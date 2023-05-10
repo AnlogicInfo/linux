@@ -1,0 +1,188 @@
+/dts-v1/;
+
+/ {
+  #address-cells = <2>;
+  #size-cells = <2>;
+  compatible = "nuclei,demo-soc";
+  model = "nuclei,demo-soc";
+  
+  chosen {
+      bootargs = "earlycon=sbi console=ttyS0,115200";
+  };
+
+  aliases {
+    serial0 = &uart0;
+    eqos0 = &eqos0;
+	/*eqos1 = &eqos1;*/
+  };
+
+  cpus {
+    #address-cells = <1>;
+    #size-cells = <0>;
+    timebase-frequency =<2500000>; /* <32768>;*/
+    cpu0: cpu@0 {
+      device_type = "cpu";
+      reg = <0>;
+      status = "okay";
+      compatible = "riscv";
+      riscv,isa = "rv64imac";
+      mmu-type = "riscv,sv39";
+      clock-frequency = <50000000>;
+      cpu0_intc: interrupt-controller {
+        #interrupt-cells = <1>;
+        interrupt-controller;
+        compatible = "riscv,cpu-intc";
+      };
+    };
+  };
+
+  memory@00000000 {
+    device_type = "memory";
+    reg = <0x0 0x00000000 0x0 0xfffffff>;
+  };
+
+  soc {
+    #address-cells = <2>;
+    #size-cells = <2>;
+    compatible = "nuclei,demo-soc", "simple-bus";
+    ranges;
+  };
+
+  /* Used for Uboot SBI Console */
+  console {
+    compatible = "sbi,console";
+  };
+
+  hfclk: hfclk {
+    #clock-cells = <0>;
+    compatible = "fixed-clock";
+    clock-frequency = <50000000>;
+    clock-output-names = "hfclk";
+  };
+  
+  plic0: interrupt-controller@6c000000 {
+    #interrupt-cells = <1>;
+    compatible = "riscv,plic0";
+    interrupt-controller;
+    riscv,ndev = <93>;
+    interrupts-extended =
+          <&cpu0_intc 11 &cpu0_intc 9>;
+    reg = <0x0 0x6c000000 0x0 0x4000000>;
+  };
+
+  uart0: serial@F8400000 {
+    compatible = "snps,dw-apb-uart";
+    reg = <0x0 0xF8400000 0x0 0x1000>;
+    interrupt-parent = <&plic0>;
+    interrupts = <71>;
+    reg-shift  = <2>;
+    reg-io-width = <4>;
+    clocks = <40000000>;
+    clock-frequency = <40000000>;
+    status = "okay";
+  };
+
+  uart1: serial@f8401000 {
+    compatible = "snps,dw-apb-uart";
+    #address-cells = <2>;
+    #size-cells = <1>;
+    reg = <0x0 0xf8401000 0x0 0x1000>;
+    interrupt-parent = <&plic0>;
+    interrupts = <72>;
+    reg-shift = <2>;
+    reg-io-width = <4>;
+    clocks = <&hfclk>;
+    status = "disabled";
+  };
+
+
+
+	GBE_CLK: GBE_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "GBE_CLK";
+	};
+	
+	PHY_CLK: PHY_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "PHY_CLK";
+	};
+
+	PTP_CLK: PTP_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "PTP_CLK";
+	};
+
+#if 1
+eqos0: ethernet1@F8110000 {
+		compatible = "snps,dwc-qos-ethernet-4.10";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		reg = <0x0 0xF8110000 0x0 0x10000>;
+		interrupt-parent = <&plic0>; /* risc-v add */
+		interrupts = <60>; /*<GIC_SPI 59 IRQ_TYPE_LEVEL_HIGH>;*/
+		mac-address = [e0 78 a3 01 02 03];
+		clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
+		clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
+		tx-fifo-depth = <16384>;
+		rx-fifo-depth = <16384>;
+		phy-handle = <&eth_phy1>;
+		phy-mode = "rgmii";
+		phy-addr = <0x011>;
+		status = "okay";
+
+		mdio {
+			compatible = "snps,dwmac-mdio";
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			eth_phy1: ethernet-phy@1 {
+				/* Realtek RTL8211F (0x001cc916) */
+				reg = <0>;
+				reset-assert-us = <10000>;
+				reset-deassert-us = <30000>;
+           };
+		};
+	};
+#endif
+
+#if 0
+eqos0: ethernet0@F8110000 {
+        compatible ="snps,dwc-qos-ethernet-4.10";
+        #address-cells = <2>;
+        #size-cells = <2>;
+        reg = <0x0 0xF8110000 0x0 0x10000>;
+        interrupt-parent = <&plic0>;
+        interrupts = <60>;    /*58 59*/
+        mac-address = [00 00 00 00 00 00];
+        clocks =  <&GBE_CLK>, <&PTP_CLK>;
+        clock-names = "apb_pclk","phy_ref_clk";
+        tx-fifo-depth = <16384>;
+        rx-fifo-depth = <16384>;
+        phy-handle = <&eth_phy0>;
+        phy-mode = "rgmii";
+        phy-addr = <0x011>;           /* 001  ,011*/
+		status = "okay";
+
+        mdio {
+			compatible = "snps,dwmac-mdio";
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			eth_phy0: ethernet-phy@0 {
+			/* Realtek RTL8211F (0x001cc916) */
+			reg = <0>;
+			reset-assert-us = <10000>;
+			reset-deassert-us = <30000>;
+
+			};
+		};
+	};
+#endif
+
+};
