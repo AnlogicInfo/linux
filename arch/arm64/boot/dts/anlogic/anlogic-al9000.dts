@@ -1,0 +1,372 @@
+/dts-v1/;
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+
+/*
+ * use memreserve for spin-lock-table area
+ */
+
+/memreserve/ 0x12010000 0x00010000;
+
+#define FPGA_SIMULATION
+
+/ {
+	model = "Anlogic, AL9000 FPSoc";
+	compatible = "anlogic,al9000";
+
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	interrupt-parent = <&gic>;
+
+	aliases {
+		uart0 = &uart0;
+		/*eqos0 = &eqos0;*/
+		eqos1 = &eqos1;
+	};
+	/*
+	chosen {
+		bootargs = "console=ttyS1,115200n8";
+		stdout-path = &uart1;
+	};
+	*/
+
+	chosen {
+		bootargs = "console=ttyS0,115200n8 earlycon=uart,mmio32,0xf8400000 loglevel=8";
+		stdout-path = &uart0;
+	};
+
+	memory@0x00000000 {
+		device_type = "memory";
+		reg = <0 0x00000000 0 0x50000000>;
+	};
+
+	GBE_CLK: GBE_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "GBE_CLK";
+	};
+
+	PHY_CLK: PHY_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "PHY_CLK";
+	};
+
+	PTP_CLK: PTP_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "PTP_CLK";
+	};
+
+	cpus {
+		#address-cells = <2>;
+		#size-cells = <0>;
+
+		cpu0: cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a35";
+			reg = <0x0 0x0>;
+			enable-method = "spin-table";
+			clock-frequency = <50000000>;
+			next-level-cache = <&l2>;
+		};
+
+#if 0
+		cpu1: cpu@1 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a35";
+			reg = <0x0 0x1>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x0 0x12010000>;
+			next-level-cache = <&l2>;
+		};
+#endif
+
+		l2: l2-cache {
+			compatible = "cache";
+		};
+	};
+
+	timer: timer {
+		compatible = "arm,armv8-timer";
+		interrupts = <GIC_PPI 13 IRQ_TYPE_LEVEL_LOW>,
+		             <GIC_PPI 14 IRQ_TYPE_LEVEL_LOW>,
+		             <GIC_PPI 11 IRQ_TYPE_LEVEL_LOW>,
+		             <GIC_PPI 10 IRQ_TYPE_LEVEL_LOW>;
+
+#ifdef FPGA_SIMULATION
+		clock-frequency = <50000000>;
+#else
+		clock-frequency = <250000000>;
+#endif
+		always-on;
+		interrupt-parent = <&gic>;
+		arm,cpu-registers-not-fw-configured;
+	};
+
+	gic: interrupt-controller@0xdd000000 {
+		compatible = "arm,gic-v3";
+		#redistributor-regions = <1>;
+		redistributor-stride = <0x0 0x20000>;
+
+		reg = <0x0 0xdd000000 0 0x20000>, /* GIC Dist */
+			  <0x0 0xdd040000 0 0x40000>;
+
+		#interrupt-cells = <3>;
+		interrupt-controller;
+		interrupts = <GIC_PPI 9 IRQ_TYPE_LEVEL_HIGH>;
+	};
+
+
+	gpio1: gpio@08420000 {
+		compatible = "snps,dw-apb-gpio";
+		reg = <0 0x08420000 0 0x20000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		porta1: gpio-controller@0 {
+			compatible = "snps,dw-apb-port";
+			gpio-controller;
+			#gpio-cells = <2>;
+			snps,nr-gpios = <8>;
+			reg = <0>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			interrupts = <GIC_SPI 78 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
+		portb1: gpio-controller@1 {
+			compatible = "snps,dw-apb-port";
+			gpio-controller;
+			#gpio-cells = <2>;
+			snps,nr-gpios = <8>;
+			reg = <1>;
+		};
+
+		portc1: gpio-controller@2 {
+			compatible = "snps,dw-apb-port";
+			gpio-controller;
+			#gpio-cells = <2>;
+			snps,nr-gpios = <8>;
+			reg = <2>;
+		};
+
+		portd1: gpio-controller@3 {
+			compatible = "snps,dw-apb-port";
+			gpio-controller;
+			#gpio-cells = <2>;
+			snps,nr-gpios = <8>;
+			reg = <3>;
+		};
+	};
+
+	gpio2: gpio@08440000{
+		compatible = "snps,dw-apb-gpio";
+		reg = <0 0x08440000 0 0x20000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		porta2: gpio-controller@0 {
+			compatible = "snps,dw-apb-port";
+			gpio-controller;
+			#gpio-cells = <2>;
+			snps,nr-gpios = <8>;
+			reg = <0>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			interrupts = <GIC_SPI 79 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
+		portb2: gpio-controller@1 {
+			compatible = "snps,dw-apb-port";
+			gpio-controller;
+			#gpio-cells = <2>;
+			snps,nr-gpios = <8>;
+			reg = <1>;
+		};
+
+		portc2: gpio-controller@2 {
+			compatible = "snps,dw-apb-port";
+			gpio-controller;
+			#gpio-cells = <2>;
+			snps,nr-gpios = <8>;
+			reg = <2>;
+		};
+
+		portd2: gpio-controller@3 {
+			compatible = "snps,dw-apb-port";
+			gpio-controller;
+			#gpio-cells = <2>;
+			snps,nr-gpios = <8>;
+			reg = <3>;
+		};
+	};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+		dma-ranges;
+
+		uart0: serial@0xF8400000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0xF8400000 0x1000>;
+			interrupts = <GIC_SPI 70 IRQ_TYPE_LEVEL_HIGH>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+
+#ifdef FPGA_SIMULATION
+			clock-frequency = <40000000>;
+#else
+			clock-frequency = <150000000>;
+#endif
+			status = "okay";
+		};
+		/*
+		uart1: serial@0xF8401000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0xF8401000 0x1000>;
+			interrupts = <GIC_SPI 71 IRQ_TYPE_LEVEL_HIGH>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+
+#ifdef FPGA_SIMULATION
+			clock-frequency = <40000000>;
+#else
+			clock-frequency = <150000000>;
+#endif
+			status = "okay";
+		};
+		*/
+	};
+
+#if 0
+eqos0: ethernet0@F8100000 {
+		compatible = "snps,dwmac-5.10a";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		reg = <0x0 0xF8100000 0x0 0x10000>;
+		interrupts = <GIC_SPI 58 IRQ_TYPE_LEVEL_HIGH>;
+		mac-address = [00 00 00 00 00 00];
+		clocks =  <&GBE_CLK>, <&PTP_CLK>;
+		clock-names = "stmmaceth", "ptp_ref";
+		tx-fifo-depth = <16384>;
+		rx-fifo-depth = <16384>;
+		phy-handle = <&eth_phy0>;
+		phy-mode = "rgmii";
+		phy-addr = <0x001>;
+		status = "okay";
+
+		mdio {
+		compatible = "snps,dwmac-mdio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		eth_phy0: ethernet-phy@0 {
+			/* Realtek RTL8211F (0x001cc916) */
+			reg = <0>;
+			reset-assert-us = <10000>;
+			reset-deassert-us = <30000>;
+
+		};
+		};
+	};
+#endif
+
+	eqos1: ethernet1@F8110000 {
+		compatible = "snps,dwc-qos-ethernet-4.10";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		reg = <0x0 0xF8110000 0x0 0x10000>;
+		interrupts = <GIC_SPI 59 IRQ_TYPE_LEVEL_HIGH>;    /*59*/
+		mac-address = [e0 78 a3 01 02 03];
+		clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
+		clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
+		tx-fifo-depth = <16384>;
+		rx-fifo-depth = <16384>;
+		phy-handle = <&eth_phy1>;
+		phy-mode = "rgmii";
+		phy-addr = <0x011>;
+		status = "okay";
+
+		mdio {
+			compatible = "snps,dwmac-mdio";
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			eth_phy1: ethernet-phy@1 {
+				/* Realtek RTL8211F (0x001cc916) */
+				reg = <0>;
+				reset-assert-us = <10000>;
+				reset-deassert-us = <30000>;
+           };
+		};
+	};
+
+	usb_otg0: usb@F8180000 {
+        compatible = "snps,dwc2";
+        reg = <0x0 0xF8180000 0x0 0x40000>;
+        interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+        //clocks = <&cru HCLK_OTG0>;
+        //clock-names = "otg";
+        dr_mode = "peripheral";
+        //dr_mode = "host";
+        g-np-tx-fifo-size = <32>;
+        g-rx-fifo-size = <768>;
+        g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
+        g-use-dma;
+        //phys = <&usbphy0>;
+        //phy-names = "usb2-phy";
+        //vbus-supply = <&vbus_regulator0>;
+        status = "okay";
+        //status = "disabled";
+    };
+
+/*
+	usb_otg0: usb@F8180000 {
+        compatible = "snps,dwc2";
+        #address-cells = <2>;
+        #size-cells = <2>;
+        reg = <0x0 0xF8180000 0x0 0x40000>;
+        interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+        //clocks = <&cru HCLK_OTG0>;
+        //clock-names = "otg";
+        //dr_mode = "peripheral";
+        dr_mode = "host";
+        g-np-tx-fifo-size = <32>;
+        g-rx-fifo-size = <768>;
+        g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
+        g-use-dma;
+        //phys = <&usbphy0>;
+        //phy-names = "usb2-phy";
+        //vbus-supply = <&vbus_regulator0>;
+        status = "okay";
+        //status = "disabled";
+    };
+*/
+/*
+	usb_otg0: usb@F8180000 {
+        compatible = "snps,dwc2";
+        reg = <0x0 0xF8180000 0x0 0x40000>;
+        interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+        //clocks = <&cru HCLK_OTG0>;
+        //clock-names = "otg";
+        //dr_mode = "peripheral";
+        dr_mode = "host";
+        g-np-tx-fifo-size = <32>;
+        g-rx-fifo-size = <768>;
+        g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
+        g-use-dma;
+        //phys = <&usbphy0>;
+        //phy-names = "usb2-phy";
+        //vbus-supply = <&vbus_regulator0>;
+        status = "okay";
+        //status = "disabled";
+    };
+*/
+};
