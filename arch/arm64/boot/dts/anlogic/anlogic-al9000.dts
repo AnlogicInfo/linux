@@ -2,12 +2,6 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 
-/*
- * use memreserve for spin-lock-table area
- */
-
-/memreserve/ 0x12010000 0x00010000;
-
 #define FPGA_SIMULATION
 
 / {
@@ -70,18 +64,17 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-a35";
 			reg = <0x0 0x0>;
-			enable-method = "spin-table";
+			enable-method = "psci";
 			clock-frequency = <50000000>;
 			next-level-cache = <&l2>;
 		};
 
-#if 0
+#if 1
 		cpu1: cpu@1 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a35";
 			reg = <0x0 0x1>;
-			enable-method = "spin-table";
-			cpu-release-addr = <0x0 0x12010000>;
+			enable-method = "psci";
 			next-level-cache = <&l2>;
 		};
 #endif
@@ -89,6 +82,12 @@
 		l2: l2-cache {
 			compatible = "cache";
 		};
+	};
+
+	psci {
+		compatible = "arm,psci-1.0", "arm,psci-0.2";
+		method = "smc";
+		status = "okay";
 	};
 
 	timer: timer {
@@ -208,14 +207,14 @@
 
 	soc {
 		compatible = "simple-bus";
-		#address-cells = <1>;
-		#size-cells = <1>;
+		#address-cells = <2>;
+		#size-cells = <2>;
 		ranges;
 		dma-ranges;
 
 		uart0: serial@0xF8400000 {
 			compatible = "snps,dw-apb-uart";
-			reg = <0xF8400000 0x1000>;
+			reg = <0 0xF8400000 0 0x1000>;
 			interrupts = <GIC_SPI 70 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
