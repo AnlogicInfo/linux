@@ -76,6 +76,20 @@
 			compatible = "fixed-clock";
 			clock-frequency = <40000000>;
 			clock-output-names = "IIC_CLK";
+	}
+
+	DWMMC_CIU_CLK: DWMMC_CIU_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <5000000>;
+		clock-output-names = "DWMMC_CIU_CLK";
+	};
+
+	DWMMC_BIU_CLK: DWMMC_BIU_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <5000000>;
+		clock-output-names = "DWMMC_BIU_CLK";
 	};
 
 	GPIO_CLK: GPIO_CLK {
@@ -488,6 +502,25 @@ eqos0: ethernet0@F8100000 {
         clocks = <&CAN_CLK>;
 		clock-names = "ipms_can_clk";
     };
+
+	sdhci0: mmc@f8049000 {
+		compatible = "snps,dwcmshc-sdhci";
+		reg = <0x0 0xf8049000 0x0 0x1000>;
+		interrupts = <GIC_SPI 62 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&DWMMC_CIU_CLK>, <&DWMMC_BIU_CLK>;
+		clock-names = "core", "bus";
+		max-frequency = <10000000>;
+		sdhci-caps-mask = <0x08FF0000 0x0600FF00>;
+		sdhci-caps = <0x10000 0xa00>;
+		bus-width = <8>;
+		non-removable;
+		broken-cd;
+		disable-wp;
+		no-sdio;
+		no-1-8-v;
+		sdhci,auto-cmd12;
+		status = "okay";
+	};
 
 /*
 	usb_otg0: usb@F8180000 {
