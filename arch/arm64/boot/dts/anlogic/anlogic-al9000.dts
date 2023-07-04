@@ -70,6 +70,13 @@
 			clock-output-names = "IIC_CLK";
 	};
 
+	GPIO_CLK: GPIO_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "GPIO_CLK";
+	};
+
 	cpus {
 		#address-cells = <2>;
 		#size-cells = <0>;
@@ -134,91 +141,6 @@
 		interrupts = <GIC_PPI 9 IRQ_TYPE_LEVEL_HIGH>;
 	};
 
-
-	gpio1: gpio@08420000 {
-		compatible = "snps,dw-apb-gpio";
-		reg = <0 0x08420000 0 0x20000>;
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		porta1: gpio-controller@0 {
-			compatible = "snps,dw-apb-port";
-			gpio-controller;
-			#gpio-cells = <2>;
-			snps,nr-gpios = <8>;
-			reg = <0>;
-			interrupt-controller;
-			#interrupt-cells = <2>;
-			interrupts = <GIC_SPI 78 IRQ_TYPE_LEVEL_HIGH>;
-		};
-
-		portb1: gpio-controller@1 {
-			compatible = "snps,dw-apb-port";
-			gpio-controller;
-			#gpio-cells = <2>;
-			snps,nr-gpios = <8>;
-			reg = <1>;
-		};
-
-		portc1: gpio-controller@2 {
-			compatible = "snps,dw-apb-port";
-			gpio-controller;
-			#gpio-cells = <2>;
-			snps,nr-gpios = <8>;
-			reg = <2>;
-		};
-
-		portd1: gpio-controller@3 {
-			compatible = "snps,dw-apb-port";
-			gpio-controller;
-			#gpio-cells = <2>;
-			snps,nr-gpios = <8>;
-			reg = <3>;
-		};
-	};
-
-	gpio2: gpio@08440000{
-		compatible = "snps,dw-apb-gpio";
-		reg = <0 0x08440000 0 0x20000>;
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		porta2: gpio-controller@0 {
-			compatible = "snps,dw-apb-port";
-			gpio-controller;
-			#gpio-cells = <2>;
-			snps,nr-gpios = <8>;
-			reg = <0>;
-			interrupt-controller;
-			#interrupt-cells = <2>;
-			interrupts = <GIC_SPI 79 IRQ_TYPE_LEVEL_HIGH>;
-		};
-
-		portb2: gpio-controller@1 {
-			compatible = "snps,dw-apb-port";
-			gpio-controller;
-			#gpio-cells = <2>;
-			snps,nr-gpios = <8>;
-			reg = <1>;
-		};
-
-		portc2: gpio-controller@2 {
-			compatible = "snps,dw-apb-port";
-			gpio-controller;
-			#gpio-cells = <2>;
-			snps,nr-gpios = <8>;
-			reg = <2>;
-		};
-
-		portd2: gpio-controller@3 {
-			compatible = "snps,dw-apb-port";
-			gpio-controller;
-			#gpio-cells = <2>;
-			snps,nr-gpios = <8>;
-			reg = <3>;
-		};
-	};
-
 	soc {
 		compatible = "simple-bus";
 		#address-cells = <2>;
@@ -260,7 +182,6 @@
 			compatible = "snps,designware-i2c";
 			interrupts = <GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>;
 			reg = <0 0xF8414000 0 0x1000>;
-			clock-frequency = <400000>;
 			clocks = <&IIC_CLK>;
 			clock-names = "IIC_CLK";
 			i2c-scl-rising-time-ns = <100>;  /* Fast mode */
@@ -281,7 +202,6 @@
 			compatible = "snps,designware-i2c";
 			interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>;
 			reg = <0 0xF8415000 0 0x1000>;
-			clock-frequency = <400000>;
 			clocks = <&IIC_CLK>;
 			clock-names = "IIC_CLK";
 			i2c-scl-rising-time-ns = <100>;  /* Fast mode */
@@ -292,6 +212,76 @@
 			status = "okay";
 		};
 
+		gpio: gpio@f8411000 {
+			compatible = "snps,dw-apb-anlogic-gpio";
+			reg = <0x0 0xf8411000 0x0 0x1000>;
+			clocks = <&GPIO_CLK>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+
+			bank0: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				interrupts = <GIC_SPI 52 IRQ_TYPE_LEVEL_HIGH>;
+				bank-name = "MIO-Bank0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				snps,nr-gpios = <32>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+
+			bank1: gpio-controller@1 {
+				compatible = "snps,dw-apb-gpio-port";
+				interrupts = <GIC_SPI 53 IRQ_TYPE_LEVEL_HIGH>;
+				bank-name = "MIO-Bank1";
+				gpio-controller;
+				#gpio-cells = <2>;
+				snps,nr-gpios = <22>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+
+			bank2: gpio-controller@2 {
+				compatible = "snps,dw-apb-gpio-port";
+				interrupts = <GIC_SPI 54 IRQ_TYPE_LEVEL_HIGH>;
+				bank-name = "EMIO-Bank2";
+				gpio-controller;
+				#gpio-cells = <2>;
+				snps,nr-gpios = <32>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+
+			bank3: gpio-controller@3 {
+				compatible = "snps,dw-apb-gpio-port";
+				interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
+				bank-name = "MIO-Bank3";
+				gpio-controller;
+				#gpio-cells = <2>;
+				snps,nr-gpios = <32>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led0 {
+			gpios = <&bank0 19 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "timer";
+			status = "okay";
+		};
+		led1 {
+			gpios = <&bank0 20 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "okay";
+		};
 	};
 
 #if 0

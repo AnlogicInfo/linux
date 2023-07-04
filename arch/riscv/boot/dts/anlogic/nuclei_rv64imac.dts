@@ -88,6 +88,13 @@
     clock-output-names = "IIC_CLK";
   };
 
+	GPIO_CLK: GPIO_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "GPIO_CLK";
+	};
+
   plic0: interrupt-controller@6c000000 {
     #interrupt-cells = <1>;
     compatible = "riscv,plic0";
@@ -158,6 +165,78 @@
     i2c-sda-hold-time-ns = <100>;
     status = "okay";
   };
+
+  gpio: gpio@f8411000 {
+    compatible = "snps,dw-apb-anlogic-gpio";
+    interrupt-parent = <&plic0>;
+    reg = <0x0 0xf8411000 0x0 0x1000>;
+    clocks = <&GPIO_CLK>;
+    #address-cells = <1>;
+    #size-cells = <0>;
+    status = "okay";
+
+    bank0: gpio-controller@0 {
+      compatible = "snps,dw-apb-gpio-port";
+      interrupts = <53>;
+      bank-name = "MIO-Bank0";
+      gpio-controller;
+      #gpio-cells = <2>;
+      snps,nr-gpios = <32>;
+      reg = <0>;
+      interrupt-controller;
+      #interrupt-cells = <2>;
+    };
+
+    bank1: gpio-controller@1 {
+      compatible = "snps,dw-apb-gpio-port";
+      interrupts = <54>;
+      bank-name = "MIO-Bank1";
+      gpio-controller;
+      #gpio-cells = <2>;
+      snps,nr-gpios = <22>;
+      reg = <0>;
+      interrupt-controller;
+      #interrupt-cells = <2>;
+    };
+
+    bank2: gpio-controller@2 {
+      compatible = "snps,dw-apb-gpio-port";
+      interrupts = <55>;
+      bank-name = "EMIO-Bank2";
+      gpio-controller;
+      #gpio-cells = <2>;
+      snps,nr-gpios = <32>;
+      reg = <0>;
+      interrupt-controller;
+      #interrupt-cells = <2>;
+    };
+
+    bank3: gpio-controller@3 {
+      compatible = "snps,dw-apb-gpio-port";
+      interrupts = <56>;
+      bank-name = "MIO-Bank3";
+      gpio-controller;
+      #gpio-cells = <2>;
+      snps,nr-gpios = <32>;
+      reg = <0>;
+      interrupt-controller;
+      #interrupt-cells = <2>;
+    };
+  };
+
+	leds {
+		compatible = "gpio-leds";
+		led0 {
+			gpios = <&bank0 19 1>;
+			linux,default-trigger = "timer";
+			status = "okay";
+		};
+		led1 {
+			gpios = <&bank0 20 1>;
+			linux,default-trigger = "heartbeat";
+			status = "okay";
+		};
+	};
 
 #if 1
 eqos0: ethernet1@F8110000 {
