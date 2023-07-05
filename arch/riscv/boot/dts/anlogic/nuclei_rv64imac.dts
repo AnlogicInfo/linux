@@ -144,7 +144,7 @@
     i2c-sda-hold-time-ns = <100>;
     status = "okay";
 
-    24aa512: eeprom@50 {
+    at24aa512: eeprom@50 {
       compatible = "atmel,24c512"; /* 64K Bytes, at24AA512 */
       reg = <0x50>;
       pagesize = <8>;
