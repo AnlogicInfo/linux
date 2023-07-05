@@ -144,9 +144,11 @@
     i2c-sda-hold-time-ns = <100>;
     status = "okay";
 
-    eeprom24cm02: eeprom@50 {
-      compatible = "Anlogic,eeprom24cm02";
+    24aa512: eeprom@50 {
+      compatible = "atmel,24c512"; /* 64K Bytes, at24AA512 */
       reg = <0x50>;
+      pagesize = <8>;
+      address-width = <16>;
       status = "okay";
     };
   };
@@ -227,12 +229,12 @@
 	leds {
 		compatible = "gpio-leds";
 		led0 {
-			gpios = <&bank0 19 1>;
+			gpios = <&bank0 19 0>;
 			linux,default-trigger = "timer";
 			status = "okay";
 		};
 		led1 {
-			gpios = <&bank0 20 1>;
+			gpios = <&bank0 20 0>;
 			linux,default-trigger = "heartbeat";
 			status = "okay";
 		};
