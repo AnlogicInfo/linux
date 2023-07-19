@@ -5,8 +5,8 @@
 #define FPGA_SIMULATION
 
 / {
-	model = "Anlogic, AL9000 FPSoc";
-	compatible = "anlogic,al9000";
+	model = "Anlogic, DR1M90 FPSoc";
+	compatible = "anlogic,dr1m90";
 
 	#address-cells = <2>;
 	#size-cells = <2>;
@@ -18,12 +18,6 @@
 		/*eqos0 = &eqos0;*/
 		eqos1 = &eqos1;
 	};
-	/*
-	chosen {
-		bootargs = "console=ttyS1,115200n8";
-		stdout-path = &uart1;
-	};
-	*/
 
 	chosen {
 		bootargs = "console=ttyS0,115200n8 earlycon=uart,mmio32,0xf8400000 loglevel=8";

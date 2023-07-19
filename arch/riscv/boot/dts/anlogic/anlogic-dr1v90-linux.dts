@@ -3,8 +3,8 @@
 / {
   #address-cells = <2>;
   #size-cells = <2>;
-  compatible = "nuclei,demo-soc";
-  model = "nuclei,demo-soc";
+  compatible = "Anlogic, DR1V90 FPSoc";
+  model = "anlogic,dr1v90";
 
   chosen {
       bootargs = "earlycon=sbi console=ttyS0,115200";
@@ -13,7 +13,7 @@
   aliases {
     serial0 = &uart0;
     eqos0 = &eqos0;
-  /*eqos1 = &eqos1;*/
+    /*eqos1 = &eqos1;*/
   };
 
   cpus {
@@ -44,7 +44,7 @@
   soc {
     #address-cells = <2>;
     #size-cells = <2>;
-    compatible = "nuclei,demo-soc", "simple-bus";
+    compatible = "anlogic,dr1v90", "simple-bus";
     ranges;
   };
 
