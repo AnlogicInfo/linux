@@ -85,6 +85,14 @@
 		clock-output-names = "GPIO_CLK";
 	};
 
+	qspi_m_clk: qspi_m_clk {
+		u-boot,dm-pre-reloc;
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "qspi_m_clk";
+	};
+
 	cpus {
 		#address-cells = <2>;
 		#size-cells = <0>;
@@ -297,6 +305,62 @@
 			linux,default-trigger = "heartbeat";
 			status = "okay";
 		};
+	};
+
+	QSPI0: spi@f804e000 {
+		compatible = "snps,dwc-ssi-1.01a";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x0 0xf804e000 0x0 0x1000>;
+		interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&qspi_m_clk>;
+		num-cs = <1>;
+		status = "okay";
+
+		flash0: flash@0 {
+			compatible = "jedec,spi-nor";
+			label = "alspinor";
+			reg = <0x0>;
+			spi-tx-bus-width = <1>;
+			spi-rx-bus-width = <1>;
+			spi-max-frequency = <2500000>;
+		};
+		/*num-cs = <2>;
+		cs-gpios = <&gpio0 13 0>,
+		<&gpio0 14 0>;*/
+	};
+
+	spi0: spi@f8404000 {
+		compatible = "snps,dw-apb-ssi";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x0 0xf8404000 0x0 0x1000>;
+		interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&qspi_m_clk>;
+		num-cs = <1>;
+		status = "disabled";
+	};
+
+	spi1: spi@f8405000 {
+		compatible = "snps,dw-apb-ssi";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x0 0xf8405000 0x0 0x1000>;
+		interrupts = <GIC_SPI 68 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&qspi_m_clk>;
+		num-cs = <1>;
+		status = "disabled";
+
+		// flash1: flash@0 {
+		// 	compatible = "jedec,spi-nor";
+		// 	reg = <0x0>;
+		// 	spi-tx-bus-width = <1>;
+		// 	spi-rx-bus-width = <1>;
+		// 	spi-max-frequency = <2500000>;
+		// };
+		/*num-cs = <2>;
+		cs-gpios = <&gpio0 13 0>,
+		<&gpio0 14 0>;*/
 	};
 
 	amba: amba {
