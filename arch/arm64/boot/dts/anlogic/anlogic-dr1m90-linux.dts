@@ -76,7 +76,7 @@
 			compatible = "fixed-clock";
 			clock-frequency = <40000000>;
 			clock-output-names = "IIC_CLK";
-	}
+	};
 
 	DWMMC_CIU_CLK: DWMMC_CIU_CLK {
 		#clock-cells = <0>;
