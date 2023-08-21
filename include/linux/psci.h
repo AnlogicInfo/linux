@@ -30,6 +30,10 @@ struct psci_operations {
 	int (*affinity_info)(unsigned long target_affinity,
 			unsigned long lowest_affinity_level);
 	int (*migrate_info_type)(void);
+	
+	/* Extended FN for DR1M90 remote proc management */
+	int (*rproc_off)(void); 
+	int (*rproc_on)(unsigned long entry_point);
 };
 
 extern struct psci_operations psci_ops;

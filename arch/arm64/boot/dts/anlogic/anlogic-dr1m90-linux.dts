@@ -2,6 +2,12 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 
+#define OPENAMP_EXAMPLE
+
+#ifdef OPENAMP_EXAMPLE
+#include "anlogic-dr1m90-openamp-example.dtsi"
+#endif
+
 #define FPGA_SIMULATION
 
 / {
@@ -24,6 +30,7 @@
 		stdout-path = &uart0;
 	};
 
+#ifndef OPENAMP_EXAMPLE
 	reserved_memory: reserved-memory {
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -38,6 +45,7 @@
 			linux,cma-default;
 		};
 	};
+#endif
 
 	memory@0x00000000 {
 		device_type = "memory";

@@ -288,6 +288,21 @@ config TI_K3_R5_REMOTEPROC
 	  It's safe to say N here if you're not interested in utilizing
 	  a slave processor.
 
+config DR1M90_REMOTEPROC
+	tristate "DR1M90 remoteproc support"
+	depends on ARCH_DR1M90
+	depends on REMOTEPROC
+	select MAILBOX
+	help
+	  Say y here to support DR1M90 processors via the
+	  remote processor framework.
+
+	  You want to say y here in order to enable AMP
+	  use-cases to run on your platform (dedicated firmware could be
+	  offloaded to remote MCU processors using this framework).
+
+	  This can be either built-in or a loadable module.
+
 endif # REMOTEPROC
 
 endmenu
