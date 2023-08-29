@@ -13,8 +13,8 @@
 
 	aliases {
 		uart0 = &uart1;
-		/*eqos0 = &eqos0;*/
-		eqos1 = &eqos1;
+		eqos0 = &eqos0;
+		/*eqos1 = &eqos1;*/
 	};
 
 	chosen {
@@ -334,7 +334,8 @@
 		status = "okay";
 
 		flash0: flash@0 {
-			compatible = "jedec,spi-nor";
+			/*compatible = "jedec,spi-nor";*/
+			compatible = "spansion,s25fl256s1", "jedec,spi-nor";
 			label = "alspinor";
 			reg = <0x0>;
 			spi-tx-bus-width = <1>;
@@ -435,16 +436,16 @@
 		};
 	};
 
-#if 0
-eqos0: ethernet0@F8100000 {
-		compatible = "snps,dwmac-5.10a";
+	eqos0: ethernet0@F8100000 {
+		/*compatible = "snps,dwmac-5.10a";*/
+		compatible = "snps,dwc-qos-ethernet-4.10";
 		#address-cells = <2>;
 		#size-cells = <2>;
 		reg = <0x0 0xF8100000 0x0 0x10000>;
 		interrupts = <GIC_SPI 58 IRQ_TYPE_LEVEL_HIGH>;
-		mac-address = [00 00 00 00 00 00];
-		clocks =  <&GBE_CLK>, <&PTP_CLK>;
-		clock-names = "stmmaceth", "ptp_ref";
+		mac-address = [e0 78 a3 01 02 01];
+		clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
+		clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
 		tx-fifo-depth = <16384>;
 		rx-fifo-depth = <16384>;
 		phy-handle = <&eth_phy0>;
@@ -457,23 +458,21 @@ eqos0: ethernet0@F8100000 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		eth_phy0: ethernet-phy@0 {
-			/* Realtek RTL8211F (0x001cc916) */
-			reg = <0>;
-			reset-assert-us = <10000>;
-			reset-deassert-us = <30000>;
-
-		};
+			eth_phy0: ethernet-phy@0 {
+				/* Realtek RTL8211F (0x001cc916) */
+				reg = <0>;
+				reset-assert-us = <10000>;
+				reset-deassert-us = <30000>;
+			};
 		};
 	};
-#endif
 
 	eqos1: ethernet1@F8110000 {
 		compatible = "snps,dwc-qos-ethernet-4.10";
 		#address-cells = <2>;
 		#size-cells = <2>;
 		reg = <0x0 0xF8110000 0x0 0x10000>;
-		interrupts = <GIC_SPI 59 IRQ_TYPE_LEVEL_HIGH>;    /*59*/
+		interrupts = <GIC_SPI 59 IRQ_TYPE_LEVEL_HIGH>;
 		mac-address = [e0 78 a3 01 02 03];
 		clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
 		clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
@@ -482,7 +481,7 @@ eqos0: ethernet0@F8100000 {
 		phy-handle = <&eth_phy1>;
 		phy-mode = "rgmii";
 		phy-addr = <0x011>;
-		status = "okay";
+		status = "disabled";
 
 		mdio {
 			compatible = "snps,dwmac-mdio";
