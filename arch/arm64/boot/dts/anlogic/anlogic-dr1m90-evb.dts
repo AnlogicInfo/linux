@@ -197,7 +197,7 @@
 			reg-shift = <2>;
 			reg-io-width = <4>;
 			clock-frequency = <50000000>;
-			status = "disable";
+			status = "disabled";
 		};
 
 		uart1: serial@0xF8401000 {
@@ -410,7 +410,7 @@
 		smcc: memory-controller@f841a000 {
 			compatible = "pl353-smc", "arm,primecell";
 			reg = <0x0 0xf841a000 0x0 0x1000>;
-			status = "okay";
+			status = "disabled";
 			clock-names = "memclk", "apb_pclk";
 			clocks = <&MEMCLK>, <&APB_PCLK>;
 			interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>;
@@ -419,7 +419,7 @@
 			#size-cells = <2>;
 
 			nfc0: nand-controller@0 {
-				status = "okay";
+				status = "disabled";
 				compatible = "arm,pl353-nand-r2p1";
 				reg = <0x0 0x0 0x0 0x1000000>;
 				#address-cells = <1>;
@@ -499,15 +499,17 @@
 
 	usb_otg0: usb@F8180000 {
         compatible = "snps,dwc2";
+        #address-cells = <2>;
+        #size-cells = <2>;
         reg = <0x0 0xF8180000 0x0 0x40000>;
         interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
         //clocks = <&cru HCLK_OTG0>;
         //clock-names = "otg";
-        dr_mode = "peripheral";
-        //dr_mode = "host";
+        //dr_mode = "peripheral";
+        dr_mode = "host";
         g-np-tx-fifo-size = <32>;
         g-rx-fifo-size = <768>;
-        g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
+        g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
         g-use-dma;
         //phys = <&usbphy0>;
         //phy-names = "usb2-phy";
