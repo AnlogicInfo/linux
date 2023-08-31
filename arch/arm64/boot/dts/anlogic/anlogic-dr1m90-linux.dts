@@ -345,7 +345,7 @@
 	};
 
 	QSPI0: spi@f804e000 {
-		compatible = "snps,dwc-ssi-1.01a";
+		compatible = "anlogic,dr1x90-qspi";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x0 0xf804e000 0x0 0x1000>;
@@ -358,8 +358,8 @@
 			compatible = "jedec,spi-nor";
 			label = "alspinor";
 			reg = <0x0>;
-			spi-tx-bus-width = <1>;
-			spi-rx-bus-width = <1>;
+			spi-tx-bus-width = <4>;
+			spi-rx-bus-width = <4>;
 			spi-max-frequency = <2500000>;
 		};
 		/*num-cs = <2>;
