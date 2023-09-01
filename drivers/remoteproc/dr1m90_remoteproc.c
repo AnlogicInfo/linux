@@ -35,6 +35,12 @@
 #include <linux/genalloc.h>
 #include <linux/psci.h>
 #include "remoteproc_internal.h"
+#include "linux/arm-smccc.h"
+
+/* Function ID passed during SiP SVC call. */
+#define FN_RPROC_BASE 	(0xFF000000)
+#define FN_RPROC_OFF 	(FN_RPROC_BASE + 21)
+#define FN_RPROC_ON 	(FN_RPROC_BASE + 22)
 
 #define MAX_NUM_VRINGS 2
 #define NOTIFYID_ANY (-1)
@@ -43,10 +49,6 @@
 #define MAX_ON_CHIP_MEMS	32
 #define REMOTE_SGI		0
 #define HOST_SGI		1
-
-/* Wirte this register to trigger cpu stop */
-#define CPU_OFF_SIGNAL		(0xF8800018)
-#define CPU_OFF_VAL		(0x12345678)
 
 static int vring_sgis[MAX_NUM_VRINGS] = { 14, 15 };
 /* count number of SGIs passed via command line if applicable. */
@@ -160,21 +162,16 @@ static int dragon_rproc_start(struct rproc *rproc)
 {
 	int ret, err;
 	struct device *dev = rproc->dev.parent;
+	struct arm_smccc_res res;
 	
 	dev_dbg(dev, "%s\n", __func__);
 	INIT_WORK(&workqueue, handle_event);
 
-	//TODO: may need to remove cpu1 from SMP in case hotplug supported. 
-	
-	/* Wake up CPU1 by calling PSCI function */
-	if (!psci_ops.rproc_on) {
-		dev_err(dev, "no PSCI rproc_on method, not booting remote core\n");
-		return -ENODEV;
-	}
-	err = psci_ops.rproc_on(rproc->bootaddr);
-	if (err) {
-		dev_err(dev, "failed to boot remote core(%d)\n", err);
-		return err;
+	/* Wake up CPU1 by sending SMC call to EL3 */
+	arm_smccc_smc(FN_RPROC_ON, rproc->bootaddr, 0, 0, 0, 0, 0, 0, &res);
+	if (0 != res.a0) {
+		dev_err(dev, "failed to boot remote core(%d)\n", -EINVAL);
+		return -EINVAL;
 	}
 
 	/* Trigger pending kicks */
@@ -220,21 +217,17 @@ static int dragon_rproc_stop(struct rproc *rproc)
 {
 	int ret, err;
 	struct device *dev = rproc->dev.parent;
+	struct arm_smccc_res res;
 
 	dev_dbg(rproc->dev.parent, "%s\n", __func__);
 	
-	/* Stop CPU1 by PSCI interface */
-	if (!psci_ops.rproc_off) {
-		dev_err(dev, "no PSCI rproc_on method, not booting remote core\n");
-		return -ENODEV;
-	}
-
-	//TODO: need to flush shared cache before stop remote core
+	/* TODO: need to flush shared cache before stop remote core */
 	
-	err = psci_ops.rproc_off();
-	if (err) {
-		dev_err(dev, "failed to stop remote core(%d)\n", err);
-		return err;
+	/* Stop CPU1 by sending SMC call to EL3 */
+	arm_smccc_smc(FN_RPROC_OFF, 0, 0, 0, 0, 0, 0, 0, &res);
+	if (0 != res.a0) {
+		dev_err(dev, "failed to stop remote core(%d)\n", -EINVAL);
+	       	return -EINVAL;
 	}
 
 	return 0;
