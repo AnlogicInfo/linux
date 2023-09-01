@@ -448,15 +448,20 @@
 		clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
 		tx-fifo-depth = <16384>;
 		rx-fifo-depth = <16384>;
+		#snps,fixed-burst;
+		snps,mixed-burst;
+		snps,pbl = <2>;
+		snps,en-tx-lpi-clockgating;
+		snps,tso;
 		phy-handle = <&eth_phy0>;
 		phy-mode = "rgmii";
 		phy-addr = <0x001>;
 		status = "okay";
 
 		mdio {
-		compatible = "snps,dwmac-mdio";
-		#address-cells = <1>;
-		#size-cells = <0>;
+			compatible = "snps,dwmac-mdio";
+			#address-cells = <1>;
+			#size-cells = <0>;
 
 			eth_phy0: ethernet-phy@0 {
 				/* Realtek RTL8211F (0x001cc916) */
@@ -478,6 +483,11 @@
 		clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
 		tx-fifo-depth = <16384>;
 		rx-fifo-depth = <16384>;
+		#snps,fixed-burst;
+		snps,mixed-burst;
+		snps,pbl = <2>;
+		snps,en-tx-lpi-clockgating;
+		snps,tso;
 		phy-handle = <&eth_phy1>;
 		phy-mode = "rgmii";
 		phy-addr = <0x011>;
