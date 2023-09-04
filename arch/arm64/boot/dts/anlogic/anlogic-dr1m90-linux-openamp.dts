@@ -29,15 +29,63 @@
 		#size-cells = <2>;
 		ranges;
 
-		linux,cma {
-			compatible = "shared-dma-pool";
-			alloc-ranges = <0x0 0x00000000 0x0 0xffffffff>;
-			reusable;
-			alignment = <0x0 0x400000>;
-			size = <0x0 0x10000000>;
-			linux,cma-default;
+		dma_reserved: buffer@4a000000 {
+			 compatible = "shared-dma-pool";
+			 no-map;
+			 reg = <0x0 0x4a000000 0x0 0x2000000>;
+		};
+
+		cma_reserved: buffer@4c000000 {
+			 compatible = "shared-dma-pool";
+			 reusable;
+			 reg = <0x0 0x4c000000 0x0 0x4000000>;
+			 linux,cma-default;
+		};
+
+		/* Reserved memory for loading remote firmware */
+		rproc_0_reserved: rproc@100000 {
+			no-map;
+			/* 16MB in DDR */
+			reg = <0x0 0x40100000 0x0 0x1000000>;
+		};
+			
+		/* Reserved memory for loading remote firmware */
+		rproc_1_reserved: rproc@61000000 {
+			no-map;
+			/* 192KB in OCM */
+			reg = <0x0 0x61000000 0x0 0x30000>;
+		};
+			
+		/* Reserved memory for vring0 */
+		vdev0vring0: vdev0vring0@61030000 {
+			no-map;
+			/* 16KB in OCM */
+			reg = <0x0 0x61030000 0x0 0x4000>;
+		};
+
+		/* Reserved memory for vring1 */
+		vdev0vring1: vdev0vring1@61034000 {
+			no-map;
+			/* 16KB in OCM */
+			reg = <0x0 0x61034000 0x0 0x4000>;
+		};
+
+		/* Reserved memory for shared buffer */
+		vdev0buffer: vdev0buffer@48000000 {
+			no-map;
+			/* 32MB in DDR */
+			reg = <0x0 0x48000000 0x0 0x2000000>;
 		};
 	};
+
+	remoteproc0: remoteproc@0 {
+		compatible = "anlogic,dragon_remoteproc";
+		firmware = "firmware";
+		vring0 = <15>;
+		vring1 = <14>;
+		memory-region = <&rproc_0_reserved>, <&vdev0vring0>, <&vdev0vring1>, <&vdev0buffer>;
+	};
+
 
 	memory@0x00000000 {
 		device_type = "memory";
@@ -135,7 +183,7 @@
 			next-level-cache = <&l2>;
 		};
 
-#if 1
+#ifndef OPENAMP_EXAMPLE
 		cpu1: cpu@1 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a35";
@@ -337,7 +385,7 @@
 	};
 
 	QSPI0: spi@f804e000 {
-		compatible = "anlogic,dr1x90-qspi";
+		compatible = "snps,dwc-ssi-1.01a";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x0 0xf804e000 0x0 0x1000>;
@@ -350,8 +398,8 @@
 			compatible = "jedec,spi-nor";
 			label = "alspinor";
 			reg = <0x0>;
-			spi-tx-bus-width = <4>;
-			spi-rx-bus-width = <4>;
+			spi-tx-bus-width = <1>;
+			spi-rx-bus-width = <1>;
 			spi-max-frequency = <2500000>;
 		};
 		/*num-cs = <2>;
