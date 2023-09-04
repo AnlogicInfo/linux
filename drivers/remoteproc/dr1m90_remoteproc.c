@@ -160,7 +160,6 @@ static void kick_pending_ipi(struct rproc *rproc)
 
 static int dragon_rproc_start(struct rproc *rproc)
 {
-	int ret, err;
 	struct device *dev = rproc->dev.parent;
 	struct arm_smccc_res res;
 	
@@ -215,7 +214,6 @@ static void dragon_rproc_kick(struct rproc *rproc, int vqid)
 /* power off the remote processor */
 static int dragon_rproc_stop(struct rproc *rproc)
 {
-	int ret, err;
 	struct device *dev = rproc->dev.parent;
 	struct arm_smccc_res res;
 
