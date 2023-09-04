@@ -49,8 +49,6 @@ static int resident_cpu = -1;
 struct psci_operations psci_ops;
 static enum arm_smccc_conduit psci_conduit = SMCCC_CONDUIT_NONE;
 
-EXPORT_SYMBOL(psci_ops);
-
 bool psci_tos_resident_on(int cpu)
 {
 	return cpu == resident_cpu;
@@ -65,11 +63,6 @@ enum psci_function {
 	PSCI_FN_CPU_ON,
 	PSCI_FN_CPU_OFF,
 	PSCI_FN_MIGRATE,
-
-	/* Extended FN for DR1M90 remote proc management */
-	PSCI_FN_RPROC_OFF, 
-	PSCI_FN_RPROC_ON,  
-
 	PSCI_FN_MAX,
 };
 
@@ -197,32 +190,6 @@ static int psci_cpu_on(unsigned long cpuid, unsigned long entry_point)
 
 	fn = psci_function_id[PSCI_FN_CPU_ON];
 	err = invoke_psci_fn(fn, cpuid, entry_point, 0);
-	return psci_to_linux_errno(err);
-}
-
-/*
- * Extended FN for DR1M90 remote proc management
- */
-static int psci_rproc_off(void)
-{
-	int err;
-	u32 fn;
-
-	fn = psci_function_id[PSCI_FN_RPROC_OFF];
-	err = invoke_psci_fn(fn, 0, 0, 0);
-	return psci_to_linux_errno(err);
-}
-
-/*
- * Extended FN for DR1M90 remote proc management
- */
-static int psci_rproc_on(unsigned long entry_point)
-{
-	int err;
-	u32 fn;
-
-	fn = psci_function_id[PSCI_FN_RPROC_ON];
-	err = invoke_psci_fn(fn, entry_point, 0, 0);
 	return psci_to_linux_errno(err);
 }
 
@@ -469,14 +436,6 @@ static void __init psci_0_2_set_functions(void)
 	psci_function_id[PSCI_FN_MIGRATE] = PSCI_FN_NATIVE(0_2, MIGRATE);
 	psci_ops.migrate = psci_migrate;
 
-	/* Extended FN for DR1M90 remote proc management */
-	psci_function_id[PSCI_FN_RPROC_OFF] = PSCI_FN_NATIVE(0_2, RPROC_OFF);
-	psci_ops.rproc_off = psci_rproc_off;
-	
-	/* Extended FN for DR1M90 remote proc management */
-	psci_function_id[PSCI_FN_RPROC_ON] = PSCI_FN_NATIVE(0_2, RPROC_ON);
-	psci_ops.rproc_on = psci_rproc_on;
-	
 	psci_ops.affinity_info = psci_affinity_info;
 
 	psci_ops.migrate_info_type = psci_migrate_info_type;
