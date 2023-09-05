@@ -36,10 +36,6 @@
 			linux,cma-default;
 		};
 
-		test_reserved: mem_test@00000000 {
-			reg = <0x0 0x0 0x0 0x100000>;
-		};
-
 	};
 
 	memory@0x00000000 {
@@ -147,8 +143,21 @@
 			next-level-cache = <&l2>;
 		};
 
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cpu0>;
+				};
+				core1 {
+					cpu = <&cpu1>;
+				};
+			};
+		};
+
 		l2: l2-cache {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 	};
 
@@ -311,13 +320,8 @@
 
 	leds {
 		compatible = "gpio-leds";
-		led0 {
-			gpios = <&bank0 19 GPIO_ACTIVE_HIGH>;
-			linux,default-trigger = "timer";
-			status = "okay";
-		};
 		led1 {
-			gpios = <&bank0 20 GPIO_ACTIVE_HIGH>;
+			gpios = <&bank0 14 GPIO_ACTIVE_HIGH>;
 			linux,default-trigger = "heartbeat";
 			status = "okay";
 		};
