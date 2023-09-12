@@ -104,7 +104,7 @@
 #define SPI_DMA_RDMAE			(1 << 0)
 #define SPI_DMA_TDMAE			(1 << 1)
 
-#define SPI_WAIT_RETRIES		5
+#define SPI_WAIT_RETRIES		50
 #define SPI_BUF_SIZE \
 	(sizeof_field(struct spi_mem_op, cmd.opcode) + \
 	 sizeof_field(struct spi_mem_op, addr.val) + 256)

@@ -328,7 +328,8 @@
 	};
 
 	QSPI0: spi@f804e000 {
-		compatible = "anlogic,dr1x90-qspi";
+		//compatible = "anlogic,dr1x90-qspi";
+		compatible = "snps,dwc-ssi-1.01a";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x0 0xf804e000 0x0 0x1000>;
@@ -338,8 +339,8 @@
 		status = "okay";
 
 		flash0: flash@0 {
-			/*compatible = "jedec,spi-nor";*/
-			compatible = "spansion,s25fl256s1", "jedec,spi-nor";
+			compatible = "jedec,spi-nor";
+			//compatible = "spansion,s25fl256s1", "jedec,spi-nor";
 			label = "alspinor";
 			reg = <0x0>;
 			spi-tx-bus-width = <4>;
