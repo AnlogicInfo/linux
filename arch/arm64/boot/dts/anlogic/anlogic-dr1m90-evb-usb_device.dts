@@ -170,9 +170,9 @@
 	timer: timer {
 		compatible = "arm,armv8-timer";
 		interrupts = <GIC_PPI 13 IRQ_TYPE_LEVEL_LOW>,
-		             <GIC_PPI 14 IRQ_TYPE_LEVEL_LOW>,
-		             <GIC_PPI 11 IRQ_TYPE_LEVEL_LOW>,
-		             <GIC_PPI 10 IRQ_TYPE_LEVEL_LOW>;
+					 <GIC_PPI 14 IRQ_TYPE_LEVEL_LOW>,
+					 <GIC_PPI 11 IRQ_TYPE_LEVEL_LOW>,
+					 <GIC_PPI 10 IRQ_TYPE_LEVEL_LOW>;
 		clock-frequency = <33000000>;
 		always-on;
 		interrupt-parent = <&gic>;
@@ -317,6 +317,27 @@
 			};
 		};
 	};
+	
+	hard_npu: hard_npu@63F00000 {
+		compatible = "Anlogic,hard_npu";
+		reg = <0x0 0x63F00000 0x0 0x00100000>;
+		//interrupts = <0 144 0x04>;
+		interrupts = <0 112 0x04>;
+	};
+
+	soft_npu: soft_npu@91000000 {
+		compatible = "Anlogic,soft_npu";
+		reg = <0x0 0x91000000 0x0 0x00100000>;
+		//interrupts = <0 129 0x04>;
+		interrupts = <0 97 0x04>;
+	};
+
+	jpu: jpu@f8460000 {
+		compatible = "Anlogic,jpu";
+		reg = <0x0 0xF8460000 0x0 0x00010000>;
+		//interrupts = <0 145 0x04>;
+		interrupts = <0 113 0x04>;
+	};
 
 	leds {
 		compatible = "gpio-leds";
@@ -328,7 +349,8 @@
 	};
 
 	QSPI0: spi@f804e000 {
-		compatible = "anlogic,dr1x90-qspi";
+		//compatible = "anlogic,dr1x90-qspi";
+		compatible = "snps,dwc-ssi-1.01a";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x0 0xf804e000 0x0 0x1000>;
@@ -338,8 +360,8 @@
 		status = "okay";
 
 		flash0: flash@0 {
-			/*compatible = "jedec,spi-nor";*/
-			compatible = "spansion,s25fl256s1", "jedec,spi-nor";
+			compatible = "jedec,spi-nor";
+			//compatible = "spansion,s25fl256s1", "jedec,spi-nor";
 			label = "alspinor";
 			reg = <0x0>;
 			spi-tx-bus-width = <4>;
@@ -391,25 +413,25 @@
 		interrupt-parent = <&gic>;
 		ranges;
 
-    		dmac: dma-controller@f8419000 {
-            		compatible = "arm,pl330", "arm,primecell";
-            		reg = <0x0 0xf8419000 0x0 0x1000>;
+		dmac: dma-controller@f8419000 {
+			compatible = "arm,pl330", "arm,primecell";
+			reg = <0x0 0xf8419000 0x0 0x1000>;
 			clock-names = "apb_pclk";
 			clocks = <&APB_PCLK>;
-            		interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 39 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 43 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
-            		arm,pl330-periph-burst;
-            		#dma-cells = <1>;
+			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 39 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 43 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
+			arm,pl330-periph-burst;
+			#dma-cells = <1>;
 			#dma-channels = <8>;
 			#dma-requests = <32>;
-    		};
+		};
 
 		smcc: memory-controller@f841a000 {
 			compatible = "pl353-smc", "arm,primecell";
@@ -507,38 +529,38 @@
 				reg = <0>;
 				reset-assert-us = <10000>;
 				reset-deassert-us = <30000>;
-           };
+			};
 		};
 	};
-	
+
 	usb_otg0: usb@F8180000 {
-        compatible = "snps,dwc2";
+		compatible = "snps,dwc2";
 		#address-cells = <2>;
-        #size-cells = <2>;
-        reg = <0x0 0xF8180000 0x0 0x40000>;
-        interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
-        //clocks = <&cru HCLK_OTG0>;
-        //clock-names = "otg";
-        dr_mode = "peripheral";
-        //dr_mode = "host";
-        g-np-tx-fifo-size = <32>;
-        g-rx-fifo-size = <768>;
-        g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
-        g-use-dma;
-        //phys = <&usbphy0>;
-        //phy-names = "usb2-phy";
-        //vbus-supply = <&vbus_regulator0>;
-        status = "okay";
-        //status = "disabled";
-    };
+		#size-cells = <2>;
+		reg = <0x0 0xF8180000 0x0 0x40000>;
+		interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+		//clocks = <&cru HCLK_OTG0>;
+		//clock-names = "otg";
+		dr_mode = "peripheral";
+		//dr_mode = "host";
+		g-np-tx-fifo-size = <32>;
+		g-rx-fifo-size = <768>;
+		g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
+		g-use-dma;
+		//phys = <&usbphy0>;
+		//phy-names = "usb2-phy";
+		//vbus-supply = <&vbus_regulator0>;
+		status = "okay";
+		//status = "disabled";
+	};
 
 	ipmscan1: can@0xF8409000 {
-        compatible = "ipms,canfd";
-        reg = <0x0 0xF8409000 0x0 0x1000>;
-        interrupts = <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>;
-        clocks = <&CAN_CLK>;
+		compatible = "ipms,canfd";
+		reg = <0x0 0xF8409000 0x0 0x1000>;
+		interrupts = <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&CAN_CLK>;
 		clock-names = "ipms_can_clk";
-    };
+	};
 
 	sdhci0: mmc@f8049000 {
 		compatible = "snps,dwcmshc-sdhci";
@@ -561,44 +583,44 @@
 
 /*
 	usb_otg0: usb@F8180000 {
-        compatible = "snps,dwc2";
-        #address-cells = <2>;
-        #size-cells = <2>;
-        reg = <0x0 0xF8180000 0x0 0x40000>;
-        interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
-        //clocks = <&cru HCLK_OTG0>;
-        //clock-names = "otg";
-        //dr_mode = "peripheral";
-        dr_mode = "host";
-        g-np-tx-fifo-size = <32>;
-        g-rx-fifo-size = <768>;
-        g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
-        g-use-dma;
-        //phys = <&usbphy0>;
-        //phy-names = "usb2-phy";
-        //vbus-supply = <&vbus_regulator0>;
-        status = "okay";
-        //status = "disabled";
-    };
+		compatible = "snps,dwc2";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		reg = <0x0 0xF8180000 0x0 0x40000>;
+		interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+		//clocks = <&cru HCLK_OTG0>;
+		//clock-names = "otg";
+		//dr_mode = "peripheral";
+		dr_mode = "host";
+		g-np-tx-fifo-size = <32>;
+		g-rx-fifo-size = <768>;
+		g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
+		g-use-dma;
+		//phys = <&usbphy0>;
+		//phy-names = "usb2-phy";
+		//vbus-supply = <&vbus_regulator0>;
+		status = "okay";
+		//status = "disabled";
+	};
 */
 /*
 	usb_otg0: usb@F8180000 {
-        compatible = "snps,dwc2";
-        reg = <0x0 0xF8180000 0x0 0x40000>;
-        interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
-        //clocks = <&cru HCLK_OTG0>;
-        //clock-names = "otg";
-        dr_mode = "peripheral";
-        //dr_mode = "host";
-        g-np-tx-fifo-size = <32>;
-        g-rx-fifo-size = <768>;
-        g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
-        g-use-dma;
-        //phys = <&usbphy0>;
-        //phy-names = "usb2-phy";
-        //vbus-supply = <&vbus_regulator0>;
-        status = "okay";
-        //status = "disabled";
-    };
+		compatible = "snps,dwc2";
+		reg = <0x0 0xF8180000 0x0 0x40000>;
+		interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+		//clocks = <&cru HCLK_OTG0>;
+		//clock-names = "otg";
+		//dr_mode = "peripheral";
+		dr_mode = "host";
+		g-np-tx-fifo-size = <32>;
+		g-rx-fifo-size = <768>;
+		g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
+		g-use-dma;
+		//phys = <&usbphy0>;
+		//phy-names = "usb2-phy";
+		//vbus-supply = <&vbus_regulator0>;
+		status = "okay";
+		//status = "disabled";
+	};
 */
 };
