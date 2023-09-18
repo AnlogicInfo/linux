@@ -349,8 +349,8 @@
 	};
 
 	QSPI0: spi@f804e000 {
-		//compatible = "anlogic,dr1x90-qspi";
-		compatible = "snps,dwc-ssi-1.01a";
+		compatible = "anlogic,dr1x90-qspi";
+		//compatible = "snps,dwc-ssi-1.01a";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x0 0xf804e000 0x0 0x1000>;
