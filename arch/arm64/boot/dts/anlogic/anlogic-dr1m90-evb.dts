@@ -317,7 +317,7 @@
 			};
 		};
 	};
-	
+
 	hard_npu: hard_npu@63F00000 {
 		compatible = "Anlogic,hard_npu";
 		reg = <0x0 0x63F00000 0x0 0x00100000>;
@@ -554,10 +554,10 @@
 		//status = "disabled";
 	};
 
-	ipmscan1: can@0xF8409000 {
+	ipmscan1: can@0xF8408000 {
 		compatible = "ipms,canfd";
-		reg = <0x0 0xF8409000 0x0 0x1000>;
-		interrupts = <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>;
+		reg = <0x0 0xF8408000 0x0 0x1000>;
+		interrupts = <GIC_SPI 72 IRQ_TYPE_LEVEL_HIGH>;
 		clocks = <&CAN_CLK>;
 		clock-names = "ipms_can_clk";
 	};
