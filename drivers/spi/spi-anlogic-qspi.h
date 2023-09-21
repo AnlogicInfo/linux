@@ -717,7 +717,7 @@
 #define INST_DDR_EN 1
 #define INST_DDR_DISABLE 0
 
-#define SPI_WAIT_RETRIES		5
+#define SPI_WAIT_RETRIES		50
 #define SPI_BUF_SIZE \
 	(sizeof_field(struct spi_mem_op, cmd.opcode) + \
 	 sizeof_field(struct spi_mem_op, addr.val) + 256)
