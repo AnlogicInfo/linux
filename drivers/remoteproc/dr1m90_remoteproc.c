@@ -25,6 +25,7 @@
 #include <linux/irqdomain.h>
 #include <linux/irq.h>
 #include <linux/irqchip.h>
+#include <linux/irqchip/arm-gic.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
 #include <linux/of_reserved_mem.h>
@@ -120,29 +121,6 @@ static void handle_event(struct work_struct *work)
 	rproc_vq_interrupt(local->rproc, local->ipis[0].notifyid);
 }
 
-/* XXX FIXME for gicv3 */
-#define ipi_send_single(hwirq, cpu) _ipi_send_single(hwirq, cpu)
-
-static void _ipi_send_single(unsigned int hwirq, unsigned int cpu)
-{
-	u64 val;
-
-	if (WARN_ON(hwirq >= 16))
-		return;
-
-	val = (0x1 << cpu) | (hwirq << 24) | (0x0UL << 40);
-	/*
-	 * Ensure that stores to Normal memory are visible to the
-	 * other CPUs before issuing the IPI.
-	 */
-	wmb();
-
-	write_sysreg_s(val, SYS_ICC_SGI1R_EL1);
-
-	/* Force the above writes to ICC_SGI1R_EL1 to be executed */
-	isb();
-}
-
 static void kick_pending_ipi(struct rproc *rproc)
 {
 	struct dragon_rproc_pdata *local = rproc->priv;
@@ -151,7 +129,6 @@ static void kick_pending_ipi(struct rproc *rproc)
 	for (i = 0; i < MAX_NUM_VRINGS; i++) {
 		/*Send swirq to firmware*/
 		if (local->ipis[i].pending) {
-			/* gic_send_sgi(1, local->irqs[HOST_SGI]); */
 		    ipi_send_single(local->irqs[HOST_SGI], 1);
 			local->ipis[i].pending = false;
 		}
@@ -201,8 +178,6 @@ static void dragon_rproc_kick(struct rproc *rproc, int vqid)
 				 * we delay firmware kick
 				 */
 				if (rproc->state == RPROC_RUNNING)
-					/* gic_send_sgi(1,
-						     local->irqs[REMOTE_SGI]); */
 					ipi_send_single(local->irqs[REMOTE_SGI], 1);
 				else
 					local->ipis[i].pending = true;
@@ -218,8 +193,6 @@ static int dragon_rproc_stop(struct rproc *rproc)
 	struct arm_smccc_res res;
 
 	dev_dbg(rproc->dev.parent, "%s\n", __func__);
-	
-	/* TODO: need to flush shared cache before stop remote core */
 	
 	/* Stop CPU1 by sending SMC call to EL3 */
 	arm_smccc_smc(FN_RPROC_OFF, 0, 0, 0, 0, 0, 0, 0, &res);
@@ -393,30 +366,21 @@ static int dragon_remoteproc_probe(struct platform_device *pdev)
 		/* Set SGI's hwirq */
 		sgi_fwspec.param[0] = vring_sgis[i];
 		virq = irq_create_fwspec_mapping(&sgi_fwspec);
-#if 0 // fix by wenbo
-		/*
-		 * Request_percpu_irq is not used because Linux only runs on
-		 * one CPU.
-		 */
-		ret = devm_request_irq(&pdev->dev, virq,
-				       dragon_remoteproc_interrupt,
-				       0, "vring0", local);
-#else
+
 		ret = request_percpu_irq(virq, dragon_remoteproc_interrupt, "vring0", local);
 		if (ret < 0) {
 			dev_err(&pdev->dev, "request percpu irq@%d failed\n", sgi_fwspec.param[0]);
 		}
-#endif
+
 		/*
 		 * The IPI descriptor relates Linux IRQ to HW IRQ and
 		 * irqaction. The irqaction will point to the dragon_remoteproc_interrupt.
 		 */
-		// ipi_desc = irq_to_desc(virq);
-		// ipi_desc->action = &action;
+		ipi_desc = irq_to_desc(virq);
+		ipi_desc->action = &action;
 		irq_set_status_flags(virq, IRQ_HIDDEN);
 		enable_percpu_irq(virq, 0);
-		local->irqs[i] = vring_sgis[i]; /* record hwirq */
-		// local->irqs[i] = virq;
+		local->irqs[i] = virq;
 	}
 
 	rproc->auto_boot = autoboot;
@@ -439,11 +403,10 @@ static int dragon_remoteproc_remove(struct platform_device *pdev)
 {
 	struct rproc *rproc = platform_get_drvdata(pdev);
 
-	dev_info(&pdev->dev, "%s\n", __func__);
-
 	rproc_del(rproc);
 
 	of_reserved_mem_device_release(&pdev->dev);
+
 	rproc_free(rproc);
 
 	return 0;
