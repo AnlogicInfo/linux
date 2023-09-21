@@ -100,9 +100,6 @@ void al_qspi_set_cs(struct spi_device *spi, bool enable)
 		al_writel(qspi, AL_QSPI_SER_OFFSET, 0);
 }
 
-
-
-
 static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi, const struct spi_mem_op *op)
 {
 	u32 room = 0, entries, sts;
@@ -181,9 +178,10 @@ static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi,
 		len = (op->data.nbytes - ((void *)buf - op->data.buf.out)) / (qspi->info.dfs / 8);
 
 	al_qspi_set_cs(spi, false);
+
 	while (len) {
 		entries = readl_relaxed(qspi->regs + AL_QSPI_TXFLR_OFFSET);
-		if (!entries) {
+		if ((!entries) && (qspi->info.spi_frame_format == SPI_STANDARD_FORMAT)) {
 			dev_err(&qspi->master->dev, "CS de-assertion on Tx\n");
 			return -EIO;
 		}
@@ -219,7 +217,6 @@ static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi,
 			buf += qspi->n_bytes;
 		}
 	}
-
 	return 0;
 }
 
@@ -444,8 +441,10 @@ static int al_qspi_exec_mem_op(struct spi_mem *mem,
 			qspi->info.tmod = SPI_TMOD_EPROMREAD;
 		else
 			qspi->info.tmod = SPI_TMOD_RO;
+		al_writel(qspi, AL_QSPI_RXFTLR_OFFSET, min(qspi->fifo_len/2, op->data.nbytes * 8 / qspi->info.dfs));
 	} else {
 		qspi->info.tmod = SPI_TMOD_TO;
+		al_writel(qspi, AL_QSPI_TXFTLR_OFFSET, min(qspi->fifo_len/2, op->data.nbytes * 8 / qspi->info.dfs));
 	}
 	al_reg32_set_bits(qspi, AL_QSPI_CTRLR0_OFFSET, QSPI_CTRLR0_TMOD_SHIFT,
 							QSPI_CTRLR0_TMOD_SIZE, qspi->info.tmod);
@@ -491,11 +490,15 @@ static int al_qspi_exec_mem_op(struct spi_mem *mem,
 	 * manually restricting the SPI bus frequency using the
 	 * qspi->max_mem_freq parameter.
 	 */
-	local_irq_save(flags);
-	preempt_disable();
+	if (qspi->info.spi_frame_format == SPI_STANDARD_FORMAT) {
+ 		local_irq_save(flags);
+		preempt_disable();
+	}
 	ret = al_qspi_write_then_read(qspi, mem->spi, op);
-	local_irq_restore(flags);
-	preempt_enable();
+	if (qspi->info.spi_frame_format == SPI_STANDARD_FORMAT) {
+		local_irq_restore(flags);
+		preempt_enable();
+	}
 
 	/*
 	 * Wait for the operation being finished and check the controller
