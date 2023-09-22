@@ -248,11 +248,11 @@
 			#size-cells = <0>;
 			status = "okay";
 
-			at24aa512: eeprom@50 {
-				compatible = "atmel,24c512"; /* 64K Bytes, at24AA512 */
-				reg = <0x50>;
-				pagesize = <8>;
-				address-width = <16>;
+			m24c08: eeprom@54 {
+				compatible = "atmel,24c08";
+				reg = <0x54>;
+				pagesize = <16>;
+				address-width = <8>;
 				status = "okay";
 			};
 		};
