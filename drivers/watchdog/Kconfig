@@ -529,6 +529,16 @@ config DW_WATCHDOG
 	  To compile this driver as a module, choose M here: the
 	  module will be called dw_wdt.
 
+config ANLOGIC_WATCHDOG
+	tristate "Anlogic watchdog"
+	depends on HAS_IOMEM
+	select WATCHDOG_CORE
+	help
+	  Say Y here if to include support for the Anlogic
+	  watchdog timer found in the anlogic chip.
+	  To compile this driver as a module, choose M here: the
+	  module will be called anlogic_wdt.
+
 config EP93XX_WATCHDOG
 	tristate "EP93xx Watchdog"
 	depends on ARCH_EP93XX || COMPILE_TEST

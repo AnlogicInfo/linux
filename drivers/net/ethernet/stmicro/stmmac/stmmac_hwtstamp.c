@@ -17,6 +17,10 @@
 
 static void config_hw_tstamping(void __iomem *ioaddr, u32 data)
 {
+	data |= (0x1 << 16);
+	data &= ~(0x1 << 14);
+	data |= (0x1 << 20);
+	data &= ~(0x1 << 1);
 	writel(data, ioaddr + PTP_TCR);
 }
 
