@@ -215,6 +215,19 @@
 		ranges;
 		dma-ranges;
 
+		fpga_mgr: fpga-mgr@F8082000 {
+			compatible = "anlogic,dr1m90-pcap-fpga";
+			reg = <0x00 0xF8801000 0x00 0x1000>;
+		};
+
+		base_fpga_region {
+			#address-cells = <0x2>;
+			#size-cells = <0x2>;
+
+			compatible = "fpga-region";
+			fpga-mgr = <&fpga_mgr>;
+		};
+
 		uart0: serial@0xF8400000 {
 			compatible = "snps,dw-apb-uart";
 			reg = <0 0xF8400000 0 0x1000>;
