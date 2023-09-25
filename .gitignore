@@ -167,3 +167,7 @@ sphinx_*/
 
 # Rust analyzer configuration
 /rust-project.json
+
+# images
+uImage.gz
+uImage
