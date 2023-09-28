@@ -349,6 +349,13 @@ config ARCH_XGENE
 	help
 	  This enables support for AppliedMicro X-Gene SOC Family
 
+config ARCH_DR1M90
+	bool "Anlogic Platforms"
+	select ANLOGIC_SOC
+	help
+	  This enables support for the ARMv8 based Anlogic SoCFPGA chipsets,
+	  like the ARCH_DR1M90.
+
 config ARCH_ZYNQMP
 	bool "Xilinx ZynqMP Family"
 	help

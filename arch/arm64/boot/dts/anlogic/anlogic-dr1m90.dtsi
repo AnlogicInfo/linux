@@ -1,0 +1,214 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+
+/ {
+	model = "Anlogic, DR1M90 FPSoc";
+	compatible = "anlogic,dr1m90";
+
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	interrupt-parent = <&gic>;
+
+	cpus {
+		#address-cells = <2>;
+		#size-cells = <0>;
+
+		cpu0: cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a35";
+			reg = <0x0 0x0>;
+			enable-method = "psci";
+			next-level-cache = <&l2>;
+		};
+
+		cpu1: cpu@1 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a35";
+			reg = <0x0 0x1>;
+			enable-method = "psci";
+			next-level-cache = <&l2>;
+		};
+
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cpu0>;
+				};
+				core1 {
+					cpu = <&cpu1>;
+				};
+			};
+		};
+
+		l2: l2-cache {
+			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
+		};
+	};
+
+	psci: psci {
+		compatible = "arm,psci-1.0", "arm,psci-0.2";
+		method = "smc";
+	};
+
+	timer: timer {
+		compatible = "arm,armv8-timer";
+		interrupts = <GIC_PPI 13 IRQ_TYPE_LEVEL_LOW>,
+					 <GIC_PPI 14 IRQ_TYPE_LEVEL_LOW>,
+					 <GIC_PPI 11 IRQ_TYPE_LEVEL_LOW>,
+					 <GIC_PPI 10 IRQ_TYPE_LEVEL_LOW>;
+		always-on;
+		interrupt-parent = <&gic>;
+		arm,cpu-registers-not-fw-configured;
+	};
+
+	gic: interrupt-controller@dd000000 {
+		compatible = "arm,gic-v3";
+		#redistributor-regions = <1>;
+		redistributor-stride = <0x0 0x20000>;
+
+		reg = <0x0 0xdd000000 0 0x20000>, /* GIC Dist */
+			  <0x0 0xdd040000 0 0x40000>;
+
+		#interrupt-cells = <3>;
+		interrupt-controller;
+		interrupts = <GIC_PPI 9 IRQ_TYPE_LEVEL_HIGH>;
+	};
+
+	soc: soc {
+		compatible = "simple-bus";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+		dma-ranges;
+
+		serial0: serial@F8400000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0 0xF8400000 0 0x1000>;
+			interrupts = <GIC_SPI 70 IRQ_TYPE_LEVEL_HIGH>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+		};
+
+		serial1: serial@F8401000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0xF8401000 0x0 0x1000>;
+			interrupts = <GIC_SPI 71 IRQ_TYPE_LEVEL_HIGH>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+		};
+
+		axidmac: dma-controller@f8419000 {
+			compatible = "arm,pl330", "arm,primecell";
+			reg = <0x0 0xf8419000 0x0 0x1000>;
+			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 39 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 43 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
+			arm,pl330-periph-burst;
+			#dma-cells = <1>;
+			#dma-channels = <8>;
+			#dma-requests = <32>;
+		};
+
+		sdhci0: mmc@f8049000 {
+			compatible = "snps,dwcmshc-sdhci";
+			reg = <0x0 0xf8049000 0x0 0x1000>;
+			interrupts = <GIC_SPI 62 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
+		spi0: spi@f8404000 {
+			compatible = "snps,dw-apb-ssi";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x0 0xf8404000 0x0 0x1000>;
+			interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&qspi_m_clk>;
+			num-cs = <1>;
+		};
+
+		spi1: spi@f8405000 {
+			compatible = "snps,dw-apb-ssi";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x0 0xf8405000 0x0 0x1000>;
+			interrupts = <GIC_SPI 68 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&qspi_m_clk>;
+			num-cs = <1>;
+		};
+
+		eqos0: ethernet0@F8100000 {
+			compatible = "snps,dwc-qos-ethernet-4.10";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			reg = <0x0 0xF8100000 0x0 0x10000>;
+			interrupts = <GIC_SPI 58 IRQ_TYPE_LEVEL_HIGH>;
+			mac-address = [e0 78 a3 01 02 01];
+			tx-fifo-depth = <16384>;
+			rx-fifo-depth = <16384>;
+			#snps,fixed-burst;
+			snps,mixed-burst;
+			snps,pbl = <2>;
+			snps,en-tx-lpi-clockgating;
+			snps,tso;
+			phy-handle = <&eth_phy0>;
+			phy-mode = "rgmii";
+			phy-addr = <0x001>;
+
+			mdio {
+				compatible = "snps,dwmac-mdio";
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				eth_phy0: ethernet-phy@0 {
+					/* Realtek RTL8211F (0x001cc916) */
+					reg = <0>;
+					reset-assert-us = <10000>;
+					reset-deassert-us = <30000>;
+				};
+			};
+		};
+
+		eqos1: ethernet1@F8110000 {
+			compatible = "snps,dwc-qos-ethernet-4.10";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			reg = <0x0 0xF8110000 0x0 0x10000>;
+			interrupts = <GIC_SPI 59 IRQ_TYPE_LEVEL_HIGH>;
+			mac-address = [e0 78 a3 01 02 03];
+			tx-fifo-depth = <16384>;
+			rx-fifo-depth = <16384>;
+			#snps,fixed-burst;
+			snps,mixed-burst;
+			snps,pbl = <2>;
+			snps,en-tx-lpi-clockgating;
+			snps,tso;
+			phy-handle = <&eth_phy1>;
+			phy-mode = "rgmii";
+			phy-addr = <0x011>;
+
+			mdio {
+				compatible = "snps,dwmac-mdio";
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				eth_phy1: ethernet-phy@1 {
+					/* Realtek RTL8211F (0x001cc916) */
+					reg = <0>;
+					reset-assert-us = <10000>;
+					reset-deassert-us = <30000>;
+				};
+			};
+		};
+	};
+};

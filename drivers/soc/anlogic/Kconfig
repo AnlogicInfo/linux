@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: GPL-2.0-only
+menu "Anlogic SoC drivers"
+
+config ANLOGIC_SOC
+	bool "Anlogic SoC"
+	default n
+	help
+	  Say yes if need codes for Anlogic SoCs.
+
+endmenu
