@@ -1,0 +1,61 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+/ {
+	#address-cells = <2>;
+	#size-cells = <2>;
+	compatible = "Anlogic, DR1V90 FPSoc";
+	model = "anlogic,dr1v90";
+
+	cpus: cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		cpu0: cpu@0 {
+			device_type = "cpu";
+			reg = <0>;
+			compatible = "riscv";
+			riscv,isa = "rv64imafdc";
+			mmu-type = "riscv,sv39";
+			cpu0_intc: interrupt-controller {
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				compatible = "riscv,cpu-intc";
+			};
+		};
+	};
+
+	soc: soc {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "anlogic,dr1v90", "simple-bus";
+		ranges;
+
+		plic0: interrupt-controller@6c000000 {
+			#interrupt-cells = <1>;
+			compatible = "riscv,plic0";
+			interrupt-controller;
+			riscv,ndev = <93>;
+			interrupts-extended = <&cpu0_intc 11 &cpu0_intc 9>;
+			reg = <0x0 0x6c000000 0x0 0x4000000>;
+		};
+
+		uart0: serial@F8400000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0xF8400000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <71>;
+			reg-shift  = <2>;
+			reg-io-width = <4>;
+		};
+
+		uart1: serial@F8401000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0xf8401000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <72>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+		};
+	};
+};

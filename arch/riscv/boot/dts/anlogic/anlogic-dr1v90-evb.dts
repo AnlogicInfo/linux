@@ -1,0 +1,52 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+#include "anlogic-dr1v90.dtsi"
+
+/ {
+	chosen {
+		bootargs = "earlycon=sbi console=ttyS0,115200";
+	};
+
+	aliases {
+		serial0 = &uart1;
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x00000000 0x0 0xfffffff>;
+	};
+
+	console {
+		compatible = "sbi,console";
+	};
+};
+
+&cpus {
+	timebase-frequency =<400000000>;
+};
+
+&cpu0 {
+	clock-frequency = <400000000>;
+};
+
+&soc {
+	UART_CLK: UART_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "UART_CLK";
+	};
+};
+
+&uart0 {
+	clocks = <&UART_CLK>;
+	clock-frequency = <50000000>;
+	status = "disabled";
+};
+
+&uart1 {
+	clocks = <&UART_CLK>;
+	clock-frequency = <50000000>;
+	status = "okay";
+};

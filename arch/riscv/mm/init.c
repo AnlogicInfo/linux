@@ -735,6 +735,11 @@ static void __init disable_pgtable_l4(void)
  */
 static __init void set_satp_mode(void)
 {
+#ifdef CONFIG_ANLOGIC_SOC
+	disable_pgtable_l5();
+	disable_pgtable_l4();
+	return;
+#else
 	u64 identity_satp, hw_satp;
 	uintptr_t set_satp_mode_pmd = ((unsigned long)set_satp_mode) & PMD_MASK;
 	bool check_l4 = false;
@@ -780,6 +785,7 @@ retry:
 	memset(early_p4d, 0, PAGE_SIZE);
 	memset(early_pud, 0, PAGE_SIZE);
 	memset(early_pmd, 0, PAGE_SIZE);
+#endif
 }
 #endif
 
