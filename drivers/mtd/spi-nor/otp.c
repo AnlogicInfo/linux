@@ -386,65 +386,6 @@ static int spi_nor_mtd_otp_read(struct mtd_info *mtd, loff_t from, size_t len,
 	return spi_nor_mtd_otp_read_write(mtd, from, len, retlen, buf, false);
 }
 
-static int spi_nor_mtd_otp_write(struct mtd_info *mtd, loff_t to, size_t len,
-				 size_t *retlen, const u8 *buf)
-{
-	return spi_nor_mtd_otp_read_write(mtd, to, len, retlen, buf, true);
-}
-
-static int spi_nor_mtd_otp_erase(struct mtd_info *mtd, loff_t from, size_t len)
-{
-	struct spi_nor *nor = mtd_to_spi_nor(mtd);
-	const struct spi_nor_otp_ops *ops = nor->params->otp.ops;
-	const size_t rlen = spi_nor_otp_region_len(nor);
-	unsigned int region;
-	loff_t rstart;
-	int ret;
-
-	/* OTP erase is optional */
-	if (!ops->erase)
-		return -EOPNOTSUPP;
-
-	if (!len)
-		return 0;
-
-	if (from < 0 || (from + len) > spi_nor_otp_size(nor))
-		return -EINVAL;
-
-	/* the user has to explicitly ask for whole regions */
-	if (!IS_ALIGNED(len, rlen) || !IS_ALIGNED(from, rlen))
-		return -EINVAL;
-
-	ret = spi_nor_prep_and_lock(nor);
-	if (ret)
-		return ret;
-
-	ret = spi_nor_mtd_otp_range_is_locked(nor, from, len);
-	if (ret < 0) {
-		goto out;
-	} else if (ret) {
-		ret = -EROFS;
-		goto out;
-	}
-
-	while (len) {
-		region = spi_nor_otp_offset_to_region(nor, from);
-		rstart = spi_nor_otp_region_start(nor, region);
-
-		ret = ops->erase(nor, rstart);
-		if (ret)
-			goto out;
-
-		len -= rlen;
-		from += rlen;
-	}
-
-out:
-	spi_nor_unlock_and_unprep(nor);
-
-	return ret;
-}
-
 static int spi_nor_mtd_otp_lock(struct mtd_info *mtd, loff_t from, size_t len)
 {
 	struct spi_nor *nor = mtd_to_spi_nor(mtd);
