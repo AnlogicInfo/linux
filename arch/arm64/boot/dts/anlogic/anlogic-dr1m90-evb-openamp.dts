@@ -1,0 +1,713 @@
+/dts-v1/;
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+
+/ {
+	model = "Anlogic, DR1M90 FPSoc";
+	compatible = "anlogic,dr1m90";
+
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	interrupt-parent = <&gic>;
+
+	aliases {
+		uart0 = &uart1;
+		eqos0 = &eqos0;
+		/*eqos1 = &eqos1;*/
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200n8 earlycon=uart,mmio32,0xf8401000 loglevel=8 maxcpus=1";
+		stdout-path = &uart0;
+	};
+
+	reserved_memory: reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		linux,cma {
+			compatible = "shared-dma-pool";
+			alloc-ranges = <0x0 0x00000000 0x0 0xffffffff>;
+			reusable;
+			alignment = <0x0 0x400000>;
+			size = <0x0 0x10000000>;
+			linux,cma-default;
+		};
+
+		dma_reserved: buffer@b000000 {
+			 compatible = "shared-dma-pool";
+			 no-map;
+			/* 32MB in DDR */
+			 reg = <0x0 0xb000000 0x0 0x2000000>;
+		};
+
+		cma_reserved: buffer@d000000 {
+			 compatible = "shared-dma-pool";
+			 reusable;
+			/* 32MB in DDR */
+			 reg = <0x0 0xd000000 0x0 0x2000000>;
+			 linux,cma-default;
+		};
+
+		/* Reserved memory for loading remote firmware */
+		rproc_0_reserved: rproc@8000000 {
+			no-map;
+			/* 16MB in DDR */
+			reg = <0x0 0x8000000 0x0 0x1000000>;
+		};
+
+		/* Reserved memory for loading remote firmware */
+		rproc_1_reserved: rproc@f000000 {
+			no-map;
+			/* 192KB in ddr */
+			reg = <0x0 0xf000000 0x0 0x30000>;
+		};
+
+		/* Reserved memory for vring0 */
+		vdev0vring0: vdev0vring0@f030000 {
+			no-map;
+			/* 16KB in ddr */
+			reg = <0x0 0xf030000 0x0 0x4000>;
+		};
+
+		/* Reserved memory for vring1 */
+		vdev0vring1: vdev0vring1@f034000 {
+			no-map;
+			/* 16KB in ddr */
+			reg = <0x0 0xf034000 0x0 0x4000>;
+		};
+
+		/* Reserved memory for shared buffer */
+		vdev0buffer: vdev0buffer@9000000 {
+			no-map;
+			/* 32MB in DDR */
+			reg = <0x0 0x9000000 0x0 0x2000000>;
+		};
+	};
+
+	remoteproc0: remoteproc@0 {
+		compatible = "anlogic,dragon_remoteproc";
+		firmware = "firmware";
+		vring0 = <15>;
+		vring1 = <14>;
+		memory-region = <&rproc_0_reserved>, <&vdev0vring0>, <&vdev0vring1>, <&vdev0buffer>;
+	};
+
+	memory@0x00000000 {
+		device_type = "memory";
+		reg = <0 0x00000000 0 0x40000000>;
+	};
+
+	GBE_CLK: GBE_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "GBE_CLK";
+	};
+
+	PHY_CLK: PHY_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "PHY_CLK";
+	};
+
+	PTP_CLK: PTP_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "PTP_CLK";
+	};
+
+	CAN_CLK: CAN_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <80000000>;
+		clock-output-names = "CAN_CLK";
+	};
+
+	MEMCLK: MEMCLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "MEMCLK";
+	};
+
+	APB_PCLK: APB_PCLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "APB_PCLK";
+	};
+
+	IIC_CLK: IIC_CLK {
+			#clock-cells = <0>;
+			compatible = "fixed-clock";
+			clock-frequency = <40000000>;
+			clock-output-names = "IIC_CLK";
+	};
+
+	DWMMC_CIU_CLK: DWMMC_CIU_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "DWMMC_CIU_CLK";
+	};
+
+	DWMMC_BIU_CLK: DWMMC_BIU_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "DWMMC_BIU_CLK";
+	};
+
+	GPIO_CLK: GPIO_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "GPIO_CLK";
+	};
+
+	qspi_m_clk: qspi_m_clk {
+		u-boot,dm-pre-reloc;
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "qspi_m_clk";
+	};
+
+	WDT_CLK: WDT_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <16666666>;
+		clock-output-names = "WDT_CLK";
+	};
+
+	cpus {
+		#address-cells = <2>;
+		#size-cells = <0>;
+
+		cpu0: cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a35";
+			reg = <0x0 0x0>;
+			enable-method = "psci";
+			clock-frequency = <400000000>;
+			next-level-cache = <&l2>;
+		};
+
+		cpu1: cpu@1 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a35";
+			reg = <0x0 0x1>;
+			enable-method = "psci";
+			clock-frequency = <400000000>;
+			next-level-cache = <&l2>;
+		};
+
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cpu0>;
+				};
+				core1 {
+					cpu = <&cpu1>;
+				};
+			};
+		};
+
+		l2: l2-cache {
+			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
+		};
+	};
+
+	psci {
+		compatible = "arm,psci-1.0", "arm,psci-0.2";
+		method = "smc";
+		status = "okay";
+	};
+
+	timer: timer {
+		compatible = "arm,armv8-timer";
+		interrupts = <GIC_PPI 13 IRQ_TYPE_LEVEL_LOW>,
+					 <GIC_PPI 14 IRQ_TYPE_LEVEL_LOW>,
+					 <GIC_PPI 11 IRQ_TYPE_LEVEL_LOW>,
+					 <GIC_PPI 10 IRQ_TYPE_LEVEL_LOW>;
+		clock-frequency = <33000000>;
+		always-on;
+		interrupt-parent = <&gic>;
+		arm,cpu-registers-not-fw-configured;
+	};
+
+	watchdog0:watchdog@f8410000 {
+		compatible = "anlogic,dw-wdt";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		reg = <0x0 0xf8410000 0x0 0x100 0x0 0Xf8800168 0x0 0x20>;
+		interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&WDT_CLK>;
+		status = "disabled";
+	};
+
+	gic: interrupt-controller@0xdd000000 {
+		compatible = "arm,gic-v3";
+		#redistributor-regions = <1>;
+		redistributor-stride = <0x0 0x20000>;
+
+		reg = <0x0 0xdd000000 0 0x20000>, /* GIC Dist */
+			  <0x0 0xdd040000 0 0x40000>;
+
+		#interrupt-cells = <3>;
+		interrupt-controller;
+		interrupts = <GIC_PPI 9 IRQ_TYPE_LEVEL_HIGH>;
+	};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+		dma-ranges;
+
+		fpga_mgr: fpga-mgr@F8082000 {
+			compatible = "anlogic,dr1m90-pcap-fpga";
+			reg = <0x00 0xF8801000 0x00 0x1000>;
+		};
+
+		base_fpga_region {
+			#address-cells = <0x2>;
+			#size-cells = <0x2>;
+
+			compatible = "fpga-region";
+			fpga-mgr = <&fpga_mgr>;
+		};
+
+		uart0: serial@0xF8400000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0 0xF8400000 0 0x1000>;
+			interrupts = <GIC_SPI 70 IRQ_TYPE_LEVEL_HIGH>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			clock-frequency = <50000000>;
+			status = "disabled";
+		};
+
+		uart1: serial@0xF8401000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0xF8401000 0x0 0x1000>;
+			interrupts = <GIC_SPI 71 IRQ_TYPE_LEVEL_HIGH>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			clock-frequency = <50000000>;
+			status = "okay";
+		};
+
+		i2c0: i2c0@f8414000 {
+			compatible = "snps,designware-i2c";
+			interrupts = <GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0 0xF8414000 0 0x1000>;
+			clocks = <&IIC_CLK>;
+			clock-names = "IIC_CLK";
+			i2c-scl-rising-time-ns = <100>;  /* Fast mode */
+			i2c-scl-falling-time-ns = <100>;
+			i2c-sda-hold-time-ns = <100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+
+			m24c08: eeprom@54 {
+				compatible = "atmel,24c08";
+				reg = <0x54>;
+				pagesize = <16>;
+				address-width = <8>;
+				status = "okay";
+			};
+		};
+
+		i2c1: i2c1@f8415000 {
+			compatible = "snps,designware-i2c";
+			interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0 0xF8415000 0 0x1000>;
+			clocks = <&IIC_CLK>;
+			clock-names = "IIC_CLK";
+			i2c-scl-rising-time-ns = <100>;  /* Fast mode */
+			i2c-scl-falling-time-ns = <100>;
+			i2c-sda-hold-time-ns = <100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+		};
+
+		gpio: gpio@f8411000 {
+			compatible = "snps,dw-apb-anlogic-gpio";
+			interrupt-parent = <&gic>;
+			reg = <0x0 0xf8411000 0x0 0x1000>;
+			clocks = <&GPIO_CLK>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+
+			bank0: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				bank-name = "MIO-Bank0";
+				interrupts = <GIC_SPI 52 IRQ_TYPE_LEVEL_HIGH>;
+				reg = <0>;
+				ngpios = <32>;
+				// snps,nr-gpios = <32>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+
+			bank1: gpio-controller@1 {
+				compatible = "snps,dw-apb-gpio-port";
+				bank-name = "MIO-Bank1";
+				interrupts = <GIC_SPI 53 IRQ_TYPE_LEVEL_HIGH>;
+				reg = <0>;
+				ngpios = <32>;
+				// snps,nr-gpios = <22>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+
+			bank2: gpio-controller@2 {
+				compatible = "snps,dw-apb-gpio-port";
+				bank-name = "EMIO-Bank2";
+				interrupts = <GIC_SPI 54 IRQ_TYPE_LEVEL_HIGH>;
+				reg = <0>;
+				ngpios = <32>;
+				// snps,nr-gpios = <32>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+
+			bank3: gpio-controller@3 {
+				compatible = "snps,dw-apb-gpio-port";
+				bank-name = "EMIO-Bank3";
+				interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
+				reg = <0>;
+				ngpios = <32>;
+				// snps,nr-gpios = <32>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+		};
+	};
+
+	hard_npu: hard_npu@63F00000 {
+		compatible = "Anlogic,hard_npu";
+		reg = <0x0 0x63F00000 0x0 0x00100000>;
+		//interrupts = <0 144 0x04>;
+		interrupts = <0 112 0x04>;
+	};
+
+	soft_npu: soft_npu@91000000 {
+		compatible = "Anlogic,soft_npu";
+		reg = <0x0 0x91000000 0x0 0x00100000>;
+		//interrupts = <0 129 0x04>;
+		interrupts = <0 97 0x04>;
+	};
+
+	jpu: jpu@f8460000 {
+		compatible = "Anlogic,jpu";
+		reg = <0x0 0xF8460000 0x0 0x00010000>;
+		//interrupts = <0 145 0x04>;
+		interrupts = <0 113 0x04>;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led1 {
+			gpios = <&bank0 14 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "okay";
+		};
+	};
+
+	QSPI0: spi@f804e000 {
+		compatible = "anlogic,dr1x90-qspi";
+		//compatible = "snps,dwc-ssi-1.01a";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x0 0xf804e000 0x0 0x1000>;
+		interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&qspi_m_clk>;
+		num-cs = <1>;
+		status = "okay";
+
+		flash0: flash@0 {
+			compatible = "jedec,spi-nor";
+			//compatible = "spansion,s25fl256s1", "jedec,spi-nor";
+			label = "alspinor";
+			reg = <0x0>;
+			spi-tx-bus-width = <4>;
+			spi-rx-bus-width = <4>;
+			spi-max-frequency = <2500000>;
+		};
+		/*num-cs = <2>;
+		cs-gpios = <&gpio0 13 0>,
+		<&gpio0 14 0>;*/
+	};
+
+	spi0: spi@f8404000 {
+		compatible = "snps,dw-apb-ssi";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x0 0xf8404000 0x0 0x1000>;
+		interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&qspi_m_clk>;
+		num-cs = <1>;
+		status = "disabled";
+	};
+
+	spi1: spi@f8405000 {
+		compatible = "snps,dw-apb-ssi";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x0 0xf8405000 0x0 0x1000>;
+		interrupts = <GIC_SPI 68 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&qspi_m_clk>;
+		num-cs = <1>;
+		status = "disabled";
+
+		// flash1: flash@0 {
+		// 	compatible = "jedec,spi-nor";
+		// 	reg = <0x0>;
+		// 	spi-tx-bus-width = <1>;
+		// 	spi-rx-bus-width = <1>;
+		// 	spi-max-frequency = <2500000>;
+		// };
+		/*num-cs = <2>;
+		cs-gpios = <&gpio0 13 0>,
+		<&gpio0 14 0>;*/
+	};
+
+	amba: amba {
+		compatible = "simple-bus";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		interrupt-parent = <&gic>;
+		ranges;
+
+		dmac: dma-controller@f8419000 {
+			compatible = "arm,pl330", "arm,primecell";
+			reg = <0x0 0xf8419000 0x0 0x1000>;
+			clock-names = "apb_pclk";
+			clocks = <&APB_PCLK>;
+			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 39 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 43 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>,
+						 <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
+			arm,pl330-periph-burst;
+			#dma-cells = <1>;
+			#dma-channels = <8>;
+			#dma-requests = <32>;
+		};
+
+		smcc: memory-controller@f841a000 {
+			compatible = "pl353-smc", "arm,primecell";
+			reg = <0x0 0xf841a000 0x0 0x1000>;
+			status = "disabled";
+			clock-names = "memclk", "apb_pclk";
+			clocks = <&MEMCLK>, <&APB_PCLK>;
+			interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>;
+			ranges = <0x0 0x0 0x0 0x64000000 0x0 0x1000000>; /* Nand CS region */
+			#address-cells = <2>;
+			#size-cells = <2>;
+
+			nfc0: nand-controller@0 {
+				status = "disabled";
+				compatible = "arm,pl353-nand-r2p1";
+				reg = <0x0 0x0 0x0 0x1000000>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				nand@0 {
+					// nand-ecc-mode = "hw";
+					// nand-bus-width = <8>;
+					label = "alnand0";
+					reg = <0x0>;
+
+				};
+			};
+		};
+	};
+
+	eqos0: ethernet0@F8100000 {
+		/*compatible = "snps,dwmac-5.10a";*/
+		compatible = "snps,dwc-qos-ethernet-4.10";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		reg = <0x0 0xF8100000 0x0 0x10000>;
+		interrupts = <GIC_SPI 58 IRQ_TYPE_LEVEL_HIGH>;
+		mac-address = [e0 78 a3 01 02 01];
+		clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
+		clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
+		tx-fifo-depth = <16384>;
+		rx-fifo-depth = <16384>;
+		#snps,fixed-burst;
+		snps,mixed-burst;
+		snps,pbl = <2>;
+		snps,en-tx-lpi-clockgating;
+		snps,tso;
+		phy-handle = <&eth_phy0>;
+		phy-mode = "rgmii";
+		phy-addr = <0x001>;
+		status = "okay";
+
+		mdio {
+			compatible = "snps,dwmac-mdio";
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			eth_phy0: ethernet-phy@0 {
+				/* Realtek RTL8211F (0x001cc916) */
+				reg = <0>;
+				reset-assert-us = <10000>;
+				reset-deassert-us = <30000>;
+			};
+		};
+	};
+
+	eqos1: ethernet1@F8110000 {
+		compatible = "snps,dwc-qos-ethernet-4.10";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		reg = <0x0 0xF8110000 0x0 0x10000>;
+		interrupts = <GIC_SPI 59 IRQ_TYPE_LEVEL_HIGH>;
+		mac-address = [e0 78 a3 01 02 03];
+		clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
+		clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
+		tx-fifo-depth = <16384>;
+		rx-fifo-depth = <16384>;
+		#snps,fixed-burst;
+		snps,mixed-burst;
+		snps,pbl = <2>;
+		snps,en-tx-lpi-clockgating;
+		snps,tso;
+		phy-handle = <&eth_phy1>;
+		phy-mode = "rgmii";
+		phy-addr = <0x011>;
+		status = "disabled";
+
+		mdio {
+			compatible = "snps,dwmac-mdio";
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			eth_phy1: ethernet-phy@1 {
+				/* Realtek RTL8211F (0x001cc916) */
+				reg = <0>;
+				reset-assert-us = <10000>;
+				reset-deassert-us = <30000>;
+			};
+		};
+	};
+
+	usb_otg0: usb@F8180000 {
+		compatible = "snps,dwc2";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		reg = <0x0 0xF8180000 0x0 0x40000>;
+		interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+		//clocks = <&cru HCLK_OTG0>;
+		//clock-names = "otg";
+		//dr_mode = "peripheral";
+		dr_mode = "host";
+		g-np-tx-fifo-size = <32>;
+		g-rx-fifo-size = <768>;
+		g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
+		g-use-dma;
+		//phys = <&usbphy0>;
+		//phy-names = "usb2-phy";
+		//vbus-supply = <&vbus_regulator0>;
+		status = "okay";
+		//status = "disabled";
+	};
+
+	ipmscan1: can@0xF8408000 {
+		compatible = "ipms,canfd";
+		reg = <0x0 0xF8408000 0x0 0x1000>;
+		interrupts = <GIC_SPI 72 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&CAN_CLK>;
+		clock-names = "ipms_can_clk";
+	};
+
+	sdhci0: mmc@f8049000 {
+		compatible = "snps,dwcmshc-sdhci";
+		reg = <0x0 0xf8049000 0x0 0x1000>;
+		interrupts = <GIC_SPI 62 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&DWMMC_CIU_CLK>, <&DWMMC_BIU_CLK>;
+		clock-names = "core", "bus";
+		max-frequency = <50000000>;
+		sdhci-caps-mask = <0x00FF0000 0x0600FF00>;
+		sdhci-caps = <0x10000 0x3200>;
+		bus-width = <8>;
+		non-removable;
+		broken-cd;
+		disable-wp;
+		no-sdio;
+		no-1-8-v;
+		sdhci,auto-cmd12;
+		status = "okay";
+	};
+
+/*
+	usb_otg0: usb@F8180000 {
+		compatible = "snps,dwc2";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		reg = <0x0 0xF8180000 0x0 0x40000>;
+		interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+		//clocks = <&cru HCLK_OTG0>;
+		//clock-names = "otg";
+		//dr_mode = "peripheral";
+		dr_mode = "host";
+		g-np-tx-fifo-size = <32>;
+		g-rx-fifo-size = <768>;
+		g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
+		g-use-dma;
+		//phys = <&usbphy0>;
+		//phy-names = "usb2-phy";
+		//vbus-supply = <&vbus_regulator0>;
+		status = "okay";
+		//status = "disabled";
+	};
+*/
+/*
+	usb_otg0: usb@F8180000 {
+		compatible = "snps,dwc2";
+		reg = <0x0 0xF8180000 0x0 0x40000>;
+		interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+		//clocks = <&cru HCLK_OTG0>;
+		//clock-names = "otg";
+		//dr_mode = "peripheral";
+		dr_mode = "host";
+		g-np-tx-fifo-size = <32>;
+		g-rx-fifo-size = <768>;
+		g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
+		g-use-dma;
+		//phys = <&usbphy0>;
+		//phy-names = "usb2-phy";
+		//vbus-supply = <&vbus_regulator0>;
+		status = "okay";
+		//status = "disabled";
+	};
+*/
+};
