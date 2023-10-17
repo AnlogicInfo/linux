@@ -3,6 +3,7 @@
  * This file contains driver for the Cadence Triple Timer Counter Rev 06
  *
  *  Copyright (C) 2011-2013 Xilinx
+ *  Copyright (C) 2023, Anlogic Inc.
  *
  * based on arch/mips/kernel/time.c timer driver
  */
@@ -37,12 +38,21 @@
  * Timer Register Offset Definitions of Timer 1, Increment base address by 4
  * and use same offsets for Timer 2
  */
+#ifndef CONFIG_ANLOGIC_SOC
 #define TTC_CLK_CNTRL_OFFSET		0x00 /* Clock Control Reg, RW */
 #define TTC_CNT_CNTRL_OFFSET		0x0C /* Counter Control Reg, RW */
 #define TTC_COUNT_VAL_OFFSET		0x18 /* Counter Value Reg, RO */
 #define TTC_INTR_VAL_OFFSET		0x24 /* Interval Count Reg, RW */
 #define TTC_ISR_OFFSET		0x54 /* Interrupt Status Reg, RO */
 #define TTC_IER_OFFSET		0x60 /* Interrupt Enable Reg, RW */
+#else
+#define TTC_CLK_CNTRL_OFFSET		0x24 /* Clock Control Reg, RW */
+#define TTC_CNT_CNTRL_OFFSET		0x18 /* Counter Control Reg, RW */
+#define TTC_COUNT_VAL_OFFSET		0x3C /* Counter Value Reg, RO */
+#define TTC_INTR_VAL_OFFSET		0x30 /* Interval Count Reg, RW */
+#define TTC_ISR_OFFSET		0x78 /* Interrupt Status Reg, RO */
+#define TTC_IER_OFFSET		0x6C /* Interrupt Enable Reg, RW */
+#endif
 
 #define TTC_CNT_CNTRL_DISABLE_MASK	0x1
 
@@ -413,10 +423,8 @@ static int __init ttc_setup_clockevent(struct clk *clk,
 	ttcce->ttc.clk = clk;
 
 	err = clk_prepare_enable(ttcce->ttc.clk);
-	if (err) {
-		kfree(ttcce);
-		return err;
-	}
+	if (err)
+		goto out_kfree;
 
 	ttcce->ttc.clk_rate_change_nb.notifier_call =
 		ttc_rate_change_clockevent_cb;
@@ -426,7 +434,7 @@ static int __init ttc_setup_clockevent(struct clk *clk,
 				    &ttcce->ttc.clk_rate_change_nb);
 	if (err) {
 		pr_warn("Unable to register clock notifier.\n");
-		return err;
+		goto out_kfree;
 	}
 
 	ttcce->ttc.freq = clk_get_rate(ttcce->ttc.clk);
@@ -455,15 +463,17 @@ static int __init ttc_setup_clockevent(struct clk *clk,
 
 	err = request_irq(irq, ttc_clock_event_interrupt,
 			  IRQF_TIMER, ttcce->ce.name, ttcce);
-	if (err) {
-		kfree(ttcce);
-		return err;
-	}
+	if (err)
+		goto out_kfree;
 
 	clockevents_config_and_register(&ttcce->ce,
 			ttcce->ttc.freq / PRESCALE, 1, 0xfffe);
 
 	return 0;
+
+out_kfree:
+	kfree(ttcce);
+	return err;
 }
 
 static int __init ttc_timer_probe(struct platform_device *pdev)
@@ -475,6 +485,9 @@ static int __init ttc_timer_probe(struct platform_device *pdev)
 	int clksel, ret;
 	u32 timer_width = 16;
 	struct device_node *timer = pdev->dev.of_node;
+
+	if (of_property_read_bool(timer, "#pwm-cells"))
+		return -ENODEV;
 
 	if (initialized)
 		return 0;

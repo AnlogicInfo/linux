@@ -321,7 +321,7 @@
 			};
 		};
 	};
-	
+
 	hard_npu: hard_npu@63F00000 {
 		compatible = "Anlogic,hard_npu";
 		reg = <0x0 0x63F00000 0x0 0x00100000>;
