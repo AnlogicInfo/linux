@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * AL9000 Remote Processor driver
+ * DR1M90 Remote Processor driver
  *
  * Copyright (C) 2023 Anlogic, Inc.
  * 
