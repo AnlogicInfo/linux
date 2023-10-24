@@ -138,6 +138,66 @@
 			#size-cells = <0>;
 		};
 
+		gpio: gpio@f8411000 {
+			compatible = "snps,dw-apb-gpio";
+			interrupt-parent = <&gic>;
+			reg = <0x0 0xf8411000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			bank0: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				bank-name = "MIO-Bank0";
+				interrupts = <GIC_SPI 52 IRQ_TYPE_LEVEL_HIGH>;
+				reg = <0>;
+				ngpios = <32>;
+				// snps,nr-gpios = <32>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+
+			bank1: gpio-controller@1 {
+				compatible = "snps,dw-apb-gpio-port";
+				bank-name = "MIO-Bank1";
+				interrupts = <GIC_SPI 53 IRQ_TYPE_LEVEL_HIGH>;
+				reg = <0>;
+				ngpios = <32>;
+				// snps,nr-gpios = <32>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+
+			bank2: gpio-controller@2 {
+				compatible = "snps,dw-apb-gpio-port";
+				bank-name = "EMIO-Bank2";
+				interrupts = <GIC_SPI 54 IRQ_TYPE_LEVEL_HIGH>;
+				reg = <0>;
+				ngpios = <32>;
+				// snps,nr-gpios = <32>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+
+			bank3: gpio-controller@3 {
+				compatible = "snps,dw-apb-gpio-port";
+				bank-name = "EMIO-Bank3";
+				interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
+				reg = <0>;
+				ngpios = <32>;
+				// snps,nr-gpios = <32>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+		};
+
 		axidmac: dma-controller@f8419000 {
 			compatible = "arm,pl330", "arm,primecell";
 			reg = <0x0 0xf8419000 0x0 0x1000>;

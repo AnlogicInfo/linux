@@ -72,6 +72,13 @@
 		clock-output-names = "IIC_CLK";
 	};
 
+	GPIO_CLK: GPIO_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "GPIO_CLK";
+	};
+
 	GBE_CLK: GBE_CLK {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
@@ -112,6 +119,21 @@
 		compatible = "fixed-clock";
 		clock-frequency = <50000000>;
 		clock-output-names = "qspi_m_clk";
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led0 {
+			gpios = <&bank0 19 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "timer";
+			status = "okay";
+		};
+
+		led1 {
+			gpios = <&bank0 20 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "okay";
+		};
 	};
 };
 
@@ -154,6 +176,11 @@
 &i2c1 {
 	clocks = <&IIC_CLK>;
 	clock-names = "IIC_CLK";
+	status = "okay";
+};
+
+&gpio {
+	clocks = <&GPIO_CLK>;
 	status = "okay";
 };
 

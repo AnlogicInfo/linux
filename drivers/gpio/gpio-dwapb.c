@@ -24,6 +24,43 @@
 #include "gpiolib.h"
 #include "gpiolib-acpi.h"
 
+#ifdef CONFIG_ANLOGIC_SOC
+#define GPIO_SWPORTA_DR		0x00
+#define GPIO_SWPORTA_DDR	0x04
+
+#define GPIO_SWPORTB_DR		0x100
+#define GPIO_SWPORTB_DDR	0x104
+
+#define GPIO_SWPORTC_DR		0x200
+#define GPIO_SWPORTC_DDR	0x204
+
+#define GPIO_SWPORTD_DR		0x300
+#define GPIO_SWPORTD_DDR	0x304
+
+#define GPIO_DR_CLR_OFFSET	0x08
+#define GPIO_DDR_CLR_OFFSET	0x0c
+
+#define GPIO_INTEN		0x30
+#define GPIO_INTMASK		0x34
+#define GPIO_INTTYPE_LEVEL	0x38
+#define GPIO_INT_POLARITY	0x3c
+#define GPIO_INTSTATUS		0x40
+#define GPIO_PORTA_DEBOUNCE	0x48
+#define GPIO_PORTA_EOI		0x4c
+#define GPIO_EXT_PORTA		0x50
+#define GPIO_EXT_PORTB		0x54
+#define GPIO_EXT_PORTC		0x58
+#define GPIO_EXT_PORTD		0x5c
+
+#define DWAPB_DRIVER_NAME	"gpio-dwapb"
+#define DWAPB_MAX_PORTS		4
+#define DWAPB_MAX_GPIOS		32
+
+#define GPIO_EXT_PORT_STRIDE	0x04  /* register stride 32 bits */
+#define GPIO_SWPORT_DR_STRIDE	0x100 /* register stride 3*32 bits */
+#define GPIO_SWPORT_DDR_STRIDE	0x100 /* register stride 3*32 bits */
+
+#else
 #define GPIO_SWPORTA_DR		0x00
 #define GPIO_SWPORTA_DDR	0x04
 #define GPIO_SWPORTB_DR		0x0c
@@ -51,6 +88,7 @@
 #define GPIO_EXT_PORT_STRIDE	0x04 /* register stride 32 bits */
 #define GPIO_SWPORT_DR_STRIDE	0x0c /* register stride 3*32 bits */
 #define GPIO_SWPORT_DDR_STRIDE	0x0c /* register stride 3*32 bits */
+#endif
 
 #define GPIO_REG_OFFSET_V1	0
 #define GPIO_REG_OFFSET_V2	1
@@ -499,6 +537,9 @@ static int dwapb_gpio_add_port(struct dwapb_gpio *gpio,
 {
 	struct dwapb_gpio_port *port;
 	void __iomem *dat, *set, *dirout;
+#ifdef CONFIG_ANLOGIC_SOC
+	void __iomem *clr, *dirin;
+#endif
 	int err;
 
 	port = &gpio->ports[offs];
@@ -515,9 +556,16 @@ static int dwapb_gpio_add_port(struct dwapb_gpio *gpio,
 	set = gpio->regs + GPIO_SWPORTA_DR + pp->idx * GPIO_SWPORT_DR_STRIDE;
 	dirout = gpio->regs + GPIO_SWPORTA_DDR + pp->idx * GPIO_SWPORT_DDR_STRIDE;
 
+#ifdef CONFIG_ANLOGIC_SOC
+	clr = gpio->regs + GPIO_DR_CLR_OFFSET + pp->idx * GPIO_SWPORT_DDR_STRIDE;
+	dirin = gpio->regs + GPIO_DDR_CLR_OFFSET + pp->idx * GPIO_SWPORT_DDR_STRIDE;
+	err = bgpio_init(&port->gc, gpio->dev, 4, dat, set, clr, dirout,
+			 dirin, 0);
+#else
 	/* This registers 32 GPIO lines per port */
 	err = bgpio_init(&port->gc, gpio->dev, 4, dat, set, NULL, dirout,
 			 NULL, 0);
+#endif
 	if (err) {
 		dev_err(gpio->dev, "failed to init gpio chip for port%d\n",
 			port->idx);
