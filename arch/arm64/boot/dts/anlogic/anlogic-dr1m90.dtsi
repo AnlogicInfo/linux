@@ -116,6 +116,28 @@
 			fpga-mgr = <&fpga_mgr>;
 		};
 
+		i2c0: i2c0@f8414000 {
+			compatible = "snps,designware-i2c";
+			interrupts = <GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0 0xF8414000 0 0x1000>;
+			i2c-scl-rising-time-ns = <100>;  /* Fast mode */
+			i2c-scl-falling-time-ns = <100>;
+			i2c-sda-hold-time-ns = <100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		i2c1: i2c1@f8415000 {
+			compatible = "snps,designware-i2c";
+			interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0 0xF8415000 0 0x1000>;
+			i2c-scl-rising-time-ns = <100>;  /* Fast mode */
+			i2c-scl-falling-time-ns = <100>;
+			i2c-sda-hold-time-ns = <100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
 		axidmac: dma-controller@f8419000 {
 			compatible = "arm,pl330", "arm,primecell";
 			reg = <0x0 0xf8419000 0x0 0x1000>;
