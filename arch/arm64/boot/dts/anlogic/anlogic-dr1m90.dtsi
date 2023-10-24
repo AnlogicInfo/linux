@@ -202,14 +202,14 @@
 			compatible = "arm,pl330", "arm,primecell";
 			reg = <0x0 0xf8419000 0x0 0x1000>;
 			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>,
-						 <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>,
-						 <GIC_SPI 39 IRQ_TYPE_LEVEL_HIGH>,
-						 <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>,
-						 <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>,
-						 <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH>,
-						 <GIC_SPI 43 IRQ_TYPE_LEVEL_HIGH>,
-						 <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>,
-						 <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
+				 <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>,
+				 <GIC_SPI 39 IRQ_TYPE_LEVEL_HIGH>,
+				 <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>,
+				 <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>,
+				 <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH>,
+				 <GIC_SPI 43 IRQ_TYPE_LEVEL_HIGH>,
+				 <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>,
+				 <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
 			arm,pl330-periph-burst;
 			#dma-cells = <1>;
 			#dma-channels = <8>;

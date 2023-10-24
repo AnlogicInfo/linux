@@ -187,7 +187,7 @@
 &axidmac {
 	clock-names = "apb_pclk";
 	clocks = <&APB_PCLK>;
-	status = "disabled";
+	status = "okay";
 };
 
 &sdhci0 {
