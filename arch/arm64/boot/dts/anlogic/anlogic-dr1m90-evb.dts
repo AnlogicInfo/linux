@@ -6,6 +6,7 @@
 / {
 	aliases {
 		uart0 = &serial1;
+		eqos0 = &eqos0;
 	};
 
 	chosen {
@@ -102,7 +103,7 @@
 	PTP_CLK: PTP_CLK {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
-		clock-frequency = <50000000>;
+		clock-frequency = <100000000>;
 		clock-output-names = "PTP_CLK";
 	};
 
@@ -222,7 +223,7 @@
 &eqos0 {
 	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
 	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
-	status = "disabled";
+	status = "okay";
 };
 
 &eqos1 {

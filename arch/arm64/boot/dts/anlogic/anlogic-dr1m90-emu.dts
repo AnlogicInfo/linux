@@ -235,5 +235,5 @@
 &eqos1 {
 	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
 	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
-	status = "disabled";
+	status = "okay";
 };
