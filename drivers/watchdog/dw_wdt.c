@@ -81,6 +81,10 @@ struct dw_wdt_timeout {
 
 struct dw_wdt {
 	void __iomem		*regs;
+#ifdef CONFIG_ANLOGIC_SOC
+	void __iomem		*wdt_ctrl;
+	u32			idx;
+#endif
 	struct clk		*clk;
 	struct clk		*pclk;
 	unsigned long		rate;
@@ -257,6 +261,19 @@ static int dw_wdt_set_pretimeout(struct watchdog_device *wdd, unsigned int req)
 	return 0;
 }
 
+#ifdef CONFIG_ANLOGIC_SOC
+static inline void dw_wdt_pause(struct dw_wdt *dw_wdt, int pause)
+{
+	u32 val;
+	val = readl(dw_wdt->wdt_ctrl);
+	if (pause) {
+		writel(val|(1<<dw_wdt->idx), dw_wdt->wdt_ctrl);
+	} else {
+		writel(val&~(1<<dw_wdt->idx), dw_wdt->wdt_ctrl);
+	}
+}
+#endif
+
 static void dw_wdt_arm_system_reset(struct dw_wdt *dw_wdt)
 {
 	u32 val = readl(dw_wdt->regs + WDOG_CONTROL_REG_OFFSET);
@@ -269,6 +286,9 @@ static void dw_wdt_arm_system_reset(struct dw_wdt *dw_wdt)
 	/* Enable watchdog. */
 	val |= WDOG_CONTROL_REG_WDT_EN_MASK;
 	writel(val, dw_wdt->regs + WDOG_CONTROL_REG_OFFSET);
+#ifdef CONFIG_ANLOGIC_SOC
+	dw_wdt_pause(dw_wdt, 0);
+#endif
 }
 
 static int dw_wdt_start(struct watchdog_device *wdd)
@@ -560,6 +580,16 @@ static int dw_wdt_drv_probe(struct platform_device *pdev)
 	if (IS_ERR(dw_wdt->regs))
 		return PTR_ERR(dw_wdt->regs);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	dw_wdt->wdt_ctrl = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(dw_wdt->wdt_ctrl))
+		return PTR_ERR(dw_wdt->wdt_ctrl);
+
+	ret = of_property_read_u32(dev->of_node, "index", &dw_wdt->idx);
+	if (ret)
+		return ret;
+#endif
+
 	/*
 	 * Try to request the watchdog dedicated timer clock source. It must
 	 * be supplied if asynchronous mode is enabled. Otherwise fallback
@@ -654,6 +684,13 @@ static int dw_wdt_drv_probe(struct platform_device *pdev)
 	 */
 	if (dw_wdt_is_enabled(dw_wdt)) {
 		wdd->timeout = dw_wdt_get_timeout(dw_wdt);
+#ifdef CONFIG_ANLOGIC_SOC
+		wdd->timeout = DW_WDT_DEFAULT_SECONDS;
+		watchdog_init_timeout(wdd, 0, dev);
+		dw_wdt_set_timeout(wdd, wdd->timeout);
+		dw_wdt_arm_system_reset(dw_wdt);
+		dw_wdt_ping(wdd);
+#endif
 		set_bit(WDOG_HW_RUNNING, &wdd->status);
 	} else {
 		wdd->timeout = DW_WDT_DEFAULT_SECONDS;
@@ -687,6 +724,9 @@ static int dw_wdt_drv_remove(struct platform_device *pdev)
 {
 	struct dw_wdt *dw_wdt = platform_get_drvdata(pdev);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	dw_wdt_pause(dw_wdt, 1);
+#endif
 	dw_wdt_dbgfs_clear(dw_wdt);
 
 	watchdog_unregister_device(&dw_wdt->wdd);

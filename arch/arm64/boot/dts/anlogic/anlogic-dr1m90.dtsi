@@ -216,6 +216,15 @@
 			#dma-requests = <32>;
 		};
 
+		watchdog0: watchdog@f8410000 {
+			compatible = "snps,dw-wdt";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			reg = <0x0 0xf8410000 0x0 0x100 0x0 0Xf8800168 0x0 0x20>;
+			index = <0>;
+			interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
 		sdhci0: mmc@f8049000 {
 			compatible = "snps,dwcmshc-sdhci";
 			reg = <0x0 0xf8049000 0x0 0x1000>;
