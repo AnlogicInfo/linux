@@ -237,3 +237,12 @@
 	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
 	status = "okay";
 };
+
+&usb_otg0 {
+	dr_mode = "peripheral";
+	g-np-tx-fifo-size = <32>;
+	g-rx-fifo-size = <768>;
+	g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
+	g-use-dma;
+	status = "okay";
+};
