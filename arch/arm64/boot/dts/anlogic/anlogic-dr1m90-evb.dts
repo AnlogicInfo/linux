@@ -79,6 +79,13 @@
 		clock-output-names = "GPIO_CLK";
 	};
 
+	qspi_m_clk: qspi_m_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "qspi_m_clk";
+	};
+
 	WDT_CLK: WDT_CLK {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
@@ -209,6 +216,11 @@
 	no-sdio;
 	no-1-8-v;
 	sdhci,auto-cmd12;
+	status = "okay";
+};
+
+&qspi0 {
+	clocks = <&qspi_m_clk>;
 	status = "okay";
 };
 

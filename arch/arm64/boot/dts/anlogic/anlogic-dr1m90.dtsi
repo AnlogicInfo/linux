@@ -231,6 +231,37 @@
 			interrupts = <GIC_SPI 62 IRQ_TYPE_LEVEL_HIGH>;
 		};
 
+		qspi0: spi@f804e000 {
+			compatible = "anlogic,dr1x90-qspi";
+			//compatible = "snps,dwc-ssi-1.01a";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x0 0xf804e000 0x0 0x1000>;
+			interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
+			num-cs = <1>;
+			// dmas = <&ahb_dma 0xd 0 0>,
+			// 	<&ahb_dma 0xc 0 0>;
+			// dma-names = "tx", "rx";
+
+			// spidev@0 {
+			// 	compatible = "rohm,dh2228fv";
+			// 	reg = <0>;
+			// 	spi-max-frequency = <8000000>;
+			// };
+
+			flash0: flash@0 {
+				compatible = "jedec,spi-nor";
+				label = "alspinor";
+				reg = <0x0>;
+				spi-tx-bus-width = <4>;
+				spi-rx-bus-width = <4>;
+				spi-max-frequency = <2500000>;
+			};
+			/*num-cs = <2>;
+			cs-gpios = <&gpio0 13 0>,
+			<&gpio0 14 0>;*/
+		};
+
 		spi0: spi@f8404000 {
 			compatible = "snps,dw-apb-ssi";
 			#address-cells = <1>;

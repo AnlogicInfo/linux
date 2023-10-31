@@ -180,7 +180,11 @@ static const struct flash_info st_nor_parts[] = {
 		NO_SFDP_FLAGS(SECT_4K | SPI_NOR_QUAD_READ) },
 	{ "n25q128a11",  INFO(0x20bb18, 0, 64 * 1024,  256)
 		FLAGS(SPI_NOR_HAS_LOCK | SPI_NOR_HAS_TB | SPI_NOR_4BIT_BP |
-		      SPI_NOR_BP3_SR_BIT6)
+		      SPI_NOR_BP3_SR_BIT6
+#ifdef CONFIG_ANLOGIC_SOC
+			  | SPI_NOR_QUAD_PP
+#endif
+			  )
 		NO_SFDP_FLAGS(SECT_4K | SPI_NOR_QUAD_READ)
 		MFR_FLAGS(USE_FSR)
 	},
