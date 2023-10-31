@@ -225,6 +225,18 @@
 			interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
 		};
 
+		ipmscan0: can@0xF8408000 {
+			compatible = "ipms,canfd";
+			reg = <0x0 0xF8408000 0x0 0x1000>;
+			interrupts = <GIC_SPI 72 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
+		ipmscan1: can@0xF8409000 {
+			compatible = "ipms,canfd";
+			reg = <0x0 0xF8409000 0x0 0x1000>;
+			interrupts = <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
 		sdhci0: mmc@f8049000 {
 			compatible = "snps,dwcmshc-sdhci";
 			reg = <0x0 0xf8049000 0x0 0x1000>;

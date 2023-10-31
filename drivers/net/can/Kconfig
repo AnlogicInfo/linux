@@ -206,6 +206,13 @@ config PCH_CAN
 	  is an IOH for x86 embedded processor (Intel Atom E6xx series).
 	  This driver can access CAN bus.
 
+config CAN_IPMS_CANFD
+	tristate "Cast & Fraunhofer IPMS CANFD controller"
+	depends on OF
+	help
+	  IPMS CANFD driver. This driver is for Anlogic dr1x90 series FPSOC and
+	  supports both CAN2.0B and CANFD.
+
 source "drivers/net/can/c_can/Kconfig"
 source "drivers/net/can/cc770/Kconfig"
 source "drivers/net/can/ctucanfd/Kconfig"
