@@ -3,6 +3,7 @@
  * This file contains driver for the Cadence Triple Timer Counter Rev 06
  *
  *  Copyright (C) 2011-2013 Xilinx
+ *  Copyright (C) 2023, Anlogic Inc.
  *
  * based on arch/mips/kernel/time.c timer driver
  */
@@ -37,12 +38,22 @@
  * Timer Register Offset Definitions of Timer 1, Increment base address by 4
  * and use same offsets for Timer 2
  */
+#ifndef CONFIG_ANLOGIC_SOC
 #define TTC_CLK_CNTRL_OFFSET		0x00 /* Clock Control Reg, RW */
 #define TTC_CNT_CNTRL_OFFSET		0x0C /* Counter Control Reg, RW */
 #define TTC_COUNT_VAL_OFFSET		0x18 /* Counter Value Reg, RO */
 #define TTC_INTR_VAL_OFFSET		0x24 /* Interval Count Reg, RW */
 #define TTC_ISR_OFFSET		0x54 /* Interrupt Status Reg, RO */
 #define TTC_IER_OFFSET		0x60 /* Interrupt Enable Reg, RW */
+#else
+#define TTC_CLK_CNTRL_OFFSET		0x24 /* Clock Control Reg, RW */
+#define TTC_CNT_CNTRL_OFFSET		0x18 /* Counter Control Reg, RW */
+#define TTC_COUNT_VAL_OFFSET		0x3C /* Counter Value Reg, RO */
+#define TTC_INTR_VAL_OFFSET		0x30 /* Interval Count Reg, RW */
+#define TTC_ISR_OFFSET		0x78 /* Interrupt Status Reg, RO */
+#define TTC_IER_OFFSET		0x6C /* Interrupt Enable Reg, RW */
+#endif
+
 
 #define TTC_CNT_CNTRL_DISABLE_MASK	0x1
 

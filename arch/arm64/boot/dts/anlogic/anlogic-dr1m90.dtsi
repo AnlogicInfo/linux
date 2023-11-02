@@ -292,6 +292,21 @@
 			num-cs = <1>;
 		};
 
+		ttc0: ttc0@f840c000 {
+			compatible = "cdns,ttc";
+			interrupts = <GIC_SPI 29 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 30 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0x0 0xf840c000 0x0 0x1000>;
+			timer-width = <32>;
+		};
+
+		ttc1: PWM1@f840d000 {
+			compatible = "cdns,ttc";
+			#pwm-cells = <3>;
+			interrupts = <GIC_SPI 32 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 33 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 34 IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0x0 0xf840d000 0x0 0x1000>;
+			timer-width = <32>;
+		};
+
 		eqos0: ethernet0@F8100000 {
 			compatible = "snps,dwc-qos-ethernet-4.10";
 			#address-cells = <2>;
