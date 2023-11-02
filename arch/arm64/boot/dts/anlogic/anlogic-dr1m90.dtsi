@@ -280,7 +280,6 @@
 			#size-cells = <0>;
 			reg = <0x0 0xf8404000 0x0 0x1000>;
 			interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&qspi_m_clk>;
 			num-cs = <1>;
 		};
 
@@ -290,7 +289,6 @@
 			#size-cells = <0>;
 			reg = <0x0 0xf8405000 0x0 0x1000>;
 			interrupts = <GIC_SPI 68 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&qspi_m_clk>;
 			num-cs = <1>;
 		};
 

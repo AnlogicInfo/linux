@@ -250,11 +250,13 @@
 };
 
 &spi0 {
-	status = "disabled";
+	clocks = <&qspi_m_clk>;
+	status = "okay";
 };
 
 &spi1 {
-	status = "disabled";
+	clocks = <&qspi_m_clk>;
+	status = "okay";
 };
 
 &eqos0 {
