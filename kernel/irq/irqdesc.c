@@ -359,6 +359,10 @@ struct irq_desc *irq_to_desc(unsigned int irq)
 EXPORT_SYMBOL_GPL(irq_to_desc);
 #endif
 
+#ifdef CONFIG_ANLOGIC_SOC
+EXPORT_SYMBOL_GPL(irq_to_desc);
+#endif
+
 static void delete_irq_desc(unsigned int irq)
 {
 	radix_tree_delete(&irq_desc_tree, irq);
