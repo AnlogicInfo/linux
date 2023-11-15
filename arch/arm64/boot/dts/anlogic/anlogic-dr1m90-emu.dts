@@ -152,13 +152,13 @@
 	leds {
 		compatible = "gpio-leds";
 		led0 {
-			gpios = <&bank0 19 GPIO_ACTIVE_HIGH>;
+			gpios = <&porta 19 GPIO_ACTIVE_HIGH>;
 			linux,default-trigger = "timer";
 			status = "okay";
 		};
 
 		led1 {
-			gpios = <&bank0 20 GPIO_ACTIVE_HIGH>;
+			gpios = <&porta 20 GPIO_ACTIVE_HIGH>;
 			linux,default-trigger = "heartbeat";
 			status = "okay";
 		};
@@ -207,7 +207,22 @@
 	status = "okay";
 };
 
-&gpio {
+&gpio0 {
+	clocks = <&GPIO_CLK>;
+	status = "okay";
+};
+
+&gpio1 {
+	clocks = <&GPIO_CLK>;
+	status = "okay";
+};
+
+&gpio2 {
+	clocks = <&GPIO_CLK>;
+	status = "okay";
+};
+
+&gpio3 {
 	clocks = <&GPIO_CLK>;
 	status = "okay";
 };

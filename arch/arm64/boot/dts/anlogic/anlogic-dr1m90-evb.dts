@@ -152,8 +152,37 @@
 	leds {
 		compatible = "gpio-leds";
 		led1 {
-			gpios = <&bank0 14 GPIO_ACTIVE_HIGH>;
+			gpios = <&porta 14 GPIO_ACTIVE_HIGH>;
 			linux,default-trigger = "heartbeat";
+			status = "okay";
+		};
+		led2 {
+			gpios = <&porta 13 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "disabled";
+		};
+		led3 {
+			gpios = <&porta 12 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "disabled";
+		};
+	};
+
+	keys {
+		compatible = "gpio-keys";
+		sw6 {
+			gpios = <&porta 10 GPIO_ACTIVE_LOW>;
+			linux,code = <103>;
+			status = "okay";
+		};
+		sw8 {
+			gpios = <&porta 11 GPIO_ACTIVE_HIGH>;
+			linux,code = <108>;
+			status = "okay";
+		};
+		sw5 {
+			gpios = <&portc 0 GPIO_ACTIVE_HIGH>;
+			linux,code = <108>;
 			status = "okay";
 		};
 	};
@@ -201,7 +230,22 @@
 	status = "okay";
 };
 
-&gpio {
+&gpio0 {
+	clocks = <&GPIO_CLK>;
+	status = "okay";
+};
+
+&gpio1 {
+	clocks = <&GPIO_CLK>;
+	status = "okay";
+};
+
+&gpio2 {
+	clocks = <&GPIO_CLK>;
+	status = "okay";
+};
+
+&gpio3 {
 	clocks = <&GPIO_CLK>;
 	status = "okay";
 };
