@@ -215,12 +215,46 @@
 	clock-names = "IIC_CLK";
 	status = "okay";
 
-	m24c08: eeprom@54 {
-		compatible = "atmel,24c08";
-		reg = <0x54>;
-		pagesize = <16>;
-		address-width = <8>;
+	i2c-mux@74 {
+		compatible = "nxp,pca9548";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x74>;
 		status = "okay";
+
+		i2c@2 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <2>;
+			/*
+			 * IIC_EEPROM 1kB memory which uses 256B blocks
+			 * where every block has different address.
+			 *    0 - 256B address 0x54
+			 * 256B - 512B address 0x55
+			 * 512B - 768B address 0x56
+			 * 768B - 1024B address 0x57
+			 */
+			m24c08: eeprom@54 {
+				compatible = "atmel,24c08";
+				reg = <0x54>;
+				pagesize = <16>;
+				address-width = <8>;
+				status = "okay";
+			};
+		};
+
+		i2c@3 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <3>;
+			ds1337: rtc@68 {
+				compatible = "dallas,ds1337";
+				reg = <0x68>;
+				trickle-resistor-ohms = <250>;
+				status = "okay";
+			};
+		};
+
 	};
 };
 
