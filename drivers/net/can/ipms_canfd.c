@@ -41,7 +41,7 @@ MODULE_DESCRIPTION("IPMS can controller driver");
 
 // enable debug output
 static int debug_on_off ;
-module_param(debug_on_off,int,0);
+module_param(debug_on_off,int,0644);
 MODULE_VERSION("1.1");
 
 /*ipms canfd debug information*/
@@ -58,10 +58,6 @@ MODULE_VERSION("1.1");
 #	else
 #		define PDEBUG(fmt,args...)
 #	endif
-
-
-#	undef PDEBUGG
-#	define PDEBUGG(fmt,args...)
 
 
 #define CANFD_MASK	0x01
@@ -1145,6 +1141,13 @@ static int canfd_driver_open(struct net_device *ndev)
 	if (ret < 0) {
 		netdev_err(ndev, "canfd_chip_start failed!\n");
 		goto err_candev;
+	}
+
+	if (priv->can.ctrlmode & CAN_CTRLMODE_LOOPBACK) {
+		ret = canfd_ioread8(priv->reg_base + CANFD_CFG_STAT_OFFSET);
+		ret |= CAN_FD_LBMIMOD_MASK;	/*set loopback internal mode*/
+		canfd_iowrite8(ret, priv->reg_base + CANFD_CFG_STAT_OFFSET);
+		PDEBUG("set loopback internal mode finished\n");
 	}
 
 	PDEBUG("canfd_chip_start finished\n");
