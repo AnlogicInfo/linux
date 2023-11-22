@@ -333,7 +333,7 @@
 			#size-cells = <2>;
 			reg = <0x0 0xF8100000 0x0 0x10000>;
 			interrupts = <GIC_SPI 58 IRQ_TYPE_LEVEL_HIGH>;
-			mac-address = [e0 78 a3 01 02 01];
+			// mac-address = [e0 78 a3 01 02 01];
 			tx-fifo-depth = <16384>;
 			rx-fifo-depth = <16384>;
 			#snps,fixed-burst;
