@@ -264,6 +264,11 @@ static int dw_spi_mmio_probe(struct platform_device *pdev)
 	struct dw_spi *dws;
 	int ret;
 	int num_cs;
+#ifdef CONFIG_ANLOGIC_SOC
+	u32 qspi_ocm_buf;
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+#endif
 
 	dwsmmio = devm_kzalloc(&pdev->dev, sizeof(struct dw_spi_mmio),
 			GFP_KERNEL);
@@ -276,6 +281,25 @@ static int dw_spi_mmio_probe(struct platform_device *pdev)
 	dws->regs = devm_platform_get_and_ioremap_resource(pdev, 0, &mem);
 	if (IS_ERR(dws->regs))
 		return PTR_ERR(dws->regs);
+
+#ifdef CONFIG_ANLOGIC_SOC
+	dws->use_ocm = 0;
+	ret = of_property_read_u32(np, "#qspi-ocm-buf", &qspi_ocm_buf);
+	if (ret != -EINVAL)
+		dws->use_ocm = 1;
+
+	if(dws->use_ocm == 1) {
+		dws->spi_rx_buf = devm_platform_ioremap_resource(pdev, 1);
+		if (IS_ERR(dws->spi_rx_buf))
+			return PTR_ERR(dws->spi_rx_buf);
+		of_property_read_u64_index(np, "reg", 2, &dws->spi_rx_phys);
+
+		dws->spi_tx_buf = devm_platform_ioremap_resource(pdev, 2);
+		if (IS_ERR(dws->spi_tx_buf))
+			return PTR_ERR(dws->spi_tx_buf);
+		of_property_read_u64_index(np, "reg", 4, &dws->spi_tx_phys);
+	}
+#endif
 
 	dws->paddr = mem->start;
 

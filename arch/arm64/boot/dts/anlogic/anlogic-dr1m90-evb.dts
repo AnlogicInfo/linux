@@ -79,18 +79,18 @@
 		clock-output-names = "GPIO_CLK";
 	};
 
-	qspi_m_clk: qspi_m_clk {
-		#clock-cells = <0>;
-		compatible = "fixed-clock";
-		clock-frequency = <50000000>;
-		clock-output-names = "qspi_m_clk";
-	};
-
 	ttc_clk: ttc_clk {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
 		clock-frequency = <200000000>;
 		clock-output-names = "ttc_clk";
+	};
+
+	ahb_dma_clk: ahb_dma_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <400000000>;
+		clock-output-names = "ahb_dma_clk";
 	};
 
 	WDT_CLK: WDT_CLK {
@@ -145,7 +145,7 @@
 	qspi_m_clk: qspi_m_clk {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
-		clock-frequency = <50000000>;
+		clock-frequency = <200000000>;
 		clock-output-names = "qspi_m_clk";
 	};
 
@@ -323,19 +323,61 @@
 	status = "okay";
 };
 
+&ahb_dma {
+	clocks = <&ahb_dma_clk>;
+	status = "okay";
+};
+
 &qspi0 {
 	clocks = <&qspi_m_clk>;
 	status = "okay";
+	dmas = <&ahb_dma 0xc 0 0 (1 << 6)>,
+			<&ahb_dma 0xd 0 0 (1 << 7)>;
+	dma-names = "tx", "rx";
+
+	// spidev@0 {
+	// 	compatible = "rohm,dh2228fv";
+	// 	reg = <0>;
+	// 	spi-max-frequency = <8000000>;
+	// };
+
+	flash0: flash@0 {
+		compatible = "jedec,spi-nor";
+		label = "alspinor";
+		reg = <0x0>;
+		spi-tx-bus-width = <4>;
+		spi-rx-bus-width = <4>;
+		spi-max-frequency = <10000000>;
+	};
+	/*num-cs = <2>;
+	cs-gpios = <&gpio0 13 0>,
+	<&gpio0 14 0>;*/
 };
 
 &spi0 {
 	clocks = <&qspi_m_clk>;
 	status = "okay";
+	dmas = <&ahb_dma 4 0 0 (1 << 0)>,
+			<&ahb_dma 5 0 0 (1 << 1)>;
+	dma-names = "tx", "rx";
+	spidev@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+	};
 };
 
 &spi1 {
 	clocks = <&qspi_m_clk>;
 	status = "okay";
+	dmas = <&ahb_dma 6 0 0 (1 << 2)>,
+			<&ahb_dma 7 0 0 (1 << 3)>;
+	dma-names = "tx", "rx";
+	spidev@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+	};
 };
 
 &ttc0 {

@@ -122,7 +122,12 @@
 #define DW_SPI_DMACR_TDMAE			BIT(1)
 
 /* Mem/DMA operations helpers */
+#ifdef CONFIG_ANLOGIC_SOC
+#define DW_SPI_WAIT_RETRIES			500
+#else
 #define DW_SPI_WAIT_RETRIES			5
+#endif
+
 #define DW_SPI_BUF_SIZE \
 	(sizeof_field(struct spi_mem_op, cmd.opcode) + \
 	 sizeof_field(struct spi_mem_op, addr.val) + 256)
@@ -198,6 +203,14 @@ struct dw_spi {
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *debugfs;
 	struct debugfs_regset32 regset;
+#endif
+
+#ifdef CONFIG_ANLOGIC_SOC
+	int					use_ocm;
+	void __iomem		*spi_rx_buf;
+	void __iomem		*spi_tx_buf;
+	dma_addr_t			spi_rx_phys;
+	dma_addr_t			spi_tx_phys;
 #endif
 };
 

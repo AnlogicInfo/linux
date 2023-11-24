@@ -20,6 +20,19 @@
 
 #include "spi-dw.h"
 
+#ifdef CONFIG_ANLOGIC_SOC
+#include <linux/dmaengine.h>
+#include <linux/types.h>
+
+#include <linux/slab.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-direction.h>
+#include <linux/dma-mapping.h>
+
+
+#include "internals.h"
+#endif
+
 #ifdef CONFIG_DEBUG_FS
 #include <linux/debugfs.h>
 #endif
@@ -498,6 +511,40 @@ static bool dw_spi_supports_mem_op(struct spi_mem *mem,
 	return spi_mem_default_supports_op(mem, op);
 }
 
+#ifdef CONFIG_ANLOGIC_SOC
+static int dw_spi_map_buf(struct sg_table *sgt, dma_addr_t phys, u32 len)
+{
+	struct scatterlist *sg;
+	int ret;
+
+	ret = sg_alloc_table(sgt, 1, GFP_KERNEL);
+	if (ret)
+		return ret;
+
+	sg = &sgt->sgl[0];
+	sg_dma_address(sg) = phys;
+	sg_dma_len(sg) = len;
+	return 0;
+}
+
+static void dw_spi_unmap_buf(struct sg_table *sgt)
+{
+	sg_free_table(sgt);
+}
+
+static void* dw_spi_memcpy(void* dest, const void* src, size_t len)
+{
+	int i;
+	unsigned char* dst_ptr = (unsigned char*) dest;
+	const unsigned char* src_ptr = (const unsigned char*) src;
+
+	for (i = 0; i < len; i++) {
+		dst_ptr[i] = src_ptr[i];
+	}
+	return dest;
+}
+#endif
+
 static int dw_spi_init_mem_buf(struct dw_spi *dws, const struct spi_mem_op *op)
 {
 	unsigned int i, j, len;
@@ -510,14 +557,31 @@ static int dw_spi_init_mem_buf(struct dw_spi *dws, const struct spi_mem_op *op)
 	len = op->cmd.nbytes + op->addr.nbytes + op->dummy.nbytes;
 	if (op->data.dir == SPI_MEM_DATA_OUT)
 		len += op->data.nbytes;
-
-	if (len <= DW_SPI_BUF_SIZE) {
-		out = dws->buf;
+#ifdef CONFIG_ANLOGIC_SOC
+	if(dws->use_ocm != 1) {
+#endif
+		if (len <= DW_SPI_BUF_SIZE) {
+			out = dws->buf;
+		} else {
+			out = kzalloc(len, GFP_KERNEL);
+			if (!out)
+				return -ENOMEM;
+		}
+#ifdef CONFIG_ANLOGIC_SOC
 	} else {
-		out = kzalloc(len, GFP_KERNEL);
-		if (!out)
-			return -ENOMEM;
+		if (dws->master->can_dma && (op->data.nbytes > (dws->fifo_len - 10))) {
+			out = dws->spi_tx_buf;
+		} else {
+			if (len <= DW_SPI_BUF_SIZE) {
+				out = dws->buf;
+			} else {
+				out = kzalloc(len, GFP_KERNEL);
+				if (!out)
+					return -ENOMEM;
+			}
+		}
 	}
+#endif
 
 	/*
 	 * Collect the operation code, address and dummy bytes into the single
@@ -532,13 +596,31 @@ static int dw_spi_init_mem_buf(struct dw_spi *dws, const struct spi_mem_op *op)
 		out[i] = 0x0;
 
 	if (op->data.dir == SPI_MEM_DATA_OUT)
-		memcpy(&out[i], op->data.buf.out, op->data.nbytes);
-
+#ifdef CONFIG_ANLOGIC_SOC
+	{
+		if(dws->use_ocm == 1)
+			dw_spi_memcpy(&out[i], op->data.buf.out, op->data.nbytes);
+		else
+#endif
+			memcpy(&out[i], op->data.buf.out, op->data.nbytes);
+#ifdef CONFIG_ANLOGIC_SOC
+	}
+#endif
 	dws->n_bytes = 1;
 	dws->tx = out;
 	dws->tx_len = len;
 	if (op->data.dir == SPI_MEM_DATA_IN) {
+#ifdef CONFIG_ANLOGIC_SOC
+	if(dws->use_ocm == 1) {
+		if (dws->master->can_dma && (op->data.nbytes > (dws->fifo_len - 10))) {
+			dws->rx = dws->spi_rx_buf;
+		} else {
+			dws->rx = op->data.buf.in;
+		}
+	} else
+#endif
 		dws->rx = op->data.buf.in;
+
 		dws->rx_len = op->data.nbytes;
 	} else {
 		dws->rx = NULL;
@@ -670,6 +752,11 @@ static int dw_spi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
 	struct dw_spi_cfg cfg;
 	unsigned long flags;
 	int ret;
+#ifdef CONFIG_ANLOGIC_SOC
+	struct spi_transfer transfer;
+	struct spi_message m;
+	dws->dma_mapped = 0;
+#endif
 
 	/*
 	 * Collect the outbound data into a single buffer to speed the
@@ -692,14 +779,79 @@ static int dw_spi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
 		cfg.tmode = DW_SPI_CTRLR0_TMOD_TO;
 	}
 
+#ifdef CONFIG_ANLOGIC_SOC
+	if (dws->master->can_dma && (op->data.nbytes > (dws->fifo_len - 10))) {
+		transfer.tx_buf = dws->tx;
+		transfer.rx_buf = dws->rx;
+		transfer.len = dws->rx_len + dws->tx_len;
+		transfer.effective_speed_hz = dws->current_freq;
+		spi_message_init_with_transfers(&m, &transfer, 1);
+		dws->master->cur_msg = &m;
+
+		if (0 != dws->tx_len) {
+			if(dws->use_ocm == 1)
+				ret = dw_spi_map_buf(&transfer.tx_sg, dws->spi_tx_phys, dws->tx_len);
+			else
+				ret = spi_map_buf(dws->master, dws->master->dma_tx->device->dev, &transfer.tx_sg,
+									dws->tx, dws->tx_len, DMA_TO_DEVICE);
+
+			if (ret)
+				goto spi_err;
+		}
+
+		if (0 != dws->rx_len) {
+			if(dws->use_ocm == 1)
+				ret = dw_spi_map_buf(&transfer.rx_sg, dws->spi_rx_phys, dws->rx_len);
+			else
+				ret = spi_map_buf(dws->master, dws->master->dma_rx->device->dev, &transfer.rx_sg,
+									dws->rx, dws->rx_len, DMA_FROM_DEVICE);
+
+			if (ret) {
+				if (0 != dws->tx_len) {
+					if(dws->use_ocm == 1)
+						dw_spi_unmap_buf(&transfer.tx_sg);
+					else
+						spi_unmap_buf(dws->master, dws->master->dma_tx->device->dev, &transfer.tx_sg,
+										DMA_TO_DEVICE);
+				}
+				goto spi_err;
+			}
+		}
+
+		dws->dma_mapped = 1;
+		smp_mb();
+	}
+#endif
 	dw_spi_enable_chip(dws, 0);
 
 	dw_spi_update_config(dws, mem->spi, &cfg);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	dw_writel(dws, DW_SPI_RXFTLR, dws->fifo_len/8);
+	dw_writel(dws, DW_SPI_TXFTLR, 1);
+#endif
 	dw_spi_mask_intr(dws, 0xff);
 
-	dw_spi_enable_chip(dws, 1);
+#ifdef CONFIG_ANLOGIC_SOC
+	/* Check if current transfer is a DMA transaction */
+	if (dws->dma_mapped) {
+		ret = dws->dma_ops->dma_setup(dws, &transfer);
+		if (ret)
+			goto dma_maped_all_err;
+	}
+#endif
 
+	dw_spi_enable_chip(dws, 1);
+#ifdef CONFIG_ANLOGIC_SOC
+	if (dws->dma_mapped) {
+		ret = dws->dma_ops->dma_transfer(dws, &transfer);
+		if (ret)
+			goto dma_maped_all_err;
+		if (op->data.dir == SPI_MEM_DATA_IN)
+			if(dws->use_ocm == 1)
+				dw_spi_memcpy(op->data.buf.in, dws->rx, dws->rx_len);
+	} else {
+#endif
 	/*
 	 * DW APB SSI controller has very nasty peculiarities. First originally
 	 * (without any vendor-specific modifications) it doesn't provide a
@@ -728,29 +880,52 @@ static int dw_spi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
 	 * manually restricting the SPI bus frequency using the
 	 * dws->max_mem_freq parameter.
 	 */
-	local_irq_save(flags);
-	preempt_disable();
 
-	ret = dw_spi_write_then_read(dws, mem->spi);
+		local_irq_save(flags);
+		preempt_disable();
 
-	local_irq_restore(flags);
-	preempt_enable();
+		ret = dw_spi_write_then_read(dws, mem->spi);
 
-	/*
-	 * Wait for the operation being finished and check the controller
-	 * status only if there hasn't been any run-time error detected. In the
-	 * former case it's just pointless. In the later one to prevent an
-	 * additional error message printing since any hw error flag being set
-	 * would be due to an error detected on the data transfer.
-	 */
-	if (!ret) {
-		ret = dw_spi_wait_mem_op_done(dws);
-		if (!ret)
-			ret = dw_spi_check_status(dws, true);
+		local_irq_restore(flags);
+		preempt_enable();
+
+		/*
+		* Wait for the operation being finished and check the controller
+		* status only if there hasn't been any run-time error detected. In the
+		* former case it's just pointless. In the later one to prevent an
+		* additional error message printing since any hw error flag being set
+		* would be due to an error detected on the data transfer.
+		*/
+		if (!ret) {
+			ret = dw_spi_wait_mem_op_done(dws);
+			if (!ret)
+				ret = dw_spi_check_status(dws, true);
+		}
+#ifdef CONFIG_ANLOGIC_SOC
 	}
-
+dma_maped_all_err:
+	if (dws->dma_mapped) {
+		if(dws->use_ocm == 1) {
+			if (0 != dws->tx_len)
+				dw_spi_unmap_buf(&transfer.tx_sg);
+			if (0 != dws->rx_len)
+				dw_spi_unmap_buf(&transfer.rx_sg);
+		} else {
+			if (0 != dws->rx_len)
+				spi_unmap_buf(dws->master, dws->master->dma_rx->device->dev,
+						&transfer.rx_sg, DMA_FROM_DEVICE);
+			if (0 != dws->tx_len)
+				spi_unmap_buf(dws->master, dws->master->dma_tx->device->dev,
+						&transfer.tx_sg, DMA_TO_DEVICE);
+		}
+	}
+spi_err:
+#endif
 	dw_spi_stop_mem_op(dws, mem->spi);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	if((dws->use_ocm != 1) || ((dws->use_ocm == 1) && (dws->dma_mapped != 1)))
+#endif
 	dw_spi_free_mem_buf(dws);
 
 	return ret;

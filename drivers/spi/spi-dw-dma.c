@@ -222,8 +222,11 @@ static int dw_spi_dma_wait(struct dw_spi *dws, unsigned int len, u32 speed)
 
 	ms = len * MSEC_PER_SEC * BITS_PER_BYTE;
 	do_div(ms, speed);
+#ifdef CONFIG_ANLOGIC_SOC
+	ms += ms + 2000;
+#else
 	ms += ms + 200;
-
+#endif
 	if (ms > UINT_MAX)
 		ms = UINT_MAX;
 
@@ -485,12 +488,19 @@ static int dw_spi_dma_transfer_all(struct dw_spi *dws,
 	}
 
 	dma_async_issue_pending(dws->txchan);
-
+#ifdef CONFIG_ANLOGIC_SOC
+	dw_writel(dws, DW_SPI_SER, 1);
+#endif
 	ret = dw_spi_dma_wait(dws, xfer->len, xfer->effective_speed_hz);
 
 err_clear_dmac:
+#ifndef CONFIG_ANLOGIC_SOC
 	dw_writel(dws, DW_SPI_DMACR, 0);
-
+#else
+	dw_spi_enable_chip(dws, 0);
+	dw_writel(dws, DW_SPI_DMACR, 0);
+	dw_spi_enable_chip(dws, 1);
+#endif
 	return ret;
 }
 
@@ -571,7 +581,9 @@ static int dw_spi_dma_transfer_one(struct dw_spi *dws,
 		dma_async_issue_pending(dws->rxchan);
 
 		dma_async_issue_pending(dws->txchan);
-
+#ifdef CONFIG_ANLOGIC_SOC
+		dw_writel(dws, DW_SPI_SER, 1);
+#endif
 		/*
 		 * Here we only need to wait for the DMA transfer to be
 		 * finished since SPI controller is kept enabled during the
@@ -589,9 +601,13 @@ static int dw_spi_dma_transfer_one(struct dw_spi *dws,
 		tx_len -= len;
 		rx_len -= len;
 	}
-
+#ifndef CONFIG_ANLOGIC_SOC
 	dw_writel(dws, DW_SPI_DMACR, 0);
-
+#else
+	dw_spi_enable_chip(dws, 0);
+	dw_writel(dws, DW_SPI_DMACR, 0);
+	dw_spi_enable_chip(dws, 1);
+#endif
 	return ret;
 }
 

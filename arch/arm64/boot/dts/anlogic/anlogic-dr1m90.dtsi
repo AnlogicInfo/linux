@@ -263,35 +263,34 @@
 			interrupts = <GIC_SPI 62 IRQ_TYPE_LEVEL_HIGH>;
 		};
 
+		ahb_dma:ahb_dma@F804D000 {
+			compatible = "snps,dma-spear1340";
+			reg = <0x0 0xF804D000 0x0 0x1000>;
+			interrupt-parent = <&gic>;
+			interrupts = <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>;
+			dma-channels = <8>;
+			dma-requests = <16>;
+			dma-masters = <2>;
+			chan_allocation_order = <0>;
+			chan_priority = <1>;
+			block_size = <0xfff>;
+			snps,dma-protection-control = <0>;
+			data-width = <16 16>;
+			#dma-cells = <4>;
+			multi-block = <1 1 1 1 1 1 1 1>;
+			snps,max-burst-len = <256 256 256 256 256 256 32 32>;
+		};
+
 		qspi0: spi@f804e000 {
-			compatible = "anlogic,dr1x90-qspi";
-			//compatible = "snps,dwc-ssi-1.01a";
+			//compatible = "anlogic,dr1x90-qspi";
+			//reg = <0x0 0xf804e000 0x0 0x1000>;
+			compatible = "snps,dwc-ssi-1.01a";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			reg = <0x0 0xf804e000 0x0 0x1000>;
+			#qspi-ocm-buf = <2>;
+			reg = <0x0 0xf804e000 0x0 0x1000 0x0 0X61000000 0x0 0x2000 0x0 0X61002000 0x0 0x2000>;
 			interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
 			num-cs = <1>;
-			// dmas = <&ahb_dma 0xd 0 0>,
-			// 	<&ahb_dma 0xc 0 0>;
-			// dma-names = "tx", "rx";
-
-			// spidev@0 {
-			// 	compatible = "rohm,dh2228fv";
-			// 	reg = <0>;
-			// 	spi-max-frequency = <8000000>;
-			// };
-
-			flash0: flash@0 {
-				compatible = "jedec,spi-nor";
-				label = "alspinor";
-				reg = <0x0>;
-				spi-tx-bus-width = <4>;
-				spi-rx-bus-width = <4>;
-				spi-max-frequency = <2500000>;
-			};
-			/*num-cs = <2>;
-			cs-gpios = <&gpio0 13 0>,
-			<&gpio0 14 0>;*/
 		};
 
 		spi0: spi@f8404000 {

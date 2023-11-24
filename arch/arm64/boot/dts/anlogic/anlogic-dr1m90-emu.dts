@@ -79,18 +79,18 @@
 		clock-output-names = "GPIO_CLK";
 	};
 
-	qspi_m_clk: qspi_m_clk {
-		#clock-cells = <0>;
-		compatible = "fixed-clock";
-		clock-frequency = <50000000>;
-		clock-output-names = "qspi_m_clk";
-	};
-
 	ttc_clk: ttc_clk {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
 		clock-frequency = <200000000>;
 		clock-output-names = "ttc_clk";
+	};
+
+	ahb_dma_clk: ahb_dma_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "ahb_dma_clk";
 	};
 
 	WDT_CLK: WDT_CLK {
@@ -263,6 +263,11 @@
 	no-sdio;
 	no-1-8-v;
 	sdhci,auto-cmd12;
+	status = "okay";
+};
+
+&ahb_dma {
+	clocks = <&ahb_dma_clk>;
 	status = "okay";
 };
 
