@@ -394,6 +394,7 @@ int canfd_get_freebuffer(struct IPMS_canfd_priv *priv)
 static void canfd_tx_interrupt(struct net_device *ndev, u8 isr)
 {
 	struct IPMS_canfd_priv *priv = netdev_priv(ndev);
+	// struct net_device_stats *stats = &ndev->stats;
 
 	/*wait till transmission of the PTB or STB finished*/
 	while (isr & (CAN_FD_SET_TPIF_MASK | CAN_FD_SET_TSIF_MASK)) {
@@ -404,6 +405,12 @@ static void canfd_tx_interrupt(struct net_device *ndev, u8 isr)
 
 		isr = canfd_ioread8(priv->reg_base + CANFD_RTIF_OFFSET);
 	}
+
+	//comment echo skb flow
+	// stats->tx_bytes += can_get_echo_skb(ndev, priv->tx_tail % priv->tx_max, NULL);
+	// can_free_echo_skb(ndev, priv->tx_tail % priv->tx_max, NULL);
+	// priv->tx_tail++;
+	// stats->tx_packets++;
 
 	netif_wake_queue(ndev);
 }
@@ -468,7 +475,7 @@ static int can_rx(struct net_device *ndev)
 		canfd_reigister_set_bit(priv, CANFD_RCTRL_OFFSET, CAN_FD_SET_RREL_MASK);
 
 		/*do some statistics*/
-		stats->rx_bytes += can_fd_dlc2len(cf->len);
+		stats->rx_bytes += cf->len;
 		stats->rx_packets++;
 		i = netif_receive_skb(skb);
 		if (i != NET_RX_SUCCESS) {
@@ -706,6 +713,10 @@ static int canfd_driver_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 
 					ctl |= CAN_FD_SET_EDL_MASK;
 
+					//comment echo skb flow
+					// can_put_echo_skb(skb, ndev, priv->tx_head % priv->tx_max, 0);
+					// priv->tx_head++;
+
 					addr_off = CANFD_TBUF_DATA_OFFSET;
 					for(i = 0; i < cf->len; i += 4) {
 						PDEBUG("CAN FD original DATA 0x%08x\n", priv->read_reg(priv, addr_off));
@@ -726,6 +737,10 @@ static int canfd_driver_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 						ctl |= CAN_FD_SET_IDE_MASK;	/*IDE=1 if IDenfitier Extension*/
 					else
 						ctl &= CAN_FD_OFF_IDE_MASK;/*IDE=0*/
+
+					//comment echo skb flow
+					// can_put_echo_skb(skb, ndev, priv->tx_head % priv->tx_max, 0);
+					// priv->tx_head++;
 
 					if (cf->can_id & CAN_RTR_FLAG) {
 						ctl |= CAN_FD_SET_RTR_MASK;
@@ -765,6 +780,10 @@ static int canfd_driver_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 				else
 					ctl &= CAN_FD_OFF_IDE_MASK;/*IDE=0*/
 
+				//comment echo skb flow
+				// can_put_echo_skb(skb, ndev, priv->tx_head % priv->tx_max, 0);
+				// priv->tx_head++;
+
 				if (cf->can_id & CAN_RTR_FLAG) {
 					ctl |= CAN_FD_SET_RTR_MASK;
 					priv->write_reg(priv, CANFD_TBUF_ID_OFFSET, id);
@@ -793,7 +812,11 @@ static int canfd_driver_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 			}
 			/*set TPE to transmit data. update statistic*/
 			canfd_reigister_set_bit(priv, CANFD_TCMD_OFFSET, CAN_FD_SET_TPE_MASK);
+			//not use echo skb flow, free skb here
+			dev_kfree_skb_any(skb);
+			// priv->tx_tail++;
 			stats->tx_bytes += cf->len;
+			stats->tx_packets++;
 			/*send interrupt flag debug*/
 			PDEBUG("Interrupt flag register is 0x%02x. TX ends\n", canfd_ioread8(priv->reg_base + CANFD_RTIF_OFFSET));
 			PDEBUG("Interrupt enable register is 0x%02x. TX ends\n", canfd_ioread8(priv->reg_base + CANFD_RTIE_OFFSET));
@@ -806,6 +829,9 @@ static int canfd_driver_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 		default:
 			break;
 	}
+
+	// stop here may cause tx queue full
+	// netif_stop_queue(ndev);
 
 	return NETDEV_TX_OK;
 }
@@ -1038,7 +1064,6 @@ static irqreturn_t canfd_interrupt(int irq, void *dev_id)
 		canfd_reigister_set_bit(priv, CANFD_RTIF_OFFSET, CAN_FD_SET_RIF_MASK);
 		napi_schedule(&priv->napi);
 		isr_handled |= CAN_FD_SET_RIF_MASK;
-
 	}
 
 	PDEBUG("RTIE before error routine is 0x%02x\n",canfd_ioread8(priv->reg_base + CANFD_RTIE_OFFSET));
@@ -1160,6 +1185,7 @@ static int canfd_driver_open(struct net_device *ndev)
 //TODO: handle with errors
 err_candev:
 	PDEBUG("Error with starting canfd chip\n");
+	close_candev(ndev);
 err_irq:
 	PDEBUG("Error during opening can device\n");
 	free_irq(ndev->irq, ndev);
@@ -1278,6 +1304,7 @@ static int canfd_driver_probe(struct platform_device *pdev)
 
     return 0;
 err:
+	free_candev(ndev);
 	PDEBUG("error in probe function\n");
 	return 1;
 }
