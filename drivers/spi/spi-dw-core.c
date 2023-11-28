@@ -611,16 +611,15 @@ static int dw_spi_init_mem_buf(struct dw_spi *dws, const struct spi_mem_op *op)
 	dws->tx_len = len;
 	if (op->data.dir == SPI_MEM_DATA_IN) {
 #ifdef CONFIG_ANLOGIC_SOC
-	if(dws->use_ocm == 1) {
-		if (dws->master->can_dma && (op->data.nbytes > (dws->fifo_len - 10))) {
-			dws->rx = dws->spi_rx_buf;
-		} else {
-			dws->rx = op->data.buf.in;
-		}
-	} else
+		if(dws->use_ocm == 1) {
+			if (dws->master->can_dma && (op->data.nbytes > (dws->fifo_len - 10))) {
+				dws->rx = dws->spi_rx_buf;
+			} else {
+				dws->rx = op->data.buf.in;
+			}
+		} else
 #endif
-		dws->rx = op->data.buf.in;
-
+			dws->rx = op->data.buf.in;
 		dws->rx_len = op->data.nbytes;
 	} else {
 		dws->rx = NULL;
