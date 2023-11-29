@@ -24,6 +24,7 @@
 #define ALSIP_FPGA_PROG_START			0
 #define ALSIP_FPGA_PROG_LOAD			1
 #define ALSIP_FPGA_PROG_DONE			2
+#define ALSIP_FPGA_PLCLK_RST			3
 
 struct dr1m90_fpga_priv {
 	struct device *dev;
@@ -104,6 +105,55 @@ static int dr1m90_fpga_prog_done(struct fpga_manager *mgr, u32 done)
 	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PROG_DONE, done, 0, 0);
 	return (int)ret;
 }
+
+static int dr1m90_fpga_plclk_reset(struct fpga_manager *mgr, u32 reset)
+{
+	unsigned long ret;
+	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PLCLK_RST, reset, 0, 0);
+	return (int)ret;
+}
+
+static ssize_t plclk_reset_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	struct fpga_manager *mgr = to_fpga_manager(dev);
+	int ret;
+
+	ret = dr1m90_fpga_plclk_reset(mgr, 2);
+	if (ret < 0)
+		return -EPERM;
+
+	return snprintf(buf, 64, "%d\n", ret);
+}
+
+static ssize_t plclk_reset_store(struct device *dev,
+			 struct device_attribute *attr,
+			 const char *buf, size_t count)
+{
+	struct fpga_manager *mgr = to_fpga_manager(dev);
+	u32 reset;
+	int ret;
+
+	ret = kstrtouint(buf, 10, &reset);
+	if (ret)
+		return ret;
+
+	if (reset >= 2)
+		return -EINVAL;
+
+	ret = dr1m90_fpga_plclk_reset(mgr, reset);
+	if (ret < 0)
+		return -EPERM;
+
+	return count;
+}
+static DEVICE_ATTR_RW(plclk_reset);
+
+static struct attribute *dr1m90_fpga_attrs[] = {
+	&dev_attr_plclk_reset.attr,
+	NULL,
+};
+ATTRIBUTE_GROUPS(dr1m90_fpga);
 
 static int dr1m90_fpga_ops_write_init(struct fpga_manager *mgr,
 				      struct fpga_image_info *info,
@@ -206,6 +256,7 @@ static const struct fpga_manager_ops dr1m90_fpga_ops = {
 	.write_init = dr1m90_fpga_ops_write_init,
 	.write = dr1m90_fpga_ops_write,
 	.write_complete = dr1m90_fpga_ops_write_complete,
+	.groups = dr1m90_fpga_groups,
 };
 
 static int dr1m90_fpga_probe(struct platform_device *pdev)
