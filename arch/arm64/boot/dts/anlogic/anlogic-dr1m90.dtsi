@@ -275,7 +275,7 @@
 			chan_priority = <1>;
 			block_size = <0xfff>;
 			snps,dma-protection-control = <0>;
-			data-width = <16 16>;
+			data_width = <0 0>;
 			#dma-cells = <4>;
 			multi-block = <1 1 1 1 1 1 1 1>;
 			snps,max-burst-len = <256 256 256 256 256 256 32 32>;
