@@ -57,5 +57,19 @@
 			reg-shift = <2>;
 			reg-io-width = <4>;
 		};
+
+		ipmscan0: can@0xF8408000 {
+			compatible = "ipms,canfd";
+			reg = <0x0 0xF8408000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <73>;
+		};
+
+		ipmscan1: can@0xF8409000 {
+			compatible = "ipms,canfd";
+			reg = <0x0 0xF8409000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <74>;
+		};
 	};
 };
