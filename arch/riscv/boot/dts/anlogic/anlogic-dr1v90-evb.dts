@@ -14,7 +14,7 @@
 
 	memory@0 {
 		device_type = "memory";
-		reg = <0x0 0x00000000 0x0 0xfffffff>;
+		reg = <0x0 0x00000000 0x0 0x3fe00000>;
 	};
 
 	console {
