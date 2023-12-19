@@ -282,13 +282,13 @@
 		};
 
 		qspi0: spi@f804e000 {
-			//compatible = "anlogic,dr1x90-qspi";
-			//reg = <0x0 0xf804e000 0x0 0x1000>;
-			compatible = "snps,dwc-ssi-1.01a";
+			compatible = "anlogic,dr1x90-qspi";
+			reg = <0x0 0xf804e000 0x0 0x1000>;
+			// compatible = "snps,dwc-ssi-1.01a";
+			// reg = <0x0 0xf804e000 0x0 0x1000 0x0 0X61000000 0x0 0x2000 0x0 0X61002000 0x0 0x2000>;
+			// #qspi-ocm-buf = <2>;
 			#address-cells = <1>;
 			#size-cells = <0>;
-			#qspi-ocm-buf = <2>;
-			reg = <0x0 0xf804e000 0x0 0x1000 0x0 0X61000000 0x0 0x2000 0x0 0X61002000 0x0 0x2000>;
 			interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
 			num-cs = <1>;
 		};
