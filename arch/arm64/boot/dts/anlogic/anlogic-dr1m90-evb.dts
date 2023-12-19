@@ -390,6 +390,10 @@
 	status = "okay";
 };
 
+&axi_ethernetlite_1 {
+	status = "disabled";
+};
+
 &eqos0 {
 	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
 	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";

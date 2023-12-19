@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Anlogic device configuration
+#
+
+config ANLOGIC_ETHLITE
+	tristate "Anlogic 10/100 Ethernet Lite support"
+
+	help
+	  This driver supports the 10/100 Ethernet Lite from Anlogic.
