@@ -40,7 +40,7 @@ MODULE_DESCRIPTION("IPMS can controller driver");
 
 // enable debug output
 static int debug_on_off ;
-module_param(debug_on_off,int,0);
+module_param(debug_on_off,int,0644);
 MODULE_VERSION("1.1");
 
 /*ipms canfd debug information*/
@@ -730,7 +730,7 @@ static int canfd_driver_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 					else
 						ctl &= CAN_FD_OFF_IDE_MASK;/*IDE=0*/
 
-					if (cf->can_id & CAN_RTR_FLAG) {
+										if (cf->can_id & CAN_RTR_FLAG) {
 						ctl |= CAN_FD_SET_RTR_MASK;
 						priv->write_reg(priv,CANFD_TBUF_ID_OFFSET, id);
 						priv->write_reg(priv,CANFD_TBUF_CTL_OFFSET,ctl);
@@ -796,7 +796,11 @@ static int canfd_driver_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 			}
 			/*set TPE to transmit data. update statistic*/
 			canfd_reigister_set_bit(priv, CANFD_TCMD_OFFSET, CAN_FD_SET_TPE_MASK);
+			//not use echo skb flow, free skb here
+			dev_kfree_skb_any(skb);
+			// priv->tx_tail++;
 			stats->tx_bytes += cf->len;
+			stats->tx_packets++;
 			/*send interrupt flag debug*/
 			PDEBUG("Interrupt flag register is 0x%02x. TX ends\n", canfd_ioread8(priv->reg_base + CANFD_RTIF_OFFSET));
 			PDEBUG("Interrupt enable register is 0x%02x. TX ends\n", canfd_ioread8(priv->reg_base + CANFD_RTIE_OFFSET));
@@ -1041,7 +1045,6 @@ static irqreturn_t canfd_interrupt(int irq, void *dev_id)
 		canfd_reigister_set_bit(priv, CANFD_RTIF_OFFSET, CAN_FD_SET_RIF_MASK);
 		napi_schedule(&priv->napi);
 		isr_handled |= CAN_FD_SET_RIF_MASK;
-
 	}
 
 	PDEBUG("RTIE before error routine is 0x%02x\n",canfd_ioread8(priv->reg_base + CANFD_RTIE_OFFSET));
@@ -1146,6 +1149,13 @@ static int canfd_driver_open(struct net_device *ndev)
 		goto err_candev;
 	}
 
+	if (priv->can.ctrlmode & CAN_CTRLMODE_LOOPBACK) {
+		ret = canfd_ioread8(priv->reg_base + CANFD_CFG_STAT_OFFSET);
+		ret |= CAN_FD_LBMIMOD_MASK;	/*set loopback internal mode*/
+		canfd_iowrite8(ret, priv->reg_base + CANFD_CFG_STAT_OFFSET);
+		PDEBUG("set loopback internal mode finished\n");
+	}
+
 	PDEBUG("canfd_chip_start finished\n");
 	napi_enable(&priv->napi);
 	netif_start_queue(ndev);
@@ -1156,6 +1166,7 @@ static int canfd_driver_open(struct net_device *ndev)
 //TODO: handle with errors
 err_candev:
 	PDEBUG("Error with starting canfd chip\n");
+	close_candev(ndev);
 err_irq:
 	PDEBUG("Error during opening can device\n");
 	free_irq(ndev->irq, ndev);
@@ -1269,6 +1280,7 @@ static int canfd_driver_probe(struct platform_device *pdev)
 
     return 0;
 err:
+	free_candev(ndev);
 	PDEBUG("error in probe function\n");
 	return 1;
 }
@@ -1276,10 +1288,10 @@ err:
 static int canfd_driver_remove(struct platform_device *pdev)
 {
     struct net_device *ndev = platform_get_drvdata(pdev);
-	struct IPMS_canfd_priv *priv = netdev_priv(ndev);
+struct IPMS_canfd_priv *priv = netdev_priv(ndev);
 
 	unregister_candev(ndev);
-	netif_napi_del(&priv->napi);
+netif_napi_del(&priv->napi);
 	free_candev(ndev);
 	return 0;
 }
