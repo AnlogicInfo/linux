@@ -114,6 +114,20 @@
 		};
 
 	};
+
+	qspi_m_clk: qspi_m_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <200000000>;
+		clock-output-names = "qspi_m_clk";
+	};
+
+	ttc_clk: ttc_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <200000000>;
+		clock-output-names = "ttc_clk";
+	};
 };
 
 &uart0 {
@@ -196,5 +210,62 @@
 
 &watchdog0 {
 	clocks = <&WDT_CLK>;
+	status = "disabled";
+};
+
+&qspi0 {
+	clocks = <&qspi_m_clk>;
+	status = "okay";
+
+	// spidev@0 {
+	// 	compatible = "rohm,dh2228fv";
+	// 	reg = <0>;
+	// 	spi-max-frequency = <8000000>;
+	// };
+
+	flash0: flash@0 {
+		compatible = "jedec,spi-nor";
+		label = "alspinor";
+		reg = <0x0>;
+		spi-tx-bus-width = <4>;
+		spi-rx-bus-width = <4>;
+		spi-max-frequency = <10000000>;
+	};
+	/*num-cs = <2>;
+	cs-gpios = <&gpio0 13 0>,
+	<&gpio0 14 0>;*/
+};
+
+&spi0 {
+	clocks = <&qspi_m_clk>;
+	status = "okay";
+	spidev@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+	};
+};
+
+&spi1 {
+	clocks = <&qspi_m_clk>;
+	status = "okay";
+	spidev@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+	};
+};
+
+&ttc0 {
+	clocks = <&ttc_clk>;
+	status = "okay";
+};
+
+&ttc1 {
+	clocks = <&ttc_clk>;
+	status = "okay";
+};
+
+&axi_ethernetlite_1 {
 	status = "disabled";
 };

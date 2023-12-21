@@ -181,5 +181,75 @@
 			interrupts = <27>;
 		};
 
+
+		qspi0: spi@f804e000 {
+			compatible = "anlogic,dr1x90-qspi";
+			reg = <0x0 0xf804e000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			interrupt-parent = <&plic0>;
+			interrupts = <48>;
+			num-cs = <1>;
+		};
+
+		spi0: spi@f8404000 {
+			compatible = "snps,dw-apb-ssi";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x0 0xf8404000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <66>;
+			num-cs = <1>;
+		};
+
+		spi1: spi@f8405000 {
+			compatible = "snps,dw-apb-ssi";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x0 0xf8405000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <68>;
+			num-cs = <1>;
+		};
+
+		ttc0: ttc0@f840c000 {
+			compatible = "cdns,ttc";
+			interrupt-parent = <&plic0>;
+			interrupts = <29>, <30>, <31>;
+			reg = <0x0 0xf840c000 0x0 0x1000>;
+			timer-width = <32>;
+		};
+
+		ttc1: PWM1@f840d000 {
+			compatible = "cdns,ttc";
+			#pwm-cells = <3>;
+			interrupt-parent = <&plic0>;
+			interrupts = <32>, <33>, <34>;
+			reg = <0x0 0xf840d000 0x0 0x1000>;
+			timer-width = <32>;
+		};
+
+		axi_ethernetlite_1: ethernet@1C0000000 {
+			compatible = "anlogic,ethernetlite1.0";
+			device_type = "network";
+			interrupt-parent = <&plic0>;
+			interrupts = <82>;
+			local-mac-address = [E0 78 A3 00 00 05];
+			phy-handle = <&eth_phy2>;
+			reg = <0x1 0xC0000000 0x0 0x10000>;
+
+			mdio {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				eth_phy2: phy@1 {
+						device_type = "ethernet-phy";
+						reg = <1>;
+				} ;
+				// eth_phy2: phy@0 {
+				// 		 device_type = "ethernet-phy";
+				// 		 reg = <0>;
+				// } ;
+			};
+		};
 	};
 };
