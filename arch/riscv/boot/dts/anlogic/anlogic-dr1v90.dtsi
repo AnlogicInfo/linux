@@ -148,5 +148,29 @@
 			};
 		};
 
+		i2c0: i2c0@f8414000 {
+			compatible = "snps,designware-i2c";
+			interrupt-parent = <&plic0>;
+			interrupts = <65>;
+			reg = <0 0xF8414000 0 0x1000>;
+			i2c-sda-hold-time-ns = <300>;
+			i2c-sda-falling-time-ns = <300>;
+			i2c-scl-falling-time-ns = <300>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		i2c1: i2c1@f8415000 {
+			compatible = "snps,designware-i2c";
+			interrupt-parent = <&plic0>;
+			interrupts = <66>;
+			reg = <0 0xF8415000 0 0x1000>;
+			i2c-sda-hold-time-ns = <300>;
+			i2c-sda-falling-time-ns = <300>;
+			i2c-scl-falling-time-ns = <300>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
 	};
 };
