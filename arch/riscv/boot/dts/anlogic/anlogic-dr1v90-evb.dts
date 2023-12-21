@@ -63,6 +63,13 @@
 		clock-output-names = "IIC_CLK";
 	};
 
+	WDT_CLK: WDT_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <16666666>;
+		clock-output-names = "WDT_CLK";
+	};
+
 	leds {
 		compatible = "gpio-leds";
 		status = "okay";
@@ -185,4 +192,9 @@
 	clocks = <&IIC_CLK>;
 	clock-names = "IIC_CLK";
 	status = "okay";
+};
+
+&watchdog0 {
+	clocks = <&WDT_CLK>;
+	status = "disabled";
 };
