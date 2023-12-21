@@ -16,7 +16,6 @@
 #include <linux/of_dma.h>
 #include <linux/of_graph.h>
 #include <linux/clk.h>
-#include <linux/printk.h>
 
 #include <drm/drm.h>
 #include <drm/drm_atomic_helper.h>
@@ -51,7 +50,6 @@ static void axi_hdmi_mode_config_init(struct drm_device *dev)
 
 	dev->mode_config.max_width = 4096;
 	dev->mode_config.max_height = 4096;
-	dev->mode_config.prefer_shadow_fbdev = 1;
 
 	dev->mode_config.funcs = &axi_hdmi_mode_config_funcs;
 }
@@ -127,6 +125,7 @@ static struct drm_driver axi_hdmi_driver = {
 	.prime_fd_to_handle	= drm_gem_prime_fd_to_handle,
 	.gem_prime_import	= drm_gem_prime_import,
 	.gem_prime_import_sg_table = drm_gem_dma_prime_import_sg_table,
+	.gem_prime_mmap		= drm_gem_prime_mmap,
 	.dumb_create		= drm_gem_dma_dumb_create,
 	.fops			= &axi_hdmi_driver_fops,
 	.name			= DRIVER_NAME,
@@ -165,7 +164,6 @@ static int axi_hdmi_platform_probe(struct platform_device *pdev)
 
 	private->hdmi_clock = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(private->hdmi_clock)) {
-		printk(KERN_ERR "hdmi get clock error\r\n");
 		return -EPROBE_DEFER;
 	}
 
@@ -196,16 +194,12 @@ static int axi_hdmi_platform_probe(struct platform_device *pdev)
 	private->encoder_slave = of_find_i2c_device_by_node(slave_node);
 	of_node_put(slave_node);
 
-	if (!private->encoder_slave || !private->encoder_slave->dev.driver) {
-		printk(KERN_ERR "hdmi get i2c device error\r\n");
+	if (!private->encoder_slave || !private->encoder_slave->dev.driver)
 		return -EPROBE_DEFER;
-	}
 
 	private->dma = dma_request_slave_channel(&pdev->dev, "video");
-	if (private->dma == NULL) {
-		printk(KERN_ERR "hdmi get slave channel error\r\n");
+	if (private->dma == NULL)
 		return -EPROBE_DEFER;
-	}
 
 	platform_set_drvdata(pdev, private);
 
