@@ -71,5 +71,82 @@
 			interrupt-parent = <&plic0>;
 			interrupts = <74>;
 		};
+
+		gpio0: gpio@f8411000 {
+			compatible = "snps,dw-apb-gpio";
+			interrupt-parent = <&plic0>;
+			reg = <0x0 0xf8411000 0x0 0x0100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			porta: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				gpio-controller;
+				#gpio-cells = <2>;
+				snps,nr-gpios = <32>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <53>;
+			};
+		};
+
+		gpio1: gpio@f8411100 {
+			compatible = "snps,dw-apb-gpio";
+			interrupt-parent = <&plic0>;
+			reg = <0x0 0xf8411100 0x0 0x0100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			portb: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				gpio-controller;
+				#gpio-cells = <2>;
+				snps,nr-gpios = <22>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <54>;
+			};
+		};
+
+		gpio2: gpio@f8411200 {
+			compatible = "snps,dw-apb-gpio";
+			interrupt-parent = <&plic0>;
+			reg = <0x0 0xf8411200 0x0 0x0100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			portc: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				gpio-controller;
+				#gpio-cells = <2>;
+				snps,nr-gpios = <32>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <55>;
+			};
+		};
+
+		gpio3: gpio@f8411300 {
+			compatible = "snps,dw-apb-gpio";
+			interrupt-parent = <&plic0>;
+			reg = <0x0 0xf8411300 0x0 0x0100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			portd: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				gpio-controller;
+				#gpio-cells = <2>;
+				snps,nr-gpios = <32>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <56>;
+			};
+		};
+
 	};
 };

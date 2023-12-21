@@ -3,6 +3,10 @@
 /dts-v1/;
 #include "anlogic-dr1v90.dtsi"
 
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+
 / {
 	chosen {
 		bootargs = "earlycon=sbi console=ttyS0,115200";
@@ -43,6 +47,58 @@
 		compatible = "fixed-clock";
 		clock-frequency = <80000000>;
 		clock-output-names = "CAN_CLK";
+	};
+
+	GPIO_CLK: GPIO_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "GPIO_CLK";
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		status = "okay";
+
+		led1 {
+			gpios = <&porta 14 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "heartbeat";
+			status = "okay";
+		};
+
+		led2 {
+			gpios = <&porta 13 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "disabled";
+		};
+
+		led3 {
+			gpios = <&porta 12 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "disabled";
+		};
+
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		sw6 {
+			gpios = <&porta 10 GPIO_ACTIVE_LOW>;
+			linux,code = <103>;
+			status = "okay";
+		};
+		sw8 {
+			gpios = <&porta 11 GPIO_ACTIVE_HIGH>;
+			linux,code = <108>;
+			status = "okay";
+		};
+		sw5 {
+			gpios = <&portc 0 GPIO_ACTIVE_HIGH>;
+			linux,code = <108>;
+			status = "okay";
+		};
+
 	};
 };
 
