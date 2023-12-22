@@ -60,7 +60,7 @@ config FPGA_MGR_ZYNQ_FPGA
 
 config FPGA_MGR_DR1M90_FPGA
 	tristate "Anlogic dr1m90 FPGA"
-	depends on ARCH_DR1M90
+	depends on ARCH_DR1M90 || ANLOGIC_SOC
 	select DR1M90_FIRMWARE
 	help
 	  FPGA manager driver support for Anlogic dr1m90 FPGAs.

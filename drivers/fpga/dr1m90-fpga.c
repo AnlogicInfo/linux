@@ -11,7 +11,11 @@
 #include <linux/of_address.h>
 #include <linux/string.h>
 #include <linux/slab.h>
+#if IS_ENABLED(CONFIG_ARCH_RV64I)
+#include <asm/sbi.h>
+#else
 #include <linux/arm-smccc.h>
+#endif
 
 #define CRP_CFG_STATE				(0x00000454U)
 #define CRP_CFG_STATE_MSK_PL2PS_INITN		(1 << 0)
@@ -20,7 +24,11 @@
 
 #define DR1M90_FLAG_BIG_ENDIAN			0x01
 
+#if IS_ENABLED(CONFIG_ARCH_RV64I)
+#define ALSIP_FPGA_PROG				(SBI_EXT_VENDOR_START+0)
+#else
 #define ALSIP_FPGA_PROG				(0xFF000000+23)
+#endif
 #define ALSIP_FPGA_PROG_START			0
 #define ALSIP_FPGA_PROG_LOAD			1
 #define ALSIP_FPGA_PROG_DONE			2
@@ -78,10 +86,16 @@ static unsigned long invoke_fpga_prog_fn(unsigned long function_id,
 			unsigned long arg0, unsigned long arg1,
 			unsigned long arg2, unsigned long arg3)
 {
+#if IS_ENABLED(CONFIG_ARCH_RV64I)
+	struct sbiret ret = {0};
+	ret = sbi_ecall((int)function_id, (int)arg0, arg1, arg2, arg3, 0, 0, 0);
+	return ret.error;
+#else
 	struct arm_smccc_res res;
 
 	arm_smccc_smc(function_id, arg0, arg1, arg2, arg3, 0, 0, 0, &res);
 	return res.a0;
+#endif
 }
 
 static int dr1m90_fpga_prog_start(struct fpga_manager *mgr)
