@@ -228,11 +228,12 @@
 	};
 
 	watchdog0:watchdog@f8410000 {
-		compatible = "anlogic,dw-wdt";
+		compatible = "snps,dw-wdt";
 		#address-cells = <2>;
 		#size-cells = <2>;
 		reg = <0x0 0xf8410000 0x0 0x100 0x0 0Xf8800168 0x0 0x20>;
 		interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
+		index = <0>;
 		clocks = <&WDT_CLK>;
 		status = "disabled";
 	};
