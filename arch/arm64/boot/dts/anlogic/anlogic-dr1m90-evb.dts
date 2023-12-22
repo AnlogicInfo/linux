@@ -326,67 +326,86 @@
 			status = "okay";
 		};
 
-		gpio: gpio@f8411000 {
-			compatible = "snps,dw-apb-anlogic-gpio";
+		gpio0: gpio@f8411000 {
+			compatible = "snps,dw-apb-gpio";
 			interrupt-parent = <&gic>;
-			reg = <0x0 0xf8411000 0x0 0x1000>;
-			clocks = <&GPIO_CLK>;
+			reg = <0x0 0xf8411000 0x0 0x0100>;
 			#address-cells = <1>;
 			#size-cells = <0>;
-			status = "okay";
 
-			bank0: gpio-controller@0 {
+			porta: gpio-controller@0 {
 				compatible = "snps,dw-apb-gpio-port";
-				bank-name = "MIO-Bank0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <32>;
+				// snps,nr-gpios = <32>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
 				interrupts = <GIC_SPI 52 IRQ_TYPE_LEVEL_HIGH>;
-				reg = <0>;
-				ngpios = <32>;
-				// snps,nr-gpios = <32>;
-				gpio-controller;
-				#gpio-cells = <2>;
-				interrupt-controller;
-				#interrupt-cells = <2>;
-			};
-
-			bank1: gpio-controller@1 {
-				compatible = "snps,dw-apb-gpio-port";
-				bank-name = "MIO-Bank1";
-				interrupts = <GIC_SPI 53 IRQ_TYPE_LEVEL_HIGH>;
-				reg = <0>;
-				ngpios = <32>;
-				// snps,nr-gpios = <22>;
-				gpio-controller;
-				#gpio-cells = <2>;
-				interrupt-controller;
-				#interrupt-cells = <2>;
-			};
-
-			bank2: gpio-controller@2 {
-				compatible = "snps,dw-apb-gpio-port";
-				bank-name = "EMIO-Bank2";
-				interrupts = <GIC_SPI 54 IRQ_TYPE_LEVEL_HIGH>;
-				reg = <0>;
-				ngpios = <32>;
-				// snps,nr-gpios = <32>;
-				gpio-controller;
-				#gpio-cells = <2>;
-				interrupt-controller;
-				#interrupt-cells = <2>;
-			};
-
-			bank3: gpio-controller@3 {
-				compatible = "snps,dw-apb-gpio-port";
-				bank-name = "EMIO-Bank3";
-				interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
-				reg = <0>;
-				ngpios = <32>;
-				// snps,nr-gpios = <32>;
-				gpio-controller;
-				#gpio-cells = <2>;
-				interrupt-controller;
-				#interrupt-cells = <2>;
 			};
 		};
+
+		gpio1: gpio@f8411100 {
+			compatible = "snps,dw-apb-gpio";
+			interrupt-parent = <&gic>;
+			reg = <0x0 0xf8411100 0x0 0x0100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			portb: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <22>;
+				// snps,nr-gpios = <22>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <GIC_SPI 53 IRQ_TYPE_LEVEL_HIGH>;
+			};
+		};
+
+		gpio2: gpio@f8411200 {
+			compatible = "snps,dw-apb-gpio";
+			interrupt-parent = <&gic>;
+			reg = <0x0 0xf8411200 0x0 0x0100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			portc: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <32>;
+				// snps,nr-gpios = <32>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <GIC_SPI 54 IRQ_TYPE_LEVEL_HIGH>;
+			};
+		};
+
+		gpio3: gpio@f8411300 {
+			compatible = "snps,dw-apb-gpio";
+			interrupt-parent = <&gic>;
+			reg = <0x0 0xf8411300 0x0 0x0100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			portd: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <32>;
+				// snps,nr-gpios = <32>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
+			};
+		};
+
 	};
 
 	hard_npu: hard_npu@63F00000 {
@@ -430,11 +449,41 @@
 	leds {
 		compatible = "gpio-leds";
 		led1 {
-			gpios = <&bank0 14 GPIO_ACTIVE_HIGH>;
+			gpios = <&porta 14 GPIO_ACTIVE_HIGH>;
 			linux,default-trigger = "heartbeat";
 			status = "okay";
 		};
+		led2 {
+			gpios = <&porta 13 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "disabled";
+		};
+		led3 {
+			gpios = <&porta 12 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "disabled";
+		};
 	};
+
+	keys {
+		compatible = "gpio-keys";
+		sw6 {
+			gpios = <&porta 10 GPIO_ACTIVE_LOW>;
+			linux,code = <103>;
+			status = "okay";
+		};
+		sw8 {
+			gpios = <&porta 11 GPIO_ACTIVE_HIGH>;
+			linux,code = <108>;
+			status = "okay";
+		};
+		sw5 {
+			gpios = <&portc 0 GPIO_ACTIVE_HIGH>;
+			linux,code = <108>;
+			status = "okay";
+		};
+	};
+
 
 	QSPI0: spi@f804e000 {
 		compatible = "anlogic,dr1x90-qspi";

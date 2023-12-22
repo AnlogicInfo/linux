@@ -28,6 +28,41 @@
 #include "gpiolib.h"
 #include "gpiolib-acpi.h"
 
+#ifdef CONFIG_ANLOGIC_SOC
+#define GPIO_SWPORTA_DR		0x00
+#define GPIO_SWPORTA_DDR	0x04
+
+#define GPIO_DR_CLR_OFFSET				0x08
+#define GPIO_DDR_CLR_OFFSET				0x0c
+#define GPIO_INTEN_CLR_OFFSET			0x10
+#define GPIO_INTMASK_CLR_OFFSET			0x14
+#define GPIO_INTTYPE_LEVEL_CLR_OFFSET	0x18
+#define GPIO_INT_POLARITY_CLR_OFFSET	0x1C
+#define GPIO_PORTA_DEBOUNCE_CLR_OFFSET	0x20
+#define GPIO_INT_BOTHEDGE_CLR_OFFSET	0x24
+
+#define GPIO_INTEN			0x30
+#define GPIO_INTMASK		0x34
+#define GPIO_INTTYPE_LEVEL	0x38
+#define GPIO_INT_POLARITY	0x3c
+#define GPIO_INTSTATUS		0x40
+#define GPIO_PORTA_DEBOUNCE	0x48
+#define GPIO_PORTA_EOI		0x4c
+#define GPIO_EXT_PORTA		0x50
+
+#define DWAPB_DRIVER_NAME	"gpio-dwapb"
+#define DWAPB_MAX_PORTS		4
+#define DWAPB_MAX_GPIOS		32
+
+#define GPIO_EXT_PORT_STRIDE		0x100
+#define GPIO_SWPORT_DR_STRIDE		0x100
+#define GPIO_SWPORT_DDR_STRIDE		0x100
+#define GPIO_DR_CLR_OFFSET_STRIDE	0x100
+#define GPIO_DDR_CLR_OFFSET_STRIDE	0x100
+
+#define GPIO_REG_OFFSET_V2	1
+
+#else
 #define GPIO_SWPORTA_DR		0x00
 #define GPIO_SWPORTA_DDR	0x04
 #define GPIO_SWPORTB_DR		0x0c
@@ -54,7 +89,7 @@
 #define GPIO_EXT_PORT_STRIDE	0x04 /* register stride 32 bits */
 #define GPIO_SWPORT_DR_STRIDE	0x0c /* register stride 3*32 bits */
 #define GPIO_SWPORT_DDR_STRIDE	0x0c /* register stride 3*32 bits */
-
+#endif
 #define GPIO_REG_OFFSET_V2	1
 
 #define GPIO_INTMASK_V2		0x44
@@ -186,6 +221,10 @@ static void dwapb_toggle_trigger(struct dwapb_gpio *gpio, unsigned int offs)
 	else
 		pol |= BIT(offs);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	dwapb_write(gpio, GPIO_INT_POLARITY_CLR_OFFSET, BIT(offs));
+#endif
+
 	dwapb_write(gpio, GPIO_INT_POLARITY, pol);
 }
 
@@ -233,6 +272,12 @@ static void dwapb_irq_ack(struct irq_data *d)
 
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 	dwapb_write(gpio, GPIO_PORTA_EOI, val);
+
+#ifdef CONFIG_ANLOGIC_SOC
+	/* Writing 0 to stop clearing interrupts, may cause bugs */
+	dwapb_write(gpio, GPIO_PORTA_EOI, 0);
+#endif
+
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
 }
 
@@ -257,8 +302,14 @@ static void dwapb_irq_unmask(struct irq_data *d)
 	u32 val;
 
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
+
+#ifdef CONFIG_ANLOGIC_SOC
+	val = dwapb_read(gpio, GPIO_INTMASK) & BIT(irqd_to_hwirq(d));
+	dwapb_write(gpio, GPIO_INTMASK_CLR_OFFSET, val);
+#else
 	val = dwapb_read(gpio, GPIO_INTMASK) & ~BIT(irqd_to_hwirq(d));
 	dwapb_write(gpio, GPIO_INTMASK, val);
+#endif
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
 }
 
@@ -284,9 +335,16 @@ static void dwapb_irq_disable(struct irq_data *d)
 	u32 val;
 
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
+
+#ifdef CONFIG_ANLOGIC_SOC
+	val = dwapb_read(gpio, GPIO_INTEN) & BIT(irqd_to_hwirq(d));
+	dwapb_write(gpio, GPIO_INTEN_CLR_OFFSET, val);
+#else
 	val = dwapb_read(gpio, GPIO_INTEN);
 	val &= ~BIT(irqd_to_hwirq(d));
 	dwapb_write(gpio, GPIO_INTEN, val);
+#endif
+
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
 }
 
@@ -332,9 +390,19 @@ static int dwapb_irq_set_type(struct irq_data *d, u32 type)
 	else if (type & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(d, handle_edge_irq);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	dwapb_write(gpio, GPIO_INTTYPE_LEVEL_CLR_OFFSET, BIT(bit));
+#endif
+
 	dwapb_write(gpio, GPIO_INTTYPE_LEVEL, level);
-	if (type != IRQ_TYPE_EDGE_BOTH)
+
+	if (type != IRQ_TYPE_EDGE_BOTH) {
+#ifdef CONFIG_ANLOGIC_SOC
+		dwapb_write(gpio, GPIO_INT_POLARITY_CLR_OFFSET, BIT(bit));
+#endif
 		dwapb_write(gpio, GPIO_INT_POLARITY, polarity);
+	}
+
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
 
 	return 0;
@@ -372,6 +440,11 @@ static int dwapb_gpio_set_debounce(struct gpio_chip *gc,
 		val_deb |= mask;
 	else
 		val_deb &= ~mask;
+
+#ifdef CONFIG_ANLOGIC_SOC
+	dwapb_write(gpio, GPIO_PORTA_DEBOUNCE_CLR_OFFSET, mask);
+#endif
+
 	dwapb_write(gpio, GPIO_PORTA_DEBOUNCE, val_deb);
 
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
@@ -479,6 +552,9 @@ static int dwapb_gpio_add_port(struct dwapb_gpio *gpio,
 {
 	struct dwapb_gpio_port *port;
 	void __iomem *dat, *set, *dirout;
+#ifdef CONFIG_ANLOGIC_SOC
+	void __iomem *clr, *dirin;
+#endif
 	int err;
 
 	port = &gpio->ports[offs];
@@ -495,9 +571,16 @@ static int dwapb_gpio_add_port(struct dwapb_gpio *gpio,
 	set = gpio->regs + GPIO_SWPORTA_DR + pp->idx * GPIO_SWPORT_DR_STRIDE;
 	dirout = gpio->regs + GPIO_SWPORTA_DDR + pp->idx * GPIO_SWPORT_DDR_STRIDE;
 
+#ifdef CONFIG_ANLOGIC_SOC
+	clr = gpio->regs + GPIO_DR_CLR_OFFSET + pp->idx * GPIO_SWPORT_DDR_STRIDE;
+	dirin = gpio->regs + GPIO_DDR_CLR_OFFSET + pp->idx * GPIO_SWPORT_DDR_STRIDE;
+	err = bgpio_init(&port->gc, gpio->dev, 4, dat, set, clr, dirout,
+			 dirin, 0);
+#else
 	/* This registers 32 GPIO lines per port */
 	err = bgpio_init(&port->gc, gpio->dev, 4, dat, set, NULL, dirout,
 			 NULL, 0);
+#endif
 	if (err) {
 		dev_err(gpio->dev, "failed to init gpio chip for port%d\n",
 			port->idx);
