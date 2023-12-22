@@ -88,7 +88,7 @@
 	IIC_CLK: IIC_CLK {
 			#clock-cells = <0>;
 			compatible = "fixed-clock";
-			clock-frequency = <40000000>;
+			clock-frequency = <100000000>;
 			clock-output-names = "IIC_CLK";
 	};
 
@@ -295,21 +295,54 @@
 			interrupts = <GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>;
 			reg = <0 0xF8414000 0 0x1000>;
 			clocks = <&IIC_CLK>;
-			clock-names = "IIC_CLK";
-			i2c-scl-rising-time-ns = <100>;  /* Fast mode */
-			i2c-scl-falling-time-ns = <100>;
-			i2c-sda-hold-time-ns = <100>;
+			i2c-scl-rising-time-ns = <300>;
+			i2c-scl-falling-time-ns = <300>;
+			i2c-sda-hold-time-ns = <300>;
 			#address-cells = <1>;
 			#size-cells = <0>;
 			status = "okay";
 
-			m24c08: eeprom@54 {
-				compatible = "atmel,24c08";
-				reg = <0x54>;
-				pagesize = <16>;
-				address-width = <8>;
+			i2c-mux@74 {
+				compatible = "nxp,pca9548";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <0x74>;
 				status = "okay";
+
+				i2c@2 {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					reg = <2>;
+					/*
+					* IIC_EEPROM 1kB memory which uses 256B blocks
+					* where every block has different address.
+					*    0 - 256B address 0x54
+					* 256B - 512B address 0x55
+					* 512B - 768B address 0x56
+					* 768B - 1024B address 0x57
+					*/
+					m24c08: eeprom@54 {
+						compatible = "atmel,24c08";
+						reg = <0x54>;
+						pagesize = <16>;
+						address-width = <8>;
+						status = "okay";
+					};
+				};
+
+				i2c@3 {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					reg = <3>;
+					ds1337: rtc@68 {
+						compatible = "dallas,ds1337";
+						reg = <0x68>;
+						trickle-resistor-ohms = <250>;
+						status = "okay";
+					};
+				};
 			};
+
 		};
 
 		i2c1: i2c1@f8415000 {
@@ -318,12 +351,12 @@
 			reg = <0 0xF8415000 0 0x1000>;
 			clocks = <&IIC_CLK>;
 			clock-names = "IIC_CLK";
-			i2c-scl-rising-time-ns = <100>;  /* Fast mode */
-			i2c-scl-falling-time-ns = <100>;
-			i2c-sda-hold-time-ns = <100>;
+			i2c-scl-rising-time-ns = <300>;
+			i2c-scl-falling-time-ns = <300>;
+			i2c-sda-hold-time-ns = <300>;
 			#address-cells = <1>;
 			#size-cells = <0>;
-			status = "okay";
+			status = "disabled";
 		};
 
 		gpio0: gpio@f8411000 {
