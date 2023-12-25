@@ -679,8 +679,9 @@ void __init sbi_init(void)
 		} else {
 			__sbi_rfence	= __sbi_rfence_v01;
 		}
-		if ((sbi_spec_version >= sbi_mk_version(0, 3)) &&
-		    sbi_probe_extension(SBI_EXT_SRST)) {
+		if (((sbi_spec_version >= sbi_mk_version(0, 3)) &&
+		    sbi_probe_extension(SBI_EXT_SRST)) ||
+		    IS_ENABLED(CONFIG_ANLOGIC_SOC)) {
 			pr_info("SBI SRST extension detected\n");
 			pm_power_off = sbi_srst_power_off;
 			sbi_srst_reboot_nb.notifier_call = sbi_srst_reboot;
