@@ -511,6 +511,25 @@ config SERIAL_IMX_EARLYCON
 	  If you have enabled the earlycon on the Freescale IMX
 	  CPU you can make it the earlycon by answering Y to this option.
 
+config SERIAL_ANLOGIC_UARTLITE
+	tristate "anlogic pl_uart serial port support"
+	depends on HAS_IOMEM
+	select SERIAL_CORE
+	help
+	  Say Y here if you want to use the anlogic pl_uart serial controller.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called uartlite.
+
+config SERIAL_ANLOGIC_UARTLITE_NR_UARTS
+	int "Maximum number of anlogic pl_uart serial ports"
+	depends on SERIAL_ANLOGIC_UARTLITE
+	range 1 256
+	default 1
+	help
+	  Set this to the number of pl_uart in your system, or the number
+	  you think you might implement.
+
 config SERIAL_UARTLITE
 	tristate "Xilinx uartlite serial port support"
 	depends on HAS_IOMEM

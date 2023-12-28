@@ -103,6 +103,18 @@
 			reg-io-width = <4>;
 		};
 
+		serialpl0: serial@A0000000 {
+			compatible = "anlogic,xps-uartlite-1.00.a";
+			reg = <0x0 0xA0000000 0x0 0x1000>;
+			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+			port-number = <0>;
+			anlogic,baudrate = <115200>;
+			current-speed = <115200>;
+			anlogic,use-parity = <0x0>;
+			anlogic,odd-parity = <0x0>;
+			anlogic,data-bits = <0x8>;
+		};
+
 		fpga_mgr: fpga-mgr@F8082000 {
 			compatible = "anlogic,dr1m90-pcap-fpga";
 			reg = <0x00 0xF8801000 0x00 0x1000>;
