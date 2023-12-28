@@ -121,6 +121,13 @@
 		clock-frequency = <200000000>;
 		clock-output-names = "qspi_m_clk";
 	};
+
+	ttc_clk: ttc_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <200000000>;
+		clock-output-names = "ttc_clk";
+	};
 };
 
 &uart0 {
@@ -248,3 +255,14 @@
 		spi-max-frequency = <8000000>;
 	};
 };
+
+&ttc0 {
+	clocks = <&ttc_clk>;
+	status = "okay";
+};
+
+&ttc1 {
+	clocks = <&ttc_clk>;
+	status = "okay";
+};
+

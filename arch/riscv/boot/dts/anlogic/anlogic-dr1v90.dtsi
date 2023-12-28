@@ -225,5 +225,22 @@
 			interrupts = <68>;
 			num-cs = <1>;
 		};
+
+		ttc0: ttc0@f840c000 {
+			compatible = "cdns,ttc";
+			interrupt-parent = <&plic0>;
+			interrupts = <29>, <30>, <31>;
+			reg = <0x0 0xf840c000 0x0 0x1000>;
+			timer-width = <32>;
+		};
+
+		ttc1: PWM1@f840d000 {
+			compatible = "cdns,ttc";
+			#pwm-cells = <3>;
+			interrupt-parent = <&plic0>;
+			interrupts = <32>, <33>, <34>;
+			reg = <0x0 0xf840d000 0x0 0x1000>;
+			timer-width = <32>;
+		};
 	};
 };
