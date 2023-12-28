@@ -66,4 +66,19 @@ config ERRATA_THEAD_CMO
 
 	  If you don't know what to do here, say "Y".
 
+config ERRATA_ANLOGIC_CCM
+	bool "Anlogic CCM extension support for non-coherent DMA operation"
+	depends on !XIP_KERNEL
+	select RISCV_DMA_NONCOHERENT
+	default n
+	help
+	  Enable the support of Anlogic CCM extension if present.
+	  Anlogic CCM is Cache Control and Mantainence unit.
+
+	  The CCM/xlccm extension can be used to handle for example
+	  non-coherent DMA support on devices that need it.
+	  To use CCM in S/U mode, you need to set ccm_suen CSR in M-Mode.
+
+	  If your Anlogic RISC-V CPU has CCM module, say Y.
+
 endmenu # "CPU errata selection"

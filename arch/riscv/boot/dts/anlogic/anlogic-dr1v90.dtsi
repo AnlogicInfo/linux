@@ -17,6 +17,7 @@
 			compatible = "riscv";
 			riscv,isa = "rv64imafdc";
 			mmu-type = "riscv,sv39";
+			riscv,cbom-block-size = <64>;
 			cpu0_intc: interrupt-controller {
 				#interrupt-cells = <1>;
 				interrupt-controller;
