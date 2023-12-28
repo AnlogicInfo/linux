@@ -195,5 +195,35 @@
 			interrupts = <27>;
 		};
 
+
+		qspi0: spi@f804e000 {
+			compatible = "anlogic,dr1x90-qspi";
+			reg = <0x0 0xf804e000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			interrupt-parent = <&plic0>;
+			interrupts = <48>;
+			num-cs = <1>;
+		};
+
+		spi0: spi@f8404000 {
+			compatible = "snps,dw-apb-ssi";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x0 0xf8404000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <66>;
+			num-cs = <1>;
+		};
+
+		spi1: spi@f8405000 {
+			compatible = "snps,dw-apb-ssi";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x0 0xf8405000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <68>;
+			num-cs = <1>;
+		};
 	};
 };
