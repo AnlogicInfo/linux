@@ -122,6 +122,12 @@ static int rtl821x_probe(struct phy_device *phydev)
 			priv->phycr2 &= ~RTL8211F_CLKOUT_EN;
 	}
 
+#ifdef CONFIG_ANLOGIC_SOC
+	of_property_read_u32(dev->of_node, "phase-100M", &phydev->phase_100M);
+	of_property_read_u32(dev->of_node, "phase-1000M", &phydev->phase_1000M);
+	of_property_read_u32(dev->of_node, "cfg_ctrl_gbe", &phydev->cfg_ctrl_gbe_phy);
+#endif
+
 	phydev->priv = priv;
 
 	return 0;
