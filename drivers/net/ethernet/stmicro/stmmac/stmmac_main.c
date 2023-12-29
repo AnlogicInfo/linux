@@ -918,6 +918,9 @@ static void stmmac_mac_link_up(struct phylink_config *config,
 {
 	struct stmmac_priv *priv = netdev_priv(to_net_dev(config->dev));
 	u32 ctrl;
+#ifdef CONFIG_ANLOGIC_SOC
+	static void __iomem *CFG_CTRL_GBE;
+#endif
 
 	stmmac_xpcs_link_up(priv, &priv->hw->xpcs_args, speed, interface);
 
@@ -982,6 +985,21 @@ static void stmmac_mac_link_up(struct phylink_config *config,
 			return;
 		}
 	}
+
+#ifdef CONFIG_ANLOGIC_SOC
+	CFG_CTRL_GBE = ioremap(phy->cfg_ctrl_gbe_phy, 4);
+
+	switch (speed) {
+	case SPEED_100:
+		writel(phy->phase_100M, CFG_CTRL_GBE);
+		break;
+	case SPEED_1000:
+		writel(phy->phase_1000M, CFG_CTRL_GBE);
+		break;
+	}
+
+	iounmap(CFG_CTRL_GBE);
+#endif
 
 	priv->speed = speed;
 

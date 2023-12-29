@@ -11,6 +11,7 @@
 #include <linux/phy.h>
 #include <linux/module.h>
 #include <linux/delay.h>
+#include <linux/of.h>
 
 #define RTL821x_PHYSR				0x11
 #define RTL821x_PHYSR_DUPLEX			BIT(13)
@@ -71,6 +72,19 @@ static int rtl821x_write_page(struct phy_device *phydev, int page)
 {
 	return __phy_write(phydev, RTL821x_PAGE_SELECT, page);
 }
+
+#ifdef CONFIG_ANLOGIC_SOC
+static int rtl821x_probe(struct phy_device *phydev)
+{
+	struct device *dev = &phydev->mdio.dev;
+
+	of_property_read_u32(dev->of_node, "phase-100M", &phydev->phase_100M);
+	of_property_read_u32(dev->of_node, "phase-1000M", &phydev->phase_1000M);
+	of_property_read_u32(dev->of_node, "cfg_ctrl_gbe", &phydev->cfg_ctrl_gbe_phy);
+
+	return 0;
+}
+#endif
 
 static int rtl8201_ack_interrupt(struct phy_device *phydev)
 {
@@ -620,6 +634,9 @@ static struct phy_driver realtek_drvs[] = {
 	}, {
 		PHY_ID_MATCH_EXACT(0x001cc916),
 		.name		= "RTL8211F Gigabit Ethernet",
+#ifdef CONFIG_ANLOGIC_SOC
+		.probe		= rtl821x_probe,
+#endif
 		.config_init	= &rtl8211f_config_init,
 		.ack_interrupt	= &rtl8211f_ack_interrupt,
 		.config_intr	= &rtl8211f_config_intr,
