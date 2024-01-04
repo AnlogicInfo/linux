@@ -1,0 +1,524 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+#include "anlogic-dr1m90.dtsi"
+
+/ {
+	aliases {
+		uart0 = &serial1;
+		eqos0 = &eqos0;
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200n8 earlycon=uart,mmio32,0xf8401000 loglevel=8";
+		stdout-path = &serial1;
+
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		framebuffer@4000000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0x4000000 0x0 (1200 * 1920 * 4)>;
+			width = <1200>;
+			height = <1920>;
+			stride = <(1200 * 4)>;
+			format = "x8r8g8b8";
+		};
+	};
+
+	reserved_memory: reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		linux,cma {
+			compatible = "shared-dma-pool";
+			alloc-ranges = <0x0 0x00000000 0x0 0xffffffff>;
+			reusable;
+			alignment = <0x0 0x400000>;
+			size = <0x0 0x10000000>;
+			linux,cma-default;
+		};
+
+		/* Reserved memory for frame buffer */
+		framebuffer0: framebuffer0@4000000 {
+			no-map;
+			/* 64MB in DDR */
+			reg = <0x0 0x4000000 0x0 0x4000000>;
+		};
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0 0x00000000 0 0x40000000>;
+	};
+};
+
+&soc {
+	hard_npu: hard_npu@63F00000 {
+		compatible = "Anlogic,hard_npu";
+		reg = <0x0 0x63F00000 0x0 0x00100000>;
+		//interrupts = <0 144 0x04>;
+		interrupts = <0 112 0x04>;
+	};
+
+	soft_npu: soft_npu@91000000 {
+		compatible = "Anlogic,soft_npu";
+		reg = <0x0 0x91000000 0x0 0x00100000>;
+		//interrupts = <0 129 0x04>;
+		interrupts = <0 97 0x04>;
+	};
+
+	jpu: jpu@f8460000 {
+		compatible = "Anlogic,jpu";
+		reg = <0x0 0xF8460000 0x0 0x00010000>;
+		//interrupts = <0 145 0x04>;
+		interrupts = <0 113 0x04>;
+	};
+
+	APB_PCLK: APB_PCLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "APB_PCLK";
+	};
+
+	IIC_CLK: IIC_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <40000000>;
+		clock-output-names = "IIC_CLK";
+	};
+
+	GPIO_CLK: GPIO_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "GPIO_CLK";
+	};
+
+	ttc_clk: ttc_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <200000000>;
+		clock-output-names = "ttc_clk";
+	};
+
+	ahb_dma_clk: ahb_dma_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <400000000>;
+		clock-output-names = "ahb_dma_clk";
+	};
+
+	WDT_CLK: WDT_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <16666666>;
+		clock-output-names = "WDT_CLK";
+	};
+
+	GBE_CLK: GBE_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "GBE_CLK";
+	};
+
+	PHY_CLK: PHY_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "PHY_CLK";
+	};
+
+	PTP_CLK: PTP_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <100000000>;
+		clock-output-names = "PTP_CLK";
+	};
+
+	CAN_CLK: CAN_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <80000000>;
+		clock-output-names = "CAN_CLK";
+	};
+
+	DWMMC_CIU_CLK: DWMMC_CIU_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "DWMMC_CIU_CLK";
+	};
+
+	DWMMC_BIU_CLK: DWMMC_BIU_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		clock-output-names = "DWMMC_BIU_CLK";
+	};
+
+	axi_dma_clk: axi_dma_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <75000000>;
+		clock-output-names = "axi_dma_clk";
+	};
+
+	axi_hdmi_clk: axi_hdmi_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <74250000>;
+		clock-output-names = "axi_hdmi_clk";
+	};
+
+	qspi_m_clk: qspi_m_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <200000000>;
+		clock-output-names = "qspi_m_clk";
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led1 {
+			gpios = <&porta 14 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "okay";
+		};
+		led2 {
+			gpios = <&porta 13 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "disabled";
+		};
+		led3 {
+			gpios = <&porta 12 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			status = "disabled";
+		};
+	};
+
+	keys {
+		compatible = "gpio-keys";
+		sw6 {
+			gpios = <&porta 10 GPIO_ACTIVE_LOW>;
+			linux,code = <103>;
+			status = "okay";
+		};
+		sw8 {
+			gpios = <&porta 11 GPIO_ACTIVE_HIGH>;
+			linux,code = <108>;
+			status = "okay";
+		};
+		sw5 {
+			gpios = <&portc 0 GPIO_ACTIVE_HIGH>;
+			linux,code = <108>;
+			status = "okay";
+		};
+	};
+
+	soft_adi_dma: dma@80400000 {
+		compatible = "adi,axi-dmac-1.00.a";
+		reg = <0x0 0x80400000 0x0 0x10000>;
+		interrupts = <GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&axi_dma_clk>;
+		#dma-cells = <1>;
+		status = "disabled";
+
+		adi,channels {
+			#size-cells = <0>;
+			#address-cells = <1>;
+
+			dma-channel@0 {
+				reg = <0>;
+				adi,source-bus-width = <32>;
+				adi,source-bus-type = <0>;
+				adi,destination-bus-width = <64>;
+				adi,destination-bus-type = <1>;
+			};
+		};
+	};
+
+	axi_hdmi@80500000 {
+		compatible = "adi,axi-hdmi-tx-1.00.a";
+		reg = <0x0 0x80500000 0x0 0x10000>;
+		dmas = <&soft_adi_dma 0>;
+		dma-names = "video";
+		clocks = <&axi_hdmi_clk>, <&axi_hdmi_clk>;
+		status = "disabled";
+
+		port {
+			axi_hdmi_out: endpoint {
+				remote-endpoint = <&adv7511_in>;
+			};
+		};
+	};
+};
+
+&cpu0 {
+	clock-frequency = <400000000>;
+};
+
+&cpu1 {
+	clock-frequency = <400000000>;
+};
+
+&timer {
+	clock-frequency = <33333333>;
+};
+
+&serial0 {
+	clock-frequency = <50000000>;
+	status = "disabled";
+};
+
+&serial1 {
+	clock-frequency = <50000000>;
+	status = "okay";
+};
+
+&serialpl0 {
+	clock-frequency = <50000000>;
+	status = "disabled";
+};
+
+&i2c0 {
+	clocks = <&IIC_CLK>;
+	clock-names = "IIC_CLK";
+	status = "okay";
+
+	i2c-mux@74 {
+		compatible = "nxp,pca9548";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x74>;
+		status = "okay";
+
+		i2c@2 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <2>;
+			/*
+			 * IIC_EEPROM 1kB memory which uses 256B blocks
+			 * where every block has different address.
+			 *    0 - 256B address 0x54
+			 * 256B - 512B address 0x55
+			 * 512B - 768B address 0x56
+			 * 768B - 1024B address 0x57
+			 */
+			m24c08: eeprom@54 {
+				compatible = "atmel,24c08";
+				reg = <0x54>;
+				pagesize = <16>;
+				address-width = <8>;
+				status = "okay";
+			};
+		};
+
+		i2c@3 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <3>;
+			ds1337: rtc@68 {
+				compatible = "dallas,ds1337";
+				reg = <0x68>;
+				trickle-resistor-ohms = <250>;
+				status = "okay";
+			};
+		};
+
+	};
+};
+
+&i2c1 {
+	clocks = <&IIC_CLK>;
+	clock-names = "IIC_CLK";
+	status = "disabled";
+
+	adv7511: adv7511@39 {
+		compatible = "adi,adv7511";
+		reg = <0x39>, <0x3f>;
+		reg-names = "primary", "edid";
+
+		adi,input-depth = <8>;
+		adi,input-colorspace = "yuv422";
+		adi,input-clock = "1x";
+		adi,input-style = <3>;
+		adi,input-justification = "right";
+		adi,clock-delay = <0>;
+
+		#sound-dai-cells = <1>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				adv7511_in: endpoint {
+					remote-endpoint = <&axi_hdmi_out>;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+			};
+		};
+
+	};
+};
+
+&gpio0 {
+	clocks = <&GPIO_CLK>;
+	status = "okay";
+};
+
+&gpio1 {
+	clocks = <&GPIO_CLK>;
+	status = "okay";
+};
+
+&gpio2 {
+	clocks = <&GPIO_CLK>;
+	status = "okay";
+};
+
+&gpio3 {
+	clocks = <&GPIO_CLK>;
+	status = "okay";
+};
+
+&axidmac {
+	clock-names = "apb_pclk";
+	clocks = <&APB_PCLK>;
+	status = "okay";
+};
+
+&watchdog0 {
+	clocks = <&WDT_CLK>;
+	status = "disabled";
+};
+
+&ipmscan0 {
+	clocks = <&CAN_CLK>;
+	clock-names = "ipms_can_clk";
+	status = "okay";
+};
+
+&ipmscan1 {
+	clocks = <&CAN_CLK>;
+	clock-names = "ipms_can_clk";
+	status = "okay";
+};
+
+&sdhci0 {
+	clocks = <&DWMMC_CIU_CLK>, <&DWMMC_BIU_CLK>;
+	clock-names = "core", "bus";
+	max-frequency = <50000000>;
+	sdhci-caps-mask = <0x00FF0000 0x0600FF00>;
+	sdhci-caps = <0x10000 0x3200>;
+	bus-width = <8>;
+	non-removable;
+	broken-cd;
+	disable-wp;
+	no-sdio;
+	no-1-8-v;
+	sdhci,auto-cmd12;
+	status = "okay";
+};
+
+&ahb_dma {
+	clocks = <&ahb_dma_clk>;
+	status = "okay";
+};
+
+&qspi0 {
+	clocks = <&qspi_m_clk>;
+	status = "okay";
+	dmas = <&ahb_dma 0xc 0 0 (1 << 6)>,
+			<&ahb_dma 0xd 0 0 (1 << 7)>;
+	dma-names = "tx", "rx";
+
+	// spidev@0 {
+	// 	compatible = "rohm,dh2228fv";
+	// 	reg = <0>;
+	// 	spi-max-frequency = <8000000>;
+	// };
+
+	flash0: flash@0 {
+		compatible = "jedec,spi-nor";
+		label = "alspinor";
+		reg = <0x0>;
+		spi-tx-bus-width = <4>;
+		spi-rx-bus-width = <4>;
+		spi-max-frequency = <10000000>;
+	};
+	/*num-cs = <2>;
+	cs-gpios = <&gpio0 13 0>,
+	<&gpio0 14 0>;*/
+};
+
+&spi0 {
+	clocks = <&qspi_m_clk>;
+	status = "okay";
+	dmas = <&ahb_dma 4 0 0 (1 << 0)>,
+			<&ahb_dma 5 0 0 (1 << 1)>;
+	dma-names = "tx", "rx";
+	spidev@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+	};
+};
+
+&spi1 {
+	clocks = <&qspi_m_clk>;
+	status = "okay";
+	dmas = <&ahb_dma 6 0 0 (1 << 2)>,
+			<&ahb_dma 7 0 0 (1 << 3)>;
+	dma-names = "tx", "rx";
+	spidev@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+	};
+};
+
+&ttc0 {
+	clocks = <&ttc_clk>;
+	status = "okay";
+};
+
+&ttc1 {
+	clocks = <&ttc_clk>;
+	status = "okay";
+};
+
+&axi_ethernetlite_1 {
+	status = "disabled";
+};
+
+&eqos0 {
+	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
+	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
+	status = "okay";
+};
+
+&eqos1 {
+	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
+	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
+	status = "disabled";
+};
+
+&usb_otg0 {
+
+	dr_mode = "host";
+	g-np-tx-fifo-size = <32>;
+	g-rx-fifo-size = <768>;
+	g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
+	g-use-dma;
+	status = "okay";
+};
