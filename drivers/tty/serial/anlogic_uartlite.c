@@ -116,7 +116,10 @@ static inline u32 uart_in32(u32 offset, struct uart_port *port)
 static inline void uart_out32(u32 val, u32 offset, struct uart_port *port)
 {
 	u32 data = 0;
+	u32 stat = 0;
 	struct uartlite_data *pdata = port->private_data;
+	stat = uart_in32(ULITE_STATUS, port);
+	while((stat & 0x4) != 0);//tx_done
 	pdata->reg_ops->out(val, port->membase + offset);
 }
 
