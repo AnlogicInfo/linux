@@ -242,5 +242,12 @@
 			reg = <0x0 0xf840d000 0x0 0x1000>;
 			timer-width = <32>;
 		};
+
+		sdhci0: mmc@f8049000 {
+			compatible = "snps,dwcmshc-sdhci";
+			reg = <0x0 0xf8049000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <63>;
+		};
 	};
 };
