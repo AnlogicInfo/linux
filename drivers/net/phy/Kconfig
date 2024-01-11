@@ -262,6 +262,12 @@ config MOTORCOMM_PHY
 	  Enables support for Motorcomm network PHYs.
 	  Currently supports the YT8511 gigabit PHY.
 
+config MOTORCOMM_8531_PHY
+	tristate "Motorcomm 8531 PHYs"
+	help
+	  Enables support for Motorcomm network PHYs.
+	  Currently supports the YT85311 gigabit PHY.
+
 config NATIONAL_PHY
 	tristate "National Semiconductor PHYs"
 	help

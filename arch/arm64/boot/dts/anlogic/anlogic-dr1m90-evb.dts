@@ -485,12 +485,34 @@
 &eqos0 {
 	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
 	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
+	phy-handle = <&eth_phy0>;
 	status = "okay";
+};
+
+&eth_phy0 {
+	/* Realtek RTL8211F (0x001cc916) */
+	status = "okay";
+};
+
+&eth_phy1 {
+	/* Motorcomm YT8531 (0x4f51e91b) */
+	status = "disabled";
 };
 
 &eqos1 {
 	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
 	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
+	phy-handle = <&eth_phy2>;
+	status = "disabled";
+};
+
+&eth_phy2 {
+	/* Realtek RTL8211F (0x001cc916) */
+	status = "disabled";
+};
+
+&eth_phy3 {
+	/* Motorcomm YT8531 (0x4f51e91b) */
 	status = "disabled";
 };
 

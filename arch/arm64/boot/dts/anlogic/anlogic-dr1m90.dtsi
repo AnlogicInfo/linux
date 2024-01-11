@@ -344,17 +344,17 @@
 			interrupt-parent = <&gic>;
 			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
 			local-mac-address = [E0 78 A3 00 00 05];
-			phy-handle = <&eth_phy2>;
+			phy-handle = <&pl_eth_phy0>;
 			reg = <0x1 0xC0000000 0x0 0x10000>;
 
 			mdio {
 				#address-cells = <1>;
 				#size-cells = <0>;
-				eth_phy2: phy@1 {
+				pl_eth_phy0: phy@1 {
 						device_type = "ethernet-phy";
 						reg = <1>;
 				} ;
-				// eth_phy2: phy@0 {
+				// pl_eth_phy0: phy@0 {
 				// 		 device_type = "ethernet-phy";
 				// 		 reg = <0>;
 				// } ;
@@ -375,7 +375,6 @@
 			snps,pbl = <2>;
 			snps,en-tx-lpi-clockgating;
 			snps,tso;
-			phy-handle = <&eth_phy0>;
 			phy-mode = "rgmii";
 			phy-addr = <0x001>;
 
@@ -392,6 +391,16 @@
 					cfg_ctrl_gbe = <0xf8800140>;
 					phase-100M = <0x14a1>;
 					phase-1000M = <0x1461>;
+				};
+
+				eth_phy1: ethernet-phy@1 {
+					/* Motorcomm YT8531 (0x4f51e91b) */
+					reg = <0>;
+					yt,phy-delay = <0x001f>;
+					phy-connection-type = "rgmii-id";
+					cfg_ctrl_gbe = <0xf8800140>;
+					phase-100M = <0x361>;
+					phase-1000M = <0x621>;
 				};
 			};
 		};
@@ -410,7 +419,6 @@
 			snps,pbl = <2>;
 			snps,en-tx-lpi-clockgating;
 			snps,tso;
-			phy-handle = <&eth_phy1>;
 			phy-mode = "rgmii";
 			phy-addr = <0x011>;
 
@@ -419,7 +427,7 @@
 				#address-cells = <1>;
 				#size-cells = <0>;
 
-				eth_phy1: ethernet-phy@1 {
+				eth_phy2: ethernet-phy@2 {
 					/* Realtek RTL8211F (0x001cc916) */
 					reg = <0>;
 					reset-assert-us = <10000>;
@@ -427,6 +435,16 @@
 					cfg_ctrl_gbe = <0xf8800144>;
 					phase-100M = <0x14a1>;
 					phase-1000M = <0x1461>;
+				};
+
+				eth_phy3: ethernet-phy@3 {
+					/* Motorcomm YT8531 (0x4f51e91b) */
+					reg = <0>;
+					yt,phy-delay = <0x001f>;
+					phy-connection-type = "rgmii-id";
+					cfg_ctrl_gbe = <0xf8800144>;
+					phase-100M = <0x361>;
+					phase-1000M = <0x621>;
 				};
 			};
 		};
