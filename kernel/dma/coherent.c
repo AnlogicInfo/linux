@@ -391,8 +391,16 @@ static int __init dma_init_reserved_memory(void)
 {
 	if (!dma_reserved_default_memory)
 		return -ENOMEM;
+#if IS_ENABLED(CONFIG_ERRATA_ANLOGIC_NONCACHE)
+	{
+		int anlogic_init_ncache_area(phys_addr_t phys_addr, size_t size);
+		return anlogic_init_ncache_area(dma_reserved_default_memory->base,
+						dma_reserved_default_memory->size);
+	}
+#else
 	return dma_init_global_coherent(dma_reserved_default_memory->base,
 					dma_reserved_default_memory->size);
+#endif
 }
 core_initcall(dma_init_reserved_memory);
 #endif /* CONFIG_DMA_GLOBAL_POOL */

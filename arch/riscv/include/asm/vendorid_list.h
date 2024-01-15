@@ -7,5 +7,6 @@
 
 #define SIFIVE_VENDOR_ID	0x489
 #define THEAD_VENDOR_ID		0x5b7
+#define ANLOGIC_VENDOR_ID	0x536
 
 #endif

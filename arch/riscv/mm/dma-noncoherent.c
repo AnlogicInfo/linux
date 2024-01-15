@@ -9,6 +9,12 @@
 #include <linux/dma-map-ops.h>
 #include <linux/mm.h>
 #include <asm/cacheflush.h>
+#include <asm/sbi.h>
+#include <linux/dma-map-ops.h>
+
+#define ALSIP_NCACHE				(SBI_EXT_VENDOR_START+1)
+#define ALSIP_NCACHE_SET			0
+#define ALSIP_NCACHE_CLR			1
 
 static bool noncoherent_supported;
 
@@ -39,6 +45,49 @@ void ccm_dcache_op(CCM_CMD_Type op, void* va, size_t size, unsigned int block_si
 		csr_write(0x5cc, op);
 	}
 }
+
+#if IS_ENABLED(CONFIG_ERRATA_ANLOGIC_NONCACHE)
+static inline unsigned long anlogic_set_noncache(
+			unsigned long addr, unsigned long addr_mask)
+{
+	struct sbiret ret = {0};
+	ret = sbi_ecall(ALSIP_NCACHE, ALSIP_NCACHE_SET, addr, addr_mask, 0, 0, 0, 0);
+	return ret.error;
+}
+int anlogic_init_ncache_area(phys_addr_t phys_addr, size_t size)
+{
+	int ret;
+	ulong mask, addr, end, sz;
+	void *vaddr;
+
+	if (size < PAGE_SIZE)
+		return -EINVAL;
+
+	ret = PAGE_SHIFT - 1;
+	addr = phys_addr;
+	end = phys_addr + size - 1;
+	do {
+		ret++;
+		mask = (1UL << ret) - 1;
+	} while ((addr & ~mask) != (end & ~mask));
+
+	if ((phys_addr & mask) || (size & mask))
+		pr_warn("noncache addr/size should be aligned to %lx\n", mask+1);
+
+	addr = (phys_addr & ~mask);
+	sz = mask + 1;
+	if (anlogic_set_noncache(addr, ~mask)) {
+		pr_err("set noncache area fail\n");
+		return -EINVAL;
+	}
+	pr_info("set noncache area: addr 0x%lx, size 0x%lx\n", addr, sz);
+
+	vaddr = phys_to_virt(addr);
+	ccm_dcache_op(CCM_DC_WBINVAL, vaddr, sz, riscv_cbom_block_size);
+
+	return dma_init_global_coherent(phys_addr, size);
+}
+#endif
 #endif
 
 void arch_sync_dma_for_device(phys_addr_t paddr, size_t size,
