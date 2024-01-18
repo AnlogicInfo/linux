@@ -100,4 +100,11 @@ config ERRATA_ANLOGIC_NONCACHE
 	help
 	  Enable allocating Anlogic noncache area for dma operations
 
+config ERRATA_ANLOGIC_ASID
+	bool "Anlogic disable ASID support"
+	depends on ERRATA_ANLOGIC
+	default n
+	help
+	  Disable ASID for anlogic RISV-V CPU
+
 endmenu # "CPU errata selection"

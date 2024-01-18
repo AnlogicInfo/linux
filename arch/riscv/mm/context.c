@@ -229,6 +229,10 @@ static int __init asids_init(void)
 {
 	unsigned long old;
 
+#ifdef CONFIG_ERRATA_ANLOGIC_ASID
+	(void)old;
+	asid_bits = 0;
+#else
 	/* Figure-out number of ASID bits in HW */
 	old = csr_read(CSR_SATP);
 	asid_bits = old | (SATP_ASID_MASK << SATP_ASID_SHIFT);
@@ -236,6 +240,7 @@ static int __init asids_init(void)
 	asid_bits = (csr_read(CSR_SATP) >> SATP_ASID_SHIFT)  & SATP_ASID_MASK;
 	asid_bits = fls_long(asid_bits);
 	csr_write(CSR_SATP, old);
+#endif
 
 	/*
 	 * In the process of determining number of ASID bits (above)
