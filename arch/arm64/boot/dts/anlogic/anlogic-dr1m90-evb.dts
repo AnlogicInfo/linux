@@ -411,6 +411,22 @@
 	status = "okay";
 };
 
+&sdhci1 {
+	clocks = <&DWMMC_CIU_CLK>, <&DWMMC_BIU_CLK>;
+	clock-names = "core", "bus";
+	max-frequency = <50000000>;
+	sdhci-caps-mask = <0x00FF0000 0x0600FF00>;
+	sdhci-caps = <0x10000 0x3200>;
+	bus-width = <4>;
+	non-removable;
+	broken-cd;
+	disable-wp;
+	no-sdio;
+	no-1-8-v;
+	sdhci,auto-cmd12;
+	status = "disabled";
+};
+
 &ahb_dma {
 	clocks = <&ahb_dma_clk>;
 	status = "okay";

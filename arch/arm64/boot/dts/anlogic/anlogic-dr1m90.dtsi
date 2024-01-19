@@ -275,6 +275,12 @@
 			interrupts = <GIC_SPI 62 IRQ_TYPE_LEVEL_HIGH>;
 		};
 
+		sdhci1: mmc@f804a000 {
+			compatible = "snps,dwcmshc-sdhci";
+			reg = <0x0 0xf804a000 0x0 0x1000>;
+			interrupts = <GIC_SPI 63 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
 		ahb_dma:ahb_dma@F804D000 {
 			compatible = "snps,dma-spear1340";
 			reg = <0x0 0xF804D000 0x0 0x1000>;
