@@ -249,5 +249,97 @@
 			interrupt-parent = <&plic0>;
 			interrupts = <63>;
 		};
+
+		eqos0: ethernet0@F8100000 {
+			compatible = "snps,dwc-qos-ethernet-4.10";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			reg = <0x0 0xF8100000 0x0 0x10000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <59>;
+			/* mac-address = [e0 78 a3 01 02 01]; */
+			tx-fifo-depth = <16384>;
+			rx-fifo-depth = <16384>;
+			dma-noncoherent;
+			#snps,fixed-burst;
+			snps,mixed-burst;
+			snps,pbl = <2>;
+			snps,en-tx-lpi-clockgating;
+			snps,tso;
+			phy-mode = "rgmii";
+			phy-addr = <0x001>;
+
+			mdio {
+				compatible = "snps,dwmac-mdio";
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				eth_phy0: ethernet-phy@0 {
+					/* Realtek RTL8211F (0x001cc916) */
+					reg = <0>;
+					reset-assert-us = <10000>;
+					reset-deassert-us = <30000>;
+					cfg_ctrl_gbe = <0xf8800140>;
+					phase-100M = <0x14a1>;
+					phase-1000M = <0x1461>;
+				};
+
+				eth_phy1: ethernet-phy@1 {
+					/* Motorcomm YT8531 (0x4f51e91b) */
+					reg = <0>;
+					yt,phy-delay = <0x001f>;
+					phy-connection-type = "rgmii-id";
+					cfg_ctrl_gbe = <0xf8800140>;
+					phase-100M = <0x361>;
+					phase-1000M = <0x621>;
+				};
+			};
+		};
+
+		eqos1: ethernet1@F8110000 {
+			compatible = "snps,dwc-qos-ethernet-4.10";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			reg = <0x0 0xF8110000 0x0 0x10000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <60>;
+			/* mac-address = [e0 78 a3 01 02 03]; */
+			tx-fifo-depth = <16384>;
+			rx-fifo-depth = <16384>;
+			dma-noncoherent;
+			#snps,fixed-burst;
+			snps,mixed-burst;
+			snps,pbl = <2>;
+			snps,en-tx-lpi-clockgating;
+			snps,tso;
+			phy-mode = "rgmii";
+			phy-addr = <0x011>;
+
+			mdio {
+				compatible = "snps,dwmac-mdio";
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				eth_phy2: ethernet-phy@2 {
+					/* Realtek RTL8211F (0x001cc916) */
+					reg = <0>;
+					reset-assert-us = <10000>;
+					reset-deassert-us = <30000>;
+					cfg_ctrl_gbe = <0xf8800144>;
+					phase-100M = <0x14a1>;
+					phase-1000M = <0x1461>;
+				};
+
+				eth_phy3: ethernet-phy@3 {
+					/* Motorcomm YT8531 (0x4f51e91b) */
+					reg = <0>;
+					yt,phy-delay = <0x001f>;
+					phy-connection-type = "rgmii-id";
+					cfg_ctrl_gbe = <0xf8800144>;
+					phase-100M = <0x361>;
+					phase-1000M = <0x621>;
+				};
+			};
+		};
 	};
 };

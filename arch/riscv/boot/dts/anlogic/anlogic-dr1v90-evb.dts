@@ -97,6 +97,27 @@
 		clock-frequency = <50000000>;
 		clock-output-names = "DWMMC_BIU_CLK";
 	};
+	
+	GBE_CLK: GBE_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "GBE_CLK";
+	};
+
+	PHY_CLK: PHY_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <25000000>;
+		clock-output-names = "PHY_CLK";
+	};
+
+	PTP_CLK: PTP_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <100000000>;
+		clock-output-names = "PTP_CLK";
+	};
 
 	leds {
 		compatible = "gpio-leds";
@@ -309,3 +330,38 @@
 	sdhci,auto-cmd12;
 	status = "okay";
 };
+
+&eqos0 {
+	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
+	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
+	phy-handle = <&eth_phy0>;
+	status = "okay";
+};
+
+&eth_phy0 {
+	/* Realtek RTL8211F (0x001cc916) */
+	status = "okay";
+};
+
+&eth_phy1 {
+	/* Motorcomm YT8531 (0x4f51e91b) */
+	status = "disabled";
+};
+
+&eqos1 {
+	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
+	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
+	phy-handle = <&eth_phy2>;
+	status = "disabled";
+};
+
+&eth_phy2 {
+	/* Realtek RTL8211F (0x001cc916) */
+	status = "disabled";
+};
+
+&eth_phy3 {
+	/* Motorcomm YT8531 (0x4f51e91b) */
+	status = "disabled";
+};
+
