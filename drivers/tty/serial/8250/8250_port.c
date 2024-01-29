@@ -3360,12 +3360,12 @@ static unsigned int probe_baud(struct uart_port *port)
 
 int serial8250_console_setup(struct uart_port *port, char *options, bool probe)
 {
-	int baud = 9600;
+	int baud = 115200;
 	int bits = 8;
 	int parity = 'n';
 	int flow = 'n';
 	int ret;
-
+	
 	if (!port->iobase && !port->membase)
 		return -ENODEV;
 

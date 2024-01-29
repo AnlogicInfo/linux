@@ -2355,6 +2355,7 @@ uart_configure_port(struct uart_driver *drv, struct uart_state *state,
 	 * Now do the auto configuration stuff.  Note that config_port
 	 * is expected to claim the resources and map the port for us.
 	 */
+	
 	flags = 0;
 	if (port->flags & UPF_AUTO_IRQ)
 		flags |= UART_CONFIG_IRQ;
@@ -2389,8 +2390,7 @@ uart_configure_port(struct uart_driver *drv, struct uart_state *state,
 		 * It may be that the port was not available.
 		 */
 		if (port->cons && !(port->cons->flags & CON_ENABLED))
-			register_console(port->cons);
-
+	 	    register_console(port->cons);
 		/*
 		 * Power down all ports by default, except the
 		 * console if we have one.

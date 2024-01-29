@@ -321,6 +321,12 @@ config ARCH_ZX
 	help
 	  This enables support for ZTE ZX SoC Family
 
+config ARCH_DR1M90
+	bool "Anlogic Platforms"
+	help
+	  This enables support for the ARMv8 based Anlogic SoCFPGA chipsets,
+	  like the ARCH_DR1M90.
+
 config ARCH_ZYNQMP
 	bool "Xilinx ZynqMP Family"
 	help

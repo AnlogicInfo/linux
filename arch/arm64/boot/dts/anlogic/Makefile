@@ -1,0 +1,2 @@
+# SPDX-License-Identifier: GPL-2.0
+dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-linux.dtb

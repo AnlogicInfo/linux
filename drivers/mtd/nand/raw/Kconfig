@@ -461,6 +461,14 @@ config MTD_NAND_ARASAN
 	help
 	  Enables the driver for the Arasan NAND flash controller on
 	  Zynq Ultrascale+ MPSoC.
+	  
+config MTD_NAND_PL35X
+	tristate "ARM PL35X NAND controller"
+	depends on OF || COMPILE_TEST
+	depends on PL353_SMC
+	help
+	  Enables support for PrimeCell SMC PL351 and PL353 NAND
+	  controller found on Zynq7000.
 
 comment "Misc"
 

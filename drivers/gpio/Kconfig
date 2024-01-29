@@ -232,6 +232,13 @@ config GPIO_DWAPB
 	  Say Y or M here to build support for the Synopsys DesignWare APB
 	  GPIO block.
 
+config ANLOGIC_GPIO
+        tristate "Anlogic GPIO driver"
+        select GPIO_GENERIC
+        select GPIOLIB_IRQCHIP
+        help
+          Say Y or M here to build support for the APB Anlogic GPIO block.
+
 config GPIO_EIC_SPRD
 	tristate "Spreadtrum EIC support"
 	depends on ARCH_SPRD || COMPILE_TEST
@@ -432,6 +439,15 @@ config GPIO_MXS
 	depends on ARCH_MXS || COMPILE_TEST
 	select GPIO_GENERIC
 	select GENERIC_IRQ_CHIP
+
+config GPIO_NUCLEI
+	bool "Nuclei GPIO support"
+	depends on OF_GPIO && IRQ_DOMAIN_HIERARCHY
+	select GPIO_GENERIC
+	select GPIOLIB_IRQCHIP
+	select REGMAP_MMIO
+	help
+	  Say yes here to support the GPIO device on Nuclei SoCs.
 
 config GPIO_OCTEON
 	tristate "Cavium OCTEON GPIO"

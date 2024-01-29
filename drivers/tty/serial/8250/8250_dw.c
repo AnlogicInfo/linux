@@ -446,6 +446,7 @@ static int dw8250_probe(struct platform_device *pdev)
 	int err;
 	u32 val;
 
+        pr_info("begin addr 0x%x, end addr 0x%x, name %s\n", pdev->resource->start, pdev->resource->end, pdev->resource->name);	
 	if (!regs) {
 		dev_err(dev, "no registers defined\n");
 		return -EINVAL;
@@ -483,7 +484,6 @@ static int dw8250_probe(struct platform_device *pdev)
 
 	data->uart_16550_compatible = device_property_read_bool(dev,
 						"snps,uart-16550-compatible");
-
 	err = device_property_read_u32(dev, "reg-shift", &val);
 	if (!err)
 		p->regshift = val;
