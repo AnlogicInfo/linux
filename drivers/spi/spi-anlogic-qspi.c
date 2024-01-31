@@ -420,7 +420,10 @@ static int al_qspi_exec_mem_op(struct spi_mem *mem,
 							QSPI_SPI_CTRLR0_TRANS_TYPE_SIZE, al_qspi_modes[mode].config_trans_type);
 	qspi->info.addr_length = op->addr.nbytes * 2;
 	qspi->info.inst_length = op->cmd.nbytes + 1;
-	qspi->info.wait_cycles = op->dummy.nbytes * 8 / op->dummy.buswidth;
+	if(0 != op->dummy.buswidth)
+		qspi->info.wait_cycles = op->dummy.nbytes * 8 / op->dummy.buswidth;
+	else
+		qspi->info.wait_cycles = 0;
 	al_reg32_set_bits(qspi,AL_QSPI_SPI_CTRLR0_OFFSET , QSPI_SPI_CTRLR0_WAIT_CYCLES_SHIFT,
 							QSPI_SPI_CTRLR0_WAIT_CYCLES_SIZE, qspi->info.wait_cycles);
 	al_reg32_set_bits(qspi, AL_QSPI_SPI_CTRLR0_OFFSET, QSPI_SPI_CTRLR0_INST_L_SHIFT,
