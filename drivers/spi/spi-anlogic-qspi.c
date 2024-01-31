@@ -105,8 +105,10 @@ static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi,
 	u32 room = 0, entries, sts;
 	unsigned int len = 0;
 	u8 *buf;
+	int dummy_temp;
 
 	qspi->n_bytes = qspi->info.dfs / 8;
+	dummy_temp = op->dummy.nbytes;
 
 	/*
 	 * At initial stage we just pre-fill the Tx FIFO in with no rush,
@@ -118,16 +120,28 @@ static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi,
 		case QSPI_DFS_32BITS:
 			al_writel(qspi, AL_QSPI_DR0_OFFSET, (op->cmd.opcode & 0xff) | ((op->addr.val & 0xff) << 24)
 												| (((op->addr.val >> 8) & 0xff) << 16) | (((op->addr.val >> 16) & 0xff) << 8));
+			while(dummy_temp) {
+				al_writel(qspi, AL_QSPI_DR0_OFFSET, 0x0);
+				dummy_temp -= 4;
+			}
 			break;
 		case QSPI_DFS_16BITS:
 			al_writel(qspi, AL_QSPI_DR0_OFFSET, (((op->addr.val >> 24) & 0xff) << 8) | (op->cmd.opcode & 0xff));
 			al_writel(qspi, AL_QSPI_DR0_OFFSET, ((op->addr.val & 0xff) << 8) | ((op->addr.val >> 8) & 0xff));
+			while(dummy_temp) {
+				al_writel(qspi, AL_QSPI_DR0_OFFSET, 0x0);
+				dummy_temp -= 2;
+			}
 			break;
 		case QSPI_DFS_8BITS:
 			al_writel(qspi, AL_QSPI_DR0_OFFSET, (op->cmd.opcode & 0xff));
 			while (op->addr.nbytes > room) {
 				al_writel(qspi, AL_QSPI_DR0_OFFSET, (op->addr.val >> ((op->addr.nbytes - room - 1) * 8)) & 0xff);
 				room++;
+			}
+			while(dummy_temp) {
+				al_writel(qspi, AL_QSPI_DR0_OFFSET, 0x0);
+				dummy_temp--;
 			}
 			break;
 		default:
