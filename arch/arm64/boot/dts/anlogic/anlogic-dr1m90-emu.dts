@@ -7,6 +7,8 @@
 	aliases {
 		uart0 = &serial0;
 		eqos1 = &eqos1;
+		ethernet0 = &eqos0;
+		ethernet1 = &eqos1;
 	};
 
 	chosen {

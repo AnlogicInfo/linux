@@ -10,6 +10,7 @@
 
 	aliases {
 		serial0 = &uart0;
+		ethernet0 = &eqos0;
 	};
 
 	memory@0 {
