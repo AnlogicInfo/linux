@@ -43,11 +43,11 @@
 };
 
 &cpus {
-	timebase-frequency =<400000000>;
+	timebase-frequency =<600000000>;
 };
 
 &cpu0 {
-	clock-frequency = <400000000>;
+	clock-frequency = <600000000>;
 };
 
 &soc {
