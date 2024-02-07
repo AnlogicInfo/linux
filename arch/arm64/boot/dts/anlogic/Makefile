@@ -4,3 +4,4 @@ dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-evb-mipi-dsi.dtb
 dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-emu.dtb
 dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-evb-openamp.dtb
 dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-emu-openamp.dtb
+dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-evb-ad101_v20.dtb
