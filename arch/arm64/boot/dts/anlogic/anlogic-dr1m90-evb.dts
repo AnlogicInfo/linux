@@ -32,7 +32,7 @@
 
 	};
 
-	memory {
+	memory: memory {
 		device_type = "memory";
 		reg = <0 0x00000000 0 0x40000000>;
 	};
@@ -167,17 +167,17 @@
 
 	leds {
 		compatible = "gpio-leds";
-		led1 {
+		led1: led1 {
 			gpios = <&porta 14 GPIO_ACTIVE_HIGH>;
 			linux,default-trigger = "heartbeat";
 			status = "okay";
 		};
-		led2 {
+		led2: led2 {
 			gpios = <&porta 13 GPIO_ACTIVE_HIGH>;
 			linux,default-trigger = "heartbeat";
 			status = "disabled";
 		};
-		led3 {
+		led3: led3 {
 			gpios = <&porta 12 GPIO_ACTIVE_HIGH>;
 			linux,default-trigger = "heartbeat";
 			status = "disabled";
@@ -186,17 +186,17 @@
 
 	keys {
 		compatible = "gpio-keys";
-		sw6 {
+		sw6: sw6 {
 			gpios = <&porta 10 GPIO_ACTIVE_LOW>;
 			linux,code = <103>;
 			status = "okay";
 		};
-		sw8 {
+		sw8: sw8 {
 			gpios = <&porta 11 GPIO_ACTIVE_HIGH>;
 			linux,code = <108>;
 			status = "okay";
 		};
-		sw5 {
+		sw5: sw5 {
 			gpios = <&portc 0 GPIO_ACTIVE_HIGH>;
 			linux,code = <108>;
 			status = "okay";
