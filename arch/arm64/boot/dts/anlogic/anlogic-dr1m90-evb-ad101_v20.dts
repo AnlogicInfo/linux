@@ -3,6 +3,10 @@
 /dts-v1/;
 #include "anlogic-dr1m90-evb.dts"
 
+&memory {
+	reg = <0 0x00000000 0 0x20000000>;
+};
+
 &eqos0 {
 	phy-handle = <&eth_phy1>;
 	status = "okay";
@@ -16,4 +20,28 @@
 &eth_phy1 {
 	/* Motorcomm YT8531 (0x4f51e91b) */
 	status = "okay";
+};
+
+&led1 {
+	status = "disabled";
+};
+
+&led2 {
+	status = "disabled";
+};
+
+&led3 {
+	status = "disabled";
+};
+
+&sw5 {
+	status = "disabled";
+};
+
+&sw6 {
+	status = "disabled";
+};
+
+&sw8 {
+	status = "disabled";
 };
