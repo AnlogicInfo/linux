@@ -22,7 +22,7 @@ enum adc_external_mux_mode {
 
 struct adc {
 	void __iomem *base;
-	void __iomem *pls_port_base;
+	void __iomem *gp_base;
 	struct clk *clk;
 
 	const struct adc_ops *ops;
@@ -98,6 +98,8 @@ static inline int adc_write_adc_reg(struct adc *adc, unsigned int reg,
 /* adc hardmacro register definitions */
 
 #define ADC_REG_VAUX(x)	(0x40 + (2*x))
+#define ADC_VER0			0x50
+#define ADC_VER1			0x52
 #define ADC_REG_FLAG		0x5E
 #define ADC_CHANNEL_0_1		0x60
 #define ADC_CHANNEL_2_3		0x62
