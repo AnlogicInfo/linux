@@ -368,3 +368,11 @@
 	status = "disabled";
 };
 
+&usb_otg0 {
+	dr_mode = "host";
+	g-np-tx-fifo-size = <32>;
+	g-rx-fifo-size = <768>;
+	g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
+	g-use-dma;
+	status = "okay";
+};

@@ -342,5 +342,15 @@
 				};
 			};
 		};
+
+		usb_otg0: usb@F8180000 {
+			dma-noncoherent;
+			compatible = "snps,dwc2";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			reg = <0x0 0xF8180000 0x0 0x40000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <57>;
+		};
 	};
 };
