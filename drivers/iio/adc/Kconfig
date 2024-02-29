@@ -1229,7 +1229,7 @@ config ANLOGIC_ADC
 	select IIO_BUFFER
 	select IIO_TRIGGERED_BUFFER
 	help
-	  Say yes here to have support for the Anlogic XADC.
+	  Say yes here to have support for the Anlogic ADC.
 
 	  The driver can also be build as a module. If so, the module will be called
 	  anlogic-adc.

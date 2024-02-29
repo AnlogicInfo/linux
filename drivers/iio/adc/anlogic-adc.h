@@ -22,7 +22,7 @@ enum adc_external_mux_mode {
 
 struct adc {
 	void __iomem *base;
-	void __iomem *pls_port_base;
+	void __iomem *gp_base;
 	struct clk *clk;
 
 	const struct adc_ops *ops;

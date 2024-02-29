@@ -50,10 +50,11 @@ static const unsigned int ADC_FPSOC_UNMASK_TIMEOUT = 500;
 #define ADC_FPSOC_CFG_WEDGE		BIT(30)
 #define ADC_FPSOC_CFG_REDGE		BIT(29)
 #define ADC_FPSOC_CFG_TCKRATE_MASK	(0x3 << 10)
-#define ADC_FPSOC_CFG_TCKRATE_DIV2	(0x0 << 10)
-#define ADC_FPSOC_CFG_TCKRATE_DIV4	(0x1 << 10)
-#define ADC_FPSOC_CFG_TCKRATE_DIV8	(0x2 << 10)
-#define ADC_FPSOC_CFG_TCKRATE_DIV16	(0x3 << 10)
+
+#define ADC_FPSOC_CFG_TCKRATE_DIV4	(0x0 << 10)
+#define ADC_FPSOC_CFG_TCKRATE_DIV8	(0x1 << 10)
+#define ADC_FPSOC_CFG_TCKRATE_DIV16	(0x2 << 10)
+#define ADC_FPSOC_CFG_TCKRATE_DIV32	(0x3 << 10)
 #define ADC_FPSOC_CFG_IGAP_MASK		0x1f
 #define ADC_FPSOC_CFG_IGAP(x)		(x)
 
@@ -100,6 +101,18 @@ static void adc_read_reg(struct adc *adc, unsigned int reg,
 	uint32_t *val)
 {
 	*val = readl(adc->base + reg);
+}
+
+static void axi_adc_write_reg(struct adc *adc, unsigned int reg,
+	uint16_t val)
+{
+	writew(val, adc->gp_base + reg);
+}
+
+static void axi_adc_read_reg(struct adc *adc, unsigned int reg,
+	uint16_t *val)
+{
+	*val = readw(adc->gp_base + reg);
 }
 
 /*
@@ -149,10 +162,10 @@ static int adc_fpsoc_write_adc_reg(struct adc *adc, unsigned int reg,
 	uint32_t tmp;
 	int ret;
 
+
 	spin_lock_irq(&adc->lock);
 	adc_fpsoc_update_intmsk(adc, ADC_FPSOC_INT_DFIFO_GTH,
 			ADC_FPSOC_INT_DFIFO_GTH);
-
 	reinit_completion(&adc->completion);
 
 	cmd[0] = ADC_FPSOC_CMD(ADC_FPSOC_CMD_WRITE, reg, val);
@@ -240,7 +253,7 @@ static irqreturn_t adc_fpsoc_interrupt_handler(int irq, void *devid)
 	return IRQ_HANDLED;
 }
 
-#define ADC_FPSOC_TCK_RATE_MAX 50000000
+#define ADC_FPSOC_TCK_RATE_MAX 25000000
 #define ADC_FPSOC_IGAP_DEFAULT 20
 #define ADC_FPSOC_PCAP_RATE_MAX 200000000
 
@@ -273,21 +286,21 @@ static int adc_fpsoc_setup(struct platform_device *pdev,
 	}
 
 	if (tck_rate > pcap_rate / 2) {
-		div = 2;
+		div = 4;
 	} else {
 		div = pcap_rate / tck_rate;
 		if (pcap_rate / div > ADC_FPSOC_TCK_RATE_MAX)
 			div++;
 	}
 
-	if (div <= 3)
-		tck_div = ADC_FPSOC_CFG_TCKRATE_DIV2;
-	else if (div <= 7)
+	if (div <= 7)
 		tck_div = ADC_FPSOC_CFG_TCKRATE_DIV4;
 	else if (div <= 15)
 		tck_div = ADC_FPSOC_CFG_TCKRATE_DIV8;
-	else
+	else if (div <= 31)
 		tck_div = ADC_FPSOC_CFG_TCKRATE_DIV16;
+	else
+		tck_div = ADC_FPSOC_CFG_TCKRATE_DIV32;
 
 	adc_write_reg(adc, ADC_FPSOC_REG_CTL, ADC_FPSOC_CTL_RESET |
 			ADC_FPSOC_CTL_CFIFO_FLUSH | ADC_FPSOC_CTL_DFIFO_FLUSH);
@@ -327,7 +340,7 @@ static unsigned long adc_fpsoc_get_dclk_rate(struct adc *adc)
 		div = 16;
 		break;
 	default:
-		div = 2;
+		div = 32;
 		break;
 	}
 
@@ -345,10 +358,10 @@ static const struct adc_ops adc_fpsoc_ops = {
 static int adc_axi_read_adc_reg(struct adc *adc, unsigned int reg,
 	uint16_t *val)
 {
-	uint32_t val32;
+	uint16_t val16;
 
-	adc_read_reg(adc, ADC_AXI_ADC_REG_OFFSET + reg, &val32);
-	*val = val32 & 0xffff;
+	axi_adc_read_reg(adc, reg, &val16);
+	*val = val16 & 0xffff;
 
 	return 0;
 }
@@ -356,7 +369,7 @@ static int adc_axi_read_adc_reg(struct adc *adc, unsigned int reg,
 static int adc_axi_write_adc_reg(struct adc *adc, unsigned int reg,
 	uint16_t val)
 {
-	adc_write_reg(adc, ADC_AXI_ADC_REG_OFFSET + reg, val);
+	axi_adc_write_reg(adc, reg, val);
 
 	return 0;
 }
@@ -364,6 +377,11 @@ static int adc_axi_write_adc_reg(struct adc *adc, unsigned int reg,
 static int adc_axi_setup(struct platform_device *pdev,
 	struct iio_dev *indio_dev, int irq)
 {
+	struct adc *adc = iio_priv(indio_dev);
+
+	/* open interrupt for pl adc */
+	adc_write_reg(adc, ADC_FPSOC_REG_INTMSK, 0xf00);
+
 	return 0;
 }
 
@@ -399,22 +417,27 @@ static irqreturn_t adc_axi_interrupt_handler(int irq, void *devid)
 	uint32_t status, mask;
 	uint16_t intr_done_flag;
 
+	spin_lock(&adc->lock);
+
 	adc_read_reg(adc, ADC_FPSOC_REG_INTSTS, &status);
 	adc_read_reg(adc, ADC_FPSOC_REG_INTMSK, &mask);
 	status &= ~mask;
 
-	if (!status)
+	if (!status) {
+		spin_unlock(&adc->lock);
 		return IRQ_NONE;
+	}
 
-	adc_fpsoc_read_adc_reg(adc, ADC_REG_CONFIG1, &intr_done_flag);
+	axi_adc_read_reg(adc, ADC_REG_CONFIG1, &intr_done_flag);
+
 	if ((intr_done_flag & ADC_CONFIG1_INTR_DONE) && adc->trigger) {
-		adc_update_adc_reg(adc, ADC_REG_CONFIG1, ADC_CONFIG1_INTR_DONE_MASK,
-				ADC_CONFIG1_INTR_DONE_MASK);
-		adc_fpsoc_read_adc_reg(adc, ADC_REG_CONFIG1, &intr_done_flag);
+		axi_adc_write_reg(adc, ADC_REG_CONFIG1, intr_done_flag);
 		iio_trigger_poll(adc->trigger);
 	}
 
 	adc_write_reg(adc, ADC_FPSOC_REG_INTSTS, status);
+
+	spin_unlock(&adc->lock);
 
 	return IRQ_HANDLED;
 }
@@ -489,30 +512,29 @@ out:
 static int adc_trigger_set_state(struct iio_trigger *trigger, bool state)
 {
 	struct adc *adc = iio_trigger_get_drvdata(trigger);
-	unsigned int convst;
 	int ret = 0;
 
 	mutex_lock(&adc->mutex);
 
 	if (state) {
-		/* Only one of the two triggers can be active at a time. */
 		if (adc->trigger != NULL) {
 			ret = -EBUSY;
 			goto err_out;
 		} else {
 			adc->trigger = trigger;
-			if (trigger == adc->convst_trigger)
-				convst = ADC_CONFIG3_REG_ADC_SOC;
-			else
-				convst = 0;
+			if (trigger == adc->convst_trigger) {
+				ret = _adc_update_adc_reg(adc, ADC_REG_CONFIG1, ADC_CONFIG1_INTR_DONE_MASK_MASK,
+					0 << ADC_CONFIG1_INTR_DONE_MASK_SHIFT);
+				if (ret)
+					goto err_out;
+			}
 		}
-
-		ret = _adc_update_adc_reg(adc, ADC_REG_CONFIG3,
-					ADC_CONFIG3_REG_ADC_SOC_MASK, convst);
-		if (ret)
-			goto err_out;
 	} else {
 		adc->trigger = NULL;
+		ret = _adc_update_adc_reg(adc, ADC_REG_CONFIG1, ADC_CONFIG1_INTR_DONE_MASK_MASK,
+				 1 << ADC_CONFIG1_INTR_DONE_MASK_SHIFT);
+		if (ret)
+			goto err_out;
 	}
 
 err_out:
@@ -556,6 +578,9 @@ static int adc_postdisable(struct iio_dev *indio_dev)
 	struct adc *adc = iio_priv(indio_dev);
 	int ret;
 
+	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_REG_ADC_SOC_MASK,
+		 0 << ADC_CONFIG3_REG_SOC_SHIFT);
+
 	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_MODE_SEL_MASK,
 		ADC_CONFIG3_CONV_MODE_SINGELE_PASS);
 	if (ret)
@@ -571,6 +596,10 @@ static int adc_preenable(struct iio_dev *indio_dev)
 
  	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_MODE_SEL_MASK,
  		ADC_CONFIG3_CONV_MODE_CONTINUOUS);
+
+	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_REG_ADC_SOC_MASK,
+		 1 << ADC_CONFIG3_REG_SOC_SHIFT);
+
 	if (ret)
 		goto err;
 
@@ -588,7 +617,9 @@ static const struct iio_buffer_setup_ops adc_buffer_ops = {
 static int adc_read_samplerate(struct adc *adc)
 {
 	unsigned int div;
+	unsigned int pl_adc_clk_src;
 	uint16_t val16;
+	unsigned long pl_adc_clk_rate;
 	int ret;
 
 	ret = adc_read_adc_reg(adc, ADC_REG_CONFIG2, &val16);
@@ -602,7 +633,16 @@ static int adc_read_samplerate(struct adc *adc)
 	else
 		div = 2 * div;
 
-	return adc_get_dclk_rate(adc) / div / ( adc->resolution + 2);
+	pl_adc_clk_src = (val16 & ADC_CONFIG2_ADC_CLK_SEL_MASK) >> ADC_CONFIG2_CLK_SEL_SHIFT;
+
+	if (pl_adc_clk_src == 0)
+		pl_adc_clk_rate = 44000000;
+	else if (pl_adc_clk_src == 1)
+		pl_adc_clk_rate = 50000000;
+	else
+		pl_adc_clk_rate = 70000000;
+
+	return pl_adc_clk_rate / div / (adc->resolution + 2);
 }
 
 static int adc_read_raw(struct iio_dev *indio_dev,
@@ -618,16 +658,30 @@ static int adc_read_raw(struct iio_dev *indio_dev,
 		if (iio_buffer_enabled(indio_dev))
 			return -EBUSY;
 
+		/* Enable interrupt for PL-ADC conversion done */
+		adc_update_adc_reg(adc, ADC_REG_CONFIG1, ADC_CONFIG1_INTR_DONE_MASK_MASK, 0);
+
+		/* start conversion */
 		adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_REG_ADC_SOC_MASK,
-				ADC_CONFIG3_REG_ADC_SOC);
+				1 << ADC_CONFIG3_REG_SOC_SHIFT);
+
+		/* wait for PL-ADC conversion done */
 		do {
 			adc_read_adc_reg(adc, ADC_REG_CONFIG1, &flag);
 		} while (!(flag & ADC_CONFIG1_INTR_DONE));
+
+		ret = adc_read_adc_reg(adc, chan->address, &val16);
+
+		/* clear interrupt for PL-ADC conversion done */
 		adc_update_adc_reg(adc, ADC_REG_CONFIG1, ADC_CONFIG1_INTR_DONE_MASK,
 			ADC_CONFIG1_INTR_DONE_MASK);
-		ret = adc_read_adc_reg(adc, chan->address, &val16);
+
+		/* stop conversion */
 		adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_REG_ADC_SOC_MASK,
 				0 << ADC_CONFIG3_REG_SOC_SHIFT);
+
+		/* Disable interrupt for PL-ADC conversion done */
+		adc_update_adc_reg(adc, ADC_REG_CONFIG1, ADC_CONFIG1_INTR_DONE_MASK_MASK, 1);
 
 		if (ret < 0)
 			return ret;
@@ -696,6 +750,7 @@ static int adc_write_raw(struct iio_dev *indio_dev,
 
 static const struct of_device_id adc_of_match_table[] = {
 	{ .compatible = "anlogic,fpsoc-adc-1.00.a", (void *)&adc_fpsoc_ops },
+	{ .compatible = "anlogic,axi-adc-1.00.a", (void *)&adc_axi_ops },
 };
 MODULE_DEVICE_TABLE(of, adc_of_match_table);
 
@@ -839,7 +894,7 @@ static int adc_parse_dt_chan(struct iio_dev *indio_dev, struct device_node *np,
 		return -ENOMEM;
 
 	num_channels = 0;
-	chan = &channels[8];
+	chan = &channels[0];
 
 	chan_node = of_get_child_by_name(np, "anlogic,channels");
 	if (chan_node) {
@@ -919,6 +974,12 @@ static int adc_probe(struct platform_device *pdev)
 	if (IS_ERR(adc->base))
 		return PTR_ERR(adc->base);
 
+	if (adc->ops->flags & ADC_FLAGS_BUFFERED) {
+		adc->gp_base = devm_platform_ioremap_resource(pdev, 1);
+		if (IS_ERR(adc->gp_base))
+			return PTR_ERR(adc->gp_base);
+	}
+
 	indio_dev->name = "adc";
 	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->info = &adc_info;
@@ -946,23 +1007,17 @@ static int adc_probe(struct platform_device *pdev)
 			ret = PTR_ERR(adc->convst_trigger);
 			goto err_triggered_buffer_cleanup;
 		}
-		adc->samplerate_trigger = adc_alloc_trigger(indio_dev,
-			"samplerate");
-		if (IS_ERR(adc->samplerate_trigger)) {
-			ret = PTR_ERR(adc->samplerate_trigger);
-			goto err_free_convst_trigger;
-		}
 	}
 
 	adc->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(adc->clk)) {
 		ret = PTR_ERR(adc->clk);
-		goto err_free_samplerate_trigger;
+		goto err_free_convst_trigger;
 	}
 
 	ret = clk_prepare_enable(adc->clk);
 	if (ret)
-		goto err_free_samplerate_trigger;
+		goto err_free_convst_trigger;
 
 	ret = request_irq(adc->irq, adc->ops->interrupt_handler, 0,
 			dev_name(&pdev->dev), indio_dev);
@@ -973,6 +1028,15 @@ static int adc_probe(struct platform_device *pdev)
 	if (ret)
 		goto err_free_irq;
 
+
+	/* Reset PL-ADC*/
+	adc_write_adc_reg(adc, ADC_REG_CONFIG0, 1);
+	adc_write_adc_reg(adc, ADC_REG_CONFIG0, 0);
+
+	/* Select PL-ADC clock source*/
+	adc_update_adc_reg(adc, ADC_REG_CONFIG2, ADC_CONFIG2_ADC_CLK_SEL_MASK,
+				ADC_CONFIG2_ADC_CLK_SEL_PS);
+
 	/*
 	 * Make sure not to exceed the maximum samplerate since otherwise the
 	 * resulting interrupt storm will soft-lock the system.
@@ -980,17 +1044,13 @@ static int adc_probe(struct platform_device *pdev)
 	if (adc->ops->flags & ADC_FLAGS_BUFFERED) {
 		ret = adc_read_samplerate(adc);
 		if (ret < 0)
-			goto err_free_samplerate_trigger;
+			goto err_free_convst_trigger;
 		if (ret > ADC_MAX_SAMPLERATE) {
 			ret = adc_write_samplerate(adc, ADC_MAX_SAMPLERATE);
 			if (ret < 0)
-				goto err_free_samplerate_trigger;
+				goto err_free_convst_trigger;
 		}
 	}
-
-	/* Reset PL-ADC*/
-	adc_write_adc_reg(adc, ADC_REG_CONFIG0, 1);
-	adc_write_adc_reg(adc, ADC_REG_CONFIG0, 0);
 
 	ret = adc_write_adc_reg(adc, ADC_REG_CONFIG0, config0);
 
@@ -1006,9 +1066,6 @@ static int adc_probe(struct platform_device *pdev)
 	/* Set the conversion channel */
 	adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_CHANNEL_SEL_MASK,
 				(indio_dev->num_channels - 1) << ADC_CONFIG3_CHANNEL_SEL_SHIFT);
-
-	/* Enable PL-ADC conversion done interrupt*/
-	adc_update_adc_reg(adc, ADC_REG_CONFIG1, ADC_CONFIG1_INTR_DONE_MASK_MASK, 0);
 
 	/* Enable PL-ADC*/
 	adc_update_adc_reg(adc, ADC_REG_CONFIG2, ADC_CONFIG2_REG_ADC_ENABLE_MASK,
@@ -1030,9 +1087,6 @@ err_free_irq:
 	cancel_delayed_work_sync(&adc->fpsoc_unmask_work);
 err_clk_disable_unprepare:
 	clk_disable_unprepare(adc->clk);
-err_free_samplerate_trigger:
-	if (adc->ops->flags & ADC_FLAGS_BUFFERED)
-		iio_trigger_free(adc->samplerate_trigger);
 err_free_convst_trigger:
 	if (adc->ops->flags & ADC_FLAGS_BUFFERED)
 		iio_trigger_free(adc->convst_trigger);
