@@ -38,7 +38,6 @@
 #define ULITE_TX		0x04
 
 #define ULITE_STATUS		0x0c
-
 #define ULITE_REGION		16
 
 #define ULITE_STATUS_RXVALID	0x01 //0:rx fifo is empty      1:rx fifo has valid data
@@ -115,11 +114,7 @@ static inline u32 uart_in32(u32 offset, struct uart_port *port)
 
 static inline void uart_out32(u32 val, u32 offset, struct uart_port *port)
 {
-	u32 data = 0;
-	u32 stat = 0;
 	struct uartlite_data *pdata = port->private_data;
-	stat = uart_in32(ULITE_STATUS, port);
-	while((stat & 0x4) != 0);//tx_done
 	pdata->reg_ops->out(val, port->membase + offset);
 }
 
@@ -139,7 +134,6 @@ static int ulite_receive(struct uart_port *port, int stat)
 
 	port->icount.rx++;
 	ch = uart_in32(ULITE_RX, port);
-	
 	port->icount.parity++;
 	flag = TTY_PARITY;
 	tty_insert_flip_char(tport, ch, flag);
@@ -175,7 +169,7 @@ static int ulite_transmit(struct uart_port *port, int stat)
 static irqreturn_t ulite_isr(int irq, void *dev_id)
 {
 	struct uart_port *port = dev_id;
-	int stat, busy, n = 0;
+	int stat, busy = 0, n = 0;
 	unsigned long flags;
 
 	int rx_intr_flag = 0x40;
@@ -183,8 +177,8 @@ static irqreturn_t ulite_isr(int irq, void *dev_id)
 
 	do {
 		spin_lock_irqsave(&port->lock, flags);
-		stat = uart_in32(ULITE_STATUS, port);
 
+		stat = uart_in32(ULITE_STATUS, port);
 		if(stat & rx_intr_flag)
 		{
 			stat &= ~rx_intr_flag;
@@ -207,9 +201,6 @@ static irqreturn_t ulite_isr(int irq, void *dev_id)
 
 static unsigned int ulite_tx_empty(struct uart_port *port)
 {
-	unsigned long flags;
-	unsigned int ret;
-
 	return TIOCSER_TEMT;
 }
 
@@ -264,9 +255,6 @@ static int ulite_startup(struct uart_port *port)
 	//enable intr
 	uart_out32(uart_in32(ULITE_STATUS, port) & ~0x80, ULITE_STATUS, port); // 0:disable 
 	uart_out32(uart_in32(ULITE_STATUS, port) | 0x80, ULITE_STATUS, port); // 1:enable
-
-	//disable tx/rx intr
-
 
 	return 0;
 }
@@ -333,7 +321,6 @@ static void ulite_release_port(struct uart_port *port)
 static int ulite_request_port(struct uart_port *port)
 {
 	struct uartlite_data *pdata = port->private_data;
-	int ret;
 
 	if (!request_mem_region(port->mapbase, ULITE_REGION, "uartlite")) {
 		dev_err(port->dev, "Memory region busy\n");
@@ -458,10 +445,16 @@ static void ulite_console_write(struct console *co, const char *s,
 		spin_lock_irqsave(&port->lock, flags);
 
 	/* save and disable interrupt */
+	//ier = uart_in32(ULITE_STATUS, port) & ULITE_STATUS_IE;
+	//uart_out32(0, ULITE_CONTROL, port);
 
 	uart_console_write(port, s, count, ulite_console_putchar);
 
 	ulite_console_wait_tx(port);
+
+	/* restore interrupt state */
+	//if (ier)
+	//	uart_out32(ULITE_CONTROL_IE, ULITE_CONTROL, port);
 
 	if (locked)
 		spin_unlock_irqrestore(&port->lock, flags);
