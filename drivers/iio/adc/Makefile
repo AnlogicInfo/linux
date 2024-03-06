@@ -120,3 +120,6 @@ xilinx-xadc-y := xilinx-xadc-core.o xilinx-xadc-events.o
 obj-$(CONFIG_XILINX_XADC) += xilinx-xadc.o
 obj-$(CONFIG_XILINX_AMS) += xilinx-ams.o
 obj-$(CONFIG_SD_ADC_MODULATOR) += sd_adc_modulator.o
+anlogic-adc-y := anlogic-adc-core.o
+obj-$(CONFIG_ANLOGIC_ADC) += anlogic-adc.o
+
