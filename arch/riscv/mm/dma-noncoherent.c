@@ -37,12 +37,16 @@ typedef enum CCM_CMD {
 /* CCM DCache Operation */
 void ccm_dcache_op(CCM_CMD_Type op, void* va, size_t size, unsigned int block_size)
 {
-	size_t start = 0;
+	ulong start, end;
+	start = (ulong)va;
+	end = start + size;
+	start &= ~(ulong)(block_size - 1);
 	// set s-mode operation address ccm_sbeginaddr
-	csr_write(0x5cb, va);
-	for (start = 0; start < size; start += block_size) {
+	csr_write(0x5cb, start);
+	while (start < end) {
 		// set s-mode ccm operation command
 		csr_write(0x5cc, op);
+		start += block_size;
 	}
 }
 
@@ -105,7 +109,7 @@ void arch_sync_dma_for_device(phys_addr_t paddr, size_t size,
 		break;
 	case DMA_FROM_DEVICE:
 #ifdef CONFIG_ERRATA_ANLOGIC_CCM
-		ccm_dcache_op(CCM_DC_INVAL, vaddr, size, riscv_cbom_block_size);
+		ccm_dcache_op(CCM_DC_WB, vaddr, size, riscv_cbom_block_size);
 #else
 		ALT_CMO_OP(clean, vaddr, size, riscv_cbom_block_size);
 #endif
@@ -133,7 +137,7 @@ void arch_sync_dma_for_cpu(phys_addr_t paddr, size_t size,
 	case DMA_FROM_DEVICE:
 	case DMA_BIDIRECTIONAL:
 #ifdef CONFIG_ERRATA_ANLOGIC_CCM
-		ccm_dcache_op(CCM_DC_INVAL, vaddr, size, riscv_cbom_block_size);
+		ccm_dcache_op(CCM_DC_WBINVAL, vaddr, size, riscv_cbom_block_size);
 #else
 		ALT_CMO_OP(flush, vaddr, size, riscv_cbom_block_size);
 #endif
