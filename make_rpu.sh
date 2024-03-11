@@ -1,11 +1,11 @@
 #defconfig
-#make ARCH=riscv CROSS_COMPILE=../toolchains/riscv/gcc/bin/riscv-nuclei-linux-gnu- anlogic_dr1v90_defconfig
+make ARCH=riscv CROSS_COMPILE=/opt/toolchain/riscv-nuclei-linux-gnu-2020.08/bin/riscv-nuclei-linux-gnu- anlogic_dr1v90_defconfig
 
 #make dtbs
-make ARCH=riscv CROSS_COMPILE=../toolchains/riscv/gcc/bin/riscv-nuclei-linux-gnu- dtbs
+make ARCH=riscv CROSS_COMPILE=/opt/toolchain/riscv-nuclei-linux-gnu-2020.08/bin/riscv-nuclei-linux-gnu- dtbs
 
 #Image
-make ARCH=riscv CROSS_COMPILE=../toolchains/riscv/gcc/bin/riscv-nuclei-linux-gnu- Image -j32
+make ARCH=riscv CROSS_COMPILE=/opt/toolchain/riscv-nuclei-linux-gnu-2020.08/bin/riscv-nuclei-linux-gnu- Image -j32
 
 #gzip
 #gzip -f -9 arch/riscv/boot/Image
