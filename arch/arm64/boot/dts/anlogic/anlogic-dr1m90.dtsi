@@ -6,7 +6,6 @@
 
 / {
 	model = "Anlogic, DR1M90 FPSoc";
-	compatible = "anlogic,dr1m90";
 
 	#address-cells = <2>;
 	#size-cells = <2>;
@@ -360,10 +359,10 @@
 						device_type = "ethernet-phy";
 						reg = <1>;
 				} ;
-				// pl_eth_phy0: phy@0 {
-				// 		 device_type = "ethernet-phy";
-				// 		 reg = <0>;
-				// } ;
+				//pl_eth_phy0: phy@0 {
+				//		device_type = "ethernet-phy";
+				//		reg = <0>;
+				//};
 			};
 		};
 
@@ -482,22 +481,22 @@
 
 
 		/*adc continuous acquisition through the GP port*/
-		// adc:adc@f840b000 {
-		// 	compatible = "anlogic,axi-adc-1.00.a";
-		// 	#address-cells = <2>;
-		// 	#size-cells = <2>;
-		// 	reg = <0x0 0xf840b000 0x0 0x20 0x0 0x80004000 0x0 0x1000>;
-		// 	interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
-		// 	resolution = <12>;
-		// 	anlogic,channels {
-		// 		#address-cells = <1>;
-		// 		#size-cells = <0>;
-		// 		channel@0 {
-		// 			reg = <0>;
-		// 			iomux = <16>;
-		// 		};
-		// 	};
-		// };
+		//adc:adc@f840b000 {
+		//	compatible = "anlogic,axi-adc-1.00.a";
+		//	#address-cells = <2>;
+		//	#size-cells = <2>;
+		//	reg = <0x0 0xf840b000 0x0 0x20 0x0 0x80004000 0x0 0x1000>;
+		//	interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
+		//	resolution = <12>;
+		//	anlogic,channels {
+		//		#address-cells = <1>;
+		//		#size-cells = <0>;
+		//		channel@0 {
+		//			reg = <0>;
+		//			iomux = <16>;
+		//		};
+		//	};
+		//};
 
 	};
 };
