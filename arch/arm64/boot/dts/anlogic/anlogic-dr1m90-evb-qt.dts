@@ -410,3 +410,4 @@
 	g-use-dma;
 	status = "okay";
 };
+

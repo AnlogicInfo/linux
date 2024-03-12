@@ -6,7 +6,6 @@
 
 / {
 	model = "Anlogic, DR1M90 FPSoc";
-	compatible = "anlogic,dr1m90";
 
 	#address-cells = <2>;
 	#size-cells = <2>;

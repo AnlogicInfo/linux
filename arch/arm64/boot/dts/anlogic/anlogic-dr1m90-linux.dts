@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
 /dts-v1/;
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
@@ -6,7 +8,6 @@
 
 / {
 	model = "Anlogic, DR1M90 FPSoc";
-	compatible = "anlogic,dr1m90";
 
 	#address-cells = <2>;
 	#size-cells = <2>;
@@ -159,9 +160,9 @@
 	timer: timer {
 		compatible = "arm,armv8-timer";
 		interrupts = <GIC_PPI 13 IRQ_TYPE_LEVEL_LOW>,
-		             <GIC_PPI 14 IRQ_TYPE_LEVEL_LOW>,
-		             <GIC_PPI 11 IRQ_TYPE_LEVEL_LOW>,
-		             <GIC_PPI 10 IRQ_TYPE_LEVEL_LOW>;
+			     <GIC_PPI 14 IRQ_TYPE_LEVEL_LOW>,
+			     <GIC_PPI 11 IRQ_TYPE_LEVEL_LOW>,
+			     <GIC_PPI 10 IRQ_TYPE_LEVEL_LOW>;
 
 #ifdef FPGA_SIMULATION
 		clock-frequency = <50000000>;
@@ -207,7 +208,7 @@
 #endif
 			status = "okay";
 		};
-		/*
+#if 0
 		uart1: serial@0xF8401000 {
 			compatible = "snps,dw-apb-uart";
 			reg = <0xF8401000 0x1000>;
@@ -222,7 +223,7 @@
 #endif
 			status = "okay";
 		};
-		*/
+#endif
 		i2c0: i2c0@f8414000 {
 			compatible = "snps,designware-i2c";
 			interrupts = <GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>;
@@ -375,9 +376,9 @@
 			spi-rx-bus-width = <4>;
 			spi-max-frequency = <2500000>;
 		};
-		/*num-cs = <2>;
-		cs-gpios = <&gpio0 13 0>,
-		<&gpio0 14 0>;*/
+		//num-cs = <2>;
+		//cs-gpios = <&gpio0 13 0>,
+		//<&gpio0 14 0>;
 	};
 
 	spi0: spi@f8404000 {
@@ -401,16 +402,16 @@
 		num-cs = <1>;
 		status = "disabled";
 
-		// flash1: flash@0 {
-		// 	compatible = "jedec,spi-nor";
-		// 	reg = <0x0>;
-		// 	spi-tx-bus-width = <1>;
-		// 	spi-rx-bus-width = <1>;
-		// 	spi-max-frequency = <2500000>;
-		// };
-		/*num-cs = <2>;
-		cs-gpios = <&gpio0 13 0>,
-		<&gpio0 14 0>;*/
+		//flash1: flash@0 {
+		//	compatible = "jedec,spi-nor";
+		//	reg = <0x0>;
+		//	spi-tx-bus-width = <1>;
+		//	spi-rx-bus-width = <1>;
+		//	spi-max-frequency = <2500000>;
+		//};
+		//num-cs = <2>;
+		//cs-gpios = <&gpio0 13 0>,
+		//<&gpio0 14 0>;
 	};
 
 	amba: amba {
@@ -420,12 +421,12 @@
 		interrupt-parent = <&gic>;
 		ranges;
 
-    		dmac: dma-controller@f8419000 {
-            		compatible = "arm,pl330", "arm,primecell";
-            		reg = <0x0 0xf8419000 0x0 0x1000>;
+		dmac: dma-controller@f8419000 {
+			compatible = "arm,pl330", "arm,primecell";
+			reg = <0x0 0xf8419000 0x0 0x1000>;
 			clock-names = "apb_pclk";
 			clocks = <&APB_PCLK>;
-            		interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>,
+			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 39 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>,
@@ -434,11 +435,11 @@
 				     <GIC_SPI 43 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
-            		arm,pl330-periph-burst;
-            		#dma-cells = <1>;
+			arm,pl330-periph-burst;
+			#dma-cells = <1>;
 			#dma-channels = <8>;
 			#dma-requests = <32>;
-    		};
+		};
 
 		smcc: memory-controller@f841a000 {
 			compatible = "pl353-smc", "arm,primecell";
@@ -528,36 +529,36 @@ eqos0: ethernet0@F8100000 {
 				reg = <0>;
 				reset-assert-us = <10000>;
 				reset-deassert-us = <30000>;
-           };
+	   };
 		};
 	};
 
 	usb_otg0: usb@F8180000 {
-        compatible = "snps,dwc2";
-        reg = <0x0 0xF8180000 0x0 0x40000>;
-        interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
-        //clocks = <&cru HCLK_OTG0>;
-        //clock-names = "otg";
-        dr_mode = "peripheral";
-        //dr_mode = "host";
-        g-np-tx-fifo-size = <32>;
-        g-rx-fifo-size = <768>;
-        g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
-        g-use-dma;
-        //phys = <&usbphy0>;
-        //phy-names = "usb2-phy";
-        //vbus-supply = <&vbus_regulator0>;
-        status = "okay";
-        //status = "disabled";
-    };
+		compatible = "snps,dwc2";
+		reg = <0x0 0xF8180000 0x0 0x40000>;
+		interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+		//clocks = <&cru HCLK_OTG0>;
+		//clock-names = "otg";
+		dr_mode = "peripheral";
+		//dr_mode = "host";
+		g-np-tx-fifo-size = <32>;
+		g-rx-fifo-size = <768>;
+		g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
+		g-use-dma;
+		//phys = <&usbphy0>;
+		//phy-names = "usb2-phy";
+		//vbus-supply = <&vbus_regulator0>;
+		status = "okay";
+		//status = "disabled";
+	};
 
 	ipmscan1: can@0xF8409000 {
-        compatible = "ipms,canfd";
-        reg = <0x0 0xF8409000 0x0 0x1000>;
-        interrupts = <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>;
-        clocks = <&CAN_CLK>;
+		compatible = "ipms,canfd";
+		reg = <0x0 0xF8409000 0x0 0x1000>;
+		interrupts = <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&CAN_CLK>;
 		clock-names = "ipms_can_clk";
-    };
+	};
 
 	sdhci0: mmc@f8049000 {
 		compatible = "snps,dwcmshc-sdhci";
@@ -578,46 +579,46 @@ eqos0: ethernet0@F8100000 {
 		status = "okay";
 	};
 
-/*
+#if 0
 	usb_otg0: usb@F8180000 {
-        compatible = "snps,dwc2";
-        #address-cells = <2>;
-        #size-cells = <2>;
-        reg = <0x0 0xF8180000 0x0 0x40000>;
-        interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
-        //clocks = <&cru HCLK_OTG0>;
-        //clock-names = "otg";
-        //dr_mode = "peripheral";
-        dr_mode = "host";
-        g-np-tx-fifo-size = <32>;
-        g-rx-fifo-size = <768>;
-        g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
-        g-use-dma;
-        //phys = <&usbphy0>;
-        //phy-names = "usb2-phy";
-        //vbus-supply = <&vbus_regulator0>;
-        status = "okay";
-        //status = "disabled";
-    };
-*/
-/*
+		compatible = "snps,dwc2";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		reg = <0x0 0xF8180000 0x0 0x40000>;
+		interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+		//clocks = <&cru HCLK_OTG0>;
+		//clock-names = "otg";
+		//dr_mode = "peripheral";
+		dr_mode = "host";
+		g-np-tx-fifo-size = <32>;
+		g-rx-fifo-size = <768>;
+		g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
+		g-use-dma;
+		//phys = <&usbphy0>;
+		//phy-names = "usb2-phy";
+		//vbus-supply = <&vbus_regulator0>;
+		status = "okay";
+		//status = "disabled";
+	};
+
 	usb_otg0: usb@F8180000 {
-        compatible = "snps,dwc2";
-        reg = <0x0 0xF8180000 0x0 0x40000>;
-        interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
-        //clocks = <&cru HCLK_OTG0>;
-        //clock-names = "otg";
-        //dr_mode = "peripheral";
-        dr_mode = "host";
-        g-np-tx-fifo-size = <32>;
-        g-rx-fifo-size = <768>;
-        g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
-        g-use-dma;
-        //phys = <&usbphy0>;
-        //phy-names = "usb2-phy";
-        //vbus-supply = <&vbus_regulator0>;
-        status = "okay";
-        //status = "disabled";
-    };
-*/
+		compatible = "snps,dwc2";
+		reg = <0x0 0xF8180000 0x0 0x40000>;
+		interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+		//clocks = <&cru HCLK_OTG0>;
+		//clock-names = "otg";
+		//dr_mode = "peripheral";
+		dr_mode = "host";
+		g-np-tx-fifo-size = <32>;
+		g-rx-fifo-size = <768>;
+		g-tx-fifo-size = <512 512 512 32 16 16 16 16 16 16 16 16 16 16 16>;
+		g-use-dma;
+		//phys = <&usbphy0>;
+		//phy-names = "usb2-phy";
+		//vbus-supply = <&vbus_regulator0>;
+		status = "okay";
+		//status = "disabled";
+	};
+#endif
 };
+

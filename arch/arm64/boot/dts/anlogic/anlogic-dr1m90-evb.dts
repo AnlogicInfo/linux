@@ -1,10 +1,11 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
 /dts-v1/;
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 
 / {
 	model = "Anlogic, DR1M90 FPSoc";
-	compatible = "anlogic,dr1m90";
 
 	#address-cells = <2>;
 	#size-cells = <2>;
@@ -222,21 +223,21 @@
 
 	/*adc continuous acquisition through the GP port*/
 	// adc:adc@f840b000 {
-	// 	compatible = "anlogic,axi-adc-1.00.a";
-	// 	#address-cells = <2>;
-	// 	#size-cells = <2>;
-	// 	reg = <0x0 0xf840b000 0x0 0x20 0x0 0x80004000 0x0 0x1000>;
-	// 	interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
-	// 	clocks = <&ADC_CLK>;
-	// 	resolution = <12>;
-	// 	anlogic,channels {
-	// 		#address-cells = <1>;
-	// 		#size-cells = <0>;
-	// 		channel@0 {
-	// 			reg = <0>;
-	// 			iomux = <16>;
-	// 		};
-	// 	};
+	//	compatible = "anlogic,axi-adc-1.00.a";
+	//	#address-cells = <2>;
+	//	#size-cells = <2>;
+	//	reg = <0x0 0xf840b000 0x0 0x20 0x0 0x80004000 0x0 0x1000>;
+	//	interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
+	//	clocks = <&ADC_CLK>;
+	//	resolution = <12>;
+	//	anlogic,channels {
+	//		#address-cells = <1>;
+	//		#size-cells = <0>;
+	//		channel@0 {
+	//			reg = <0>;
+	//			iomux = <16>;
+	//		};
+	//	};
 	// };
 
 
@@ -328,13 +329,13 @@
 					#size-cells = <0>;
 					reg = <2>;
 					/*
-					* IIC_EEPROM 1kB memory which uses 256B blocks
-					* where every block has different address.
-					*    0 - 256B address 0x54
-					* 256B - 512B address 0x55
-					* 512B - 768B address 0x56
-					* 768B - 1024B address 0x57
-					*/
+					 * IIC_EEPROM 1kB memory which uses 256B blocks
+					 * where every block has different address.
+					 *    0 - 256B address 0x54
+					 * 256B - 512B address 0x55
+					 * 512B - 768B address 0x56
+					 * 768B - 1024B address 0x57
+					 */
 					m24c08: eeprom@54 {
 						compatible = "atmel,24c08";
 						reg = <0x54>;
@@ -552,9 +553,9 @@
 			spi-rx-bus-width = <4>;
 			spi-max-frequency = <2500000>;
 		};
-		/*num-cs = <2>;
-		cs-gpios = <&gpio0 13 0>,
-		<&gpio0 14 0>;*/
+		//num-cs = <2>;
+		//cs-gpios = <&gpio0 13 0>,
+		//<&gpio0 14 0>;
 	};
 
 	spi0: spi@f8404000 {
@@ -578,16 +579,16 @@
 		num-cs = <1>;
 		status = "disabled";
 
-		// flash1: flash@0 {
-		// 	compatible = "jedec,spi-nor";
-		// 	reg = <0x0>;
-		// 	spi-tx-bus-width = <1>;
-		// 	spi-rx-bus-width = <1>;
-		// 	spi-max-frequency = <2500000>;
-		// };
-		/*num-cs = <2>;
-		cs-gpios = <&gpio0 13 0>,
-		<&gpio0 14 0>;*/
+		//flash1: flash@0 {
+		//	compatible = "jedec,spi-nor";
+		//	reg = <0x0>;
+		//	spi-tx-bus-width = <1>;
+		//	spi-rx-bus-width = <1>;
+		//	spi-max-frequency = <2500000>;
+		//};
+		//num-cs = <2>;
+		//cs-gpios = <&gpio0 13 0>,
+		//<&gpio0 14 0>;
 	};
 
 	amba: amba {
@@ -765,7 +766,7 @@
 		status = "okay";
 	};
 
-/*
+#if 0
 	usb_otg0: usb@F8180000 {
 		compatible = "snps,dwc2";
 		#address-cells = <2>;
@@ -786,8 +787,7 @@
 		status = "okay";
 		//status = "disabled";
 	};
-*/
-/*
+
 	usb_otg0: usb@F8180000 {
 		compatible = "snps,dwc2";
 		reg = <0x0 0xF8180000 0x0 0x40000>;
@@ -806,5 +806,6 @@
 		status = "okay";
 		//status = "disabled";
 	};
-*/
+#endif
 };
+
