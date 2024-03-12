@@ -5,7 +5,6 @@
 / {
 	#address-cells = <2>;
 	#size-cells = <2>;
-	compatible = "Anlogic, DR1V90 FPSoc";
 	model = "anlogic,dr1v90";
 
 	cpus: cpus {
