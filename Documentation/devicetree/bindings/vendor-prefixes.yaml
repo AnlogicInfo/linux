@@ -109,6 +109,8 @@ patternProperties:
     description: Anbernic
   "^andestech,.*":
     description: Andes Technology Corporation
+  "^anlogic,.*":
+    description: Anlogic, Inc.
   "^anvo,.*":
     description: Anvo-Systems Dresden GmbH
   "^apm,.*":
