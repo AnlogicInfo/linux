@@ -4,7 +4,7 @@
 #include "anlogic-dr1m90.dtsi"
 
 / {
-	aliases {
+ 	aliases {
 		uart0 = &serial1;
 		eqos0 = &eqos0;
 		ethernet0 = &eqos0;
