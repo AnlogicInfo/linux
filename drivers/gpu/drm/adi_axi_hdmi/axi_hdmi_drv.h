@@ -1,8 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Analog Devices AXI HDMI DRM driver.
  *
  * Copyright 2012 Analog Devices Inc.
- *  Author: Lars-Peter Clausen <lars@metafoo.de>
+ * Author: Lars-Peter Clausen <lars@metafoo.de>
  *
  * Licensed under the GPL-2.
  */

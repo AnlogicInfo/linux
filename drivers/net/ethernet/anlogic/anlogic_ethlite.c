@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-/* Anlogic EthLite Linux driver for the Anlogic Ethernet MAC Lite device.
+/*
+ * Anlogic EthLite Linux driver for the Anlogic Ethernet MAC Lite device.
  *
  * Copyright (C) 2023 Anlogic, Inc.
  *
