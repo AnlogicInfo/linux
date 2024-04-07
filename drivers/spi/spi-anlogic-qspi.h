@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+/*
+ * Copyright (C) 2023 Anlogic, Inc.
+ */
 #ifndef AL_QSPI_HEADER_H
 #define AL_QSPI_HEADER_H
 
