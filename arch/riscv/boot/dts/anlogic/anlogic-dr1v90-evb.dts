@@ -30,6 +30,14 @@
 			linux,dma-default;
 		};
 
+		linux,cma {
+			compatible = "shared-dma-pool";
+			alloc-ranges = <0x0 0x00000000 0x0 0xffffffff>;
+			reusable;
+			alignment = <0x0 0x400000>;
+			size = <0x0 0x10000000>;
+			linux,cma-default;
+		};
 	};
 
 	memory@0 {
