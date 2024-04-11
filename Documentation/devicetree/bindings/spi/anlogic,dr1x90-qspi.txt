@@ -1,0 +1,24 @@
+Spi bindings
+
+Required properties:
+- compatible: should be "anlogic,dr1x90-qspi"
+- reg:  Offset and length of the register set for the device
+- interrupts: Interrupt specifier for the controllers interrupt.
+- clocks:clocks for this module
+
+Optional properties:
+- num-cs: Number of chip selects used.
+
+Example:
+
+	qspi: spi@f804e000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "anlogic,dr1x90-qspi";
+		reg = <0xf804e000 0x1000>;
+		interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&qspi_m_clk>;
+		rx-sample-delay = <0>;
+		num-cs = <1>;
+		status = "okay";
+	};

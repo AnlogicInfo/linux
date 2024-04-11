@@ -1,0 +1,18 @@
+Fpga-mgr bindings
+
+Required properties:
+- compatible: should be "anlogic,dr1m90-pcap-fpga"
+- reg: physical base address of the controller and length of memory mapped region.
+
+description: |
+  Device Tree Bindings for Anlogic Dr1m90.
+  The Anlogic SoC uses the PCAP (Processor Configuration Port) to
+  configure the Programmable Logic (PL). The configuration uses the
+  firmware interface
+
+Example:
+
+	fpga: fpga-mgr@F8082000 {
+		compatible = "anlogic,dr1m90-pcap-fpga";
+		reg = <0x00 0xF8801000 0x00 0x1000>;
+	};

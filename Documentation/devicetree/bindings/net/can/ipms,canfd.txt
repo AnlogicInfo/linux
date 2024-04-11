@@ -1,0 +1,17 @@
+Anlogic can  bindings
+
+Required properties:
+- compatible: should be "ipms,canfd"
+- reg: physical base address of the controller and length of memory mapped region.
+- interrupts: Interrupt specifier for the controllers interrupt.
+
+
+Example:
+
+	ipmscan0: can@0xF8408000 {
+		compatible = "ipms,canfd";
+		reg = <0x0 0xF8408000 0x0 0x1000>;
+		interrupt-parent = <&plic0>;
+		interrupts = <73>;
+
+	};

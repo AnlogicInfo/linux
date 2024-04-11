@@ -1,0 +1,19 @@
+Anlogic remoteproc bindings
+
+Required properties:
+- compatible: should be "anlogic,dragon_remoteproc"
+- memory-region:        phandle to the reserved memory node to be associated
+                        with the remoteproc device. The reserved memory node
+                        can be a CMA memory node.
+
+
+Example:
+	&soc {
+		remoteproc0: remoteproc@0 {
+			compatible = "anlogic,dragon_remoteproc";
+			firmware = "firmware";
+			vring0 = <15>;
+			vring1 = <14>;
+			memory-region = <&rproc_0_reserved>, <&vdev0vring0>, <&vdev0vring1>, <&vdev0buffer>;
+		};
+	};

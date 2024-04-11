@@ -1,0 +1,15 @@
+Anlogic soft_npu  bindings
+
+Required properties:
+- compatible: should be "anlogic,soft_npu"
+- reg: Offset and length of the register set for the device
+- interrupts: Interrupt specifier for the controllers interrupt.
+
+
+Example:
+
+soft_npu: soft_npu@91000000 {
+	compatible = "anlogic,soft_npu";
+	reg = <0x0 0x91000000 0x0 0x00100000>;
+	interrupts = <0 97 0x04>;
+};

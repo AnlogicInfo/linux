@@ -1,0 +1,15 @@
+Anlogic hard_npu  bindings
+
+Required properties:
+- compatible: should be "ad,gpio-adnp"
+- reg: Offset and length of the register set for the device
+- interrupts: Interrupt specifier for the controllers interrupt.
+
+
+Example:
+
+hard_npu: hard_npu@63F00000 {
+		compatible = "anlogic,hard_npu";
+		reg = <0x0 0x63F00000 0x0 0x00100000>;
+		interrupts = <0 112 0x04>;
+	};

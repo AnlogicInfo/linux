@@ -1,0 +1,13 @@
+Anlogic spi  bindings
+
+Required properties:
+- compatible: should be "rohm,dh2228fv"
+- reg:Offset of the register set for the device 
+- spi-max-frequency	: Maximum SPI clocking speed of device in Hz
+
+Example:
+	spidev@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+	};
