@@ -1,0 +1,15 @@
+Anlogic jpu  bindings
+
+Required properties:
+- compatible: should be "anlogic,jpu"
+- reg: Offset and length of the register set for the device
+- interrupts: Interrupt specifier for the controllers interrupt.
+
+JPU: JPEG processing unit.
+
+Example:
+jpu: jpu@f8460000 {
+		compatible = "anlogic,jpu";
+		reg = <0x0 0xF8460000 0x0 0x00010000>;
+		interrupts = <0 113 0x04>;
+	};
