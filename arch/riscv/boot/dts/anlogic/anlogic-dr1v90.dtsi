@@ -35,7 +35,7 @@
 			#interrupt-cells = <1>;
 			compatible = "riscv,plic0";
 			interrupt-controller;
-			riscv,ndev = <93>;
+			riscv,ndev = <1024>;
 			interrupts-extended = <&cpu0_intc 11 &cpu0_intc 9>;
 			reg = <0x0 0x6c000000 0x0 0x4000000>;
 		};
