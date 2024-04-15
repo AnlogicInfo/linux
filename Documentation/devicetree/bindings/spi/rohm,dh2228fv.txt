@@ -1,0 +1,15 @@
+Anlogic spi  bindings
+
+Required properties:
+- compatible: should be "rohm,dh2228fv"
+- reg: reg device address.
+- spi-max-frequency: Maximum SPI clocking speed of device in Hz
+
+Rohm, dh2228fv is a digital humidity sensor produced by Rohm Electronics. It is a sensor device used to measure humidity in the air, commonly used in various electronic devices and environmental monitoring systems. In Linux systems, device matching properties are typically used to identify and configure device drivers to ensure that devices can communicate correctly with the operating system.
+
+Example:
+	spidev@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+	};

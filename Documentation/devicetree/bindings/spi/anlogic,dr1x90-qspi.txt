@@ -1,0 +1,29 @@
+Spi bindings
+
+Required properties:
+- compatible: should be "anlogic,dr1x90-qspi"
+- reg: spi/qspi controller memory mapped registers
+- interrupts: Interrupt specifier for the controllers interrupt.
+- clocks: Controller reference clock source
+- rx-sample-delay : Default value of the rx-sample-delay-ns property.
+      This value will be used if the property is not explicitly defined
+      for a SPI slave device.
+
+Optional properties:
+- num-cs: Number of chip selects used.
+
+anlogic Synchronous Serial Interfac
+
+Example:
+
+	qspi: spi@f804e000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "anlogic,dr1x90-qspi";
+		reg = <0xf804e000 0x1000>;
+		interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&qspi_m_clk>;
+		rx-sample-delay = <0>;
+		num-cs = <1>;
+		status = "okay";
+	};

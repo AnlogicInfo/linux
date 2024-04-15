@@ -1,0 +1,30 @@
+Anlogic adc  bindings
+
+Required properties:
+- compatible: should be "anlogic,fpsoc-adc-1.00.a"
+- reg: Offset and length of the register set for the device(adc@f840b000 node in example)
+- reg: Channel number(channel@0 node in example)
+- interrupts: Interrupt specifier for the controllers interrupt.
+- resolution: The resolution of an ADC (Analog-to-Digital Converter).
+  refers to its ability to convert analog signals into digital signals with precision.
+- iomux: Select the iomux corresponding to the channel for data processing.
+
+ADC include a 12bit , 5 Mega sample per second(MSPS) Successive-Approximation ADC , having the resolution selectable between 12/10/8 and 6 bit. The ADC provide several operation modes include Single Channel Mode、Single Pass Mode、Continuous Sequence Mode、External Multiplexer Mode. The ADC also provide various analog input signal types, for example, unipolar and differential. The ADC can access up to 17 external analog input channels include 1x dedicated IO channel and 16x shared IO channels.
+
+Example:
+	adc: adc@f840b000 {
+		compatible = "anlogic,fpsoc-adc-1.00.a";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		reg = <0x0 0xf840b000 0x0 0x20>;
+		interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
+		resolution = <12>;
+		anlogic,channels {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			channel@0 {
+				reg = <0>;
+				iomux = <16>;
+			};
+		};
+	};
