@@ -1,12 +1,16 @@
-Avionic Design N-bit GPIO expander bindings
+Anlogic  Design ethernet expander bindings
 
 Required properties:
 - compatible: should be "anlogic,ethernetlite1.0"
-- reg:Offset and length of the register set for the device 
+- reg: Offset and length of the register set for the device.
 - interrupts: Interrupt specifier for the controllers interrupt.
-- device_type: set to "network".
+- device_type: set to "network".(ethernet@1C0000000 node in example)
+- device_type: set to "xxxphy".(phy@1 node in example)
 - local-mac-address: MAC address assigned to this device
 - phy-handle: Reference to a PHY node connected to this device
+
+
+The Anlogic  Ethernet Subsystem implements a tri-mode (10/100 Mb/s) Ethernet MAC or a 10/100 Mb/s Ethernet MAC. This core supports the use of MII, RGMII, and 100BASE-X interfaces to connect a media access control (MAC) to a Physical-side interface (PHY) chip.
 
 Example:
 	axi_ethernetlite_1: ethernet@1C0000000 {
@@ -21,8 +25,8 @@ Example:
 			#address-cells = <1>;
 			#size-cells = <0>;
 			pl_eth_phy0: phy@1 {
-				device_type = "ethernet-phy";
-				reg = <1>;
+					device_type = "ethernet-phy";
+					reg = <1>;
 			} ;
 		};
 	};

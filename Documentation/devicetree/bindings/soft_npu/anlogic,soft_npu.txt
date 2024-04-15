@@ -5,6 +5,7 @@ Required properties:
 - reg: Offset and length of the register set for the device
 - interrupts: Interrupt specifier for the controllers interrupt.
 
+softnpu: part of al neural processing unit implemented as soft IP which is extensiblel;
 
 Example:
 

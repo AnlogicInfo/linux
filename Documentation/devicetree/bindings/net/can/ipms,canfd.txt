@@ -5,6 +5,8 @@ Required properties:
 - reg: physical base address of the controller and length of memory mapped region.
 - interrupts: Interrupt specifier for the controllers interrupt.
 
+The Can expander comprises data fields up to 64 bytes,
+extended CRC checksum, and a higher data rate for the payload.
 
 Example:
 

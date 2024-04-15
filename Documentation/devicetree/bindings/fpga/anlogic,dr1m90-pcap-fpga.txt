@@ -5,7 +5,6 @@ Required properties:
 - reg: physical base address of the controller and length of memory mapped region.
 
 description: |
-  Device Tree Bindings for Anlogic Dr1m90.
   The Anlogic SoC uses the PCAP (Processor Configuration Port) to
   configure the Programmable Logic (PL). The configuration uses the
   firmware interface

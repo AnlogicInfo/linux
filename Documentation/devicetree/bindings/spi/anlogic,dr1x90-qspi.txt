@@ -2,12 +2,17 @@ Spi bindings
 
 Required properties:
 - compatible: should be "anlogic,dr1x90-qspi"
-- reg:  Offset and length of the register set for the device
+- reg: spi/qspi controller memory mapped registers
 - interrupts: Interrupt specifier for the controllers interrupt.
-- clocks:clocks for this module
+- clocks: Controller reference clock source
+- rx-sample-delay : Default value of the rx-sample-delay-ns property.
+      This value will be used if the property is not explicitly defined
+      for a SPI slave device.
 
 Optional properties:
 - num-cs: Number of chip selects used.
+
+anlogic Synchronous Serial Interfac
 
 Example:
 

@@ -5,6 +5,7 @@ Required properties:
 - reg: Offset and length of the register set for the device
 - interrupts: Interrupt specifier for the controllers interrupt.
 
+JPU: JPEG processing unit.
 
 Example:
 jpu: jpu@f8460000 {
