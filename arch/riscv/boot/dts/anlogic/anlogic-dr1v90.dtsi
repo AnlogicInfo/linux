@@ -28,7 +28,7 @@
 	soc: soc {
 		#address-cells = <2>;
 		#size-cells = <2>;
-		compatible = "anlogic,dr1v90", "simple-bus";
+		compatible = "simple-bus";
 		ranges;
 
 		plic0: interrupt-controller@6c000000 {
