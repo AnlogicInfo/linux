@@ -17,10 +17,6 @@
 		device_type = "memory";
 		reg = <0x0 0x00000000 0x0 0xfffffff>;
 	};
-
-	console {
-		compatible = "sbi,console";
-	};
 };
 
 &cpus {
