@@ -1,0 +1,48 @@
+Anlogic Design N-bit GPIO expander bindings
+
+Required properties:
+- compatible: should be "snps,dw-apb-anlogic-gpio"(gpio@f8411000 in example)
+- compatible: should be "snps,dw-apb-gpio-port"(gpio-controller@0 in example)
+- reg: Offset and length of the register set for the device
+- reg: Max Ports
+- clocks: DW GPIO debounce reference clock source
+- interrupts: Interrupt specifier for the controllers interrupt.
+- #gpio-cells: Should be 2. The first cell is the GPIO number and the
+  second cell is used to specify optional parameters:
+  - bit 0: polarity (0: normal, 1: inverted)
+- gpio-controller: Marks the device as a GPIO controller.
+- ngpios: The number of GPIO pins exported by the port.
+- interrupts: The interrupts to the parent controller raised when GPIOs generate
+              the interrupts. If the controller provides one combined interrupt
+              for all GPIOs, specify a single interrupt. If the controller provides
+              one interrupt for each GPIO, provide a list of interrupts that
+              correspond to each of the GPIO pins.
+- interrupt-controller : marks this as an interrupt controller
+
+description: |
+  Synopsys DesignWare GPIO controllers have a configurable number of ports,
+  each of which are intended to be represented as child nodes with the generic
+  GPIO-controller properties as desribed in this bindings file.
+
+Example:
+
+gpio: gpio@f8411000 {
+	compatible = "snps,dw-apb-anlogic-gpio";
+	interrupt-parent = <&gic>;
+	reg = <0x0 0xf8411000 0x0 0x1000>;
+	clocks = <&GPIO_CLK>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	bank0: gpio-controller@0 {
+		compatible = "snps,dw-apb-gpio-port";
+		interrupts = <GIC_SPI 52 IRQ_TYPE_LEVEL_HIGH>;
+		reg = <0>;
+		ngpios = <32>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+	};
+};
