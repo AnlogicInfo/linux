@@ -407,21 +407,21 @@
 	};
 
 	hard_npu: hard_npu@63F00000 {
-		compatible = "Anlogic,hard_npu";
+		compatible = "anlogic,hard_npu";
 		reg = <0x0 0x63F00000 0x0 0x00100000>;
 		//interrupts = <0 144 0x04>;
 		interrupts = <0 112 0x04>;
 	};
 
 	soft_npu: soft_npu@91000000 {
-		compatible = "Anlogic,soft_npu";
+		compatible = "anlogic,soft_npu";
 		reg = <0x0 0x91000000 0x0 0x00100000>;
 		//interrupts = <0 129 0x04>;
 		interrupts = <0 97 0x04>;
 	};
 
 	jpu: jpu@f8460000 {
-		compatible = "Anlogic,jpu";
+		compatible = "anlogic,jpu";
 		reg = <0x0 0xF8460000 0x0 0x00010000>;
 		//interrupts = <0 145 0x04>;
 		interrupts = <0 113 0x04>;
