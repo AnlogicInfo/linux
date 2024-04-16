@@ -1,0 +1,31 @@
+Anlogic hdmi  bindings
+
+Required properties:
+- compatible: should be "adi,axi-hdmi-tx-1.00.a"
+- reg: Offset and length of the register set for the device,The address comes from the configuration on the PL side
+- clocks: clocks for this module
+- dmas: DMA specifiers for tx and rx dma. See the DMA client binding
+- dma-names: the corresponding channel name, must be "video"
+- remote-endpoint: A phandle to the bus receiver's endpoint node.
+
+The Hdmi expander can transmit video and audio data, supports a variety of video formats,
+and provides flexible configuration options
+
+
+Example:
+
+axi_hdmi@80500000 {
+	compatible = "adi,axi-hdmi-tx-1.00.a";
+	reg = <0x0 0x80500000 0x0 0x10000>;
+	dmas = <&soft_adi_dma 0>;
+	dma-names = "video";
+	clocks = <&axi_hdmi_clk>, <&axi_hdmi_clk>;
+	status = "disabled";
+
+	port {
+		axi_hdmi_out: endpoint {
+			remote-endpoint = <&adv7511_in>;
+		};
+	};
+};
+

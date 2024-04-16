@@ -1,0 +1,29 @@
+Anlogic Synopsys Designware Watchdog Timer
+
+Required properties:
+- compatible: should be "anlogic,dw-wdt"
+- reg: Two registers need to be configured, the first is the position
+       offset and length of the watchdog controller, and the second is the
+       position offset and length of the top controller.
+- interrupts: DW Watchdog pre-timeout interrupt.
+- clocks: Watchdog timer reference clock.
+
+DW APB Watchdog custom timer intervals - Timeout Period ranges (TOPs).
+Each TOP is a number loaded into the watchdog counter at the moment of
+the timer restart. The counter decrementing happens each tick of the
+reference clock. Therefore the TOPs array is equivalent to an array of
+the timer expiration intervals supported by the DW APB Watchdog. Note
+DW APB Watchdog IP-core might be synthesized with fixed TOP values,
+in which case this property is unnecessary with default TOPs utilized.
+
+Example:
+
+watchdog0:watchdog@f8410000 {
+	compatible = "anlogic,dw-wdt";
+	#address-cells = <2>;
+	#size-cells = <2>;
+	reg = <0x0 0xf8410000 0x0 0x100 0x0 0Xf8800168 0x0 0x20>;
+	interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
+	clocks = <&WDT_CLK>;
+	status = "disabled";
+};
