@@ -87,6 +87,12 @@ static const struct flash_info issi_nor_parts[] = {
 	},
 	{ "pm25lq032",   INFO(0x7f9d46, 0, 64 * 1024,   64)
 		NO_SFDP_FLAGS(SECT_4K) },
+#ifdef CONFIG_ANLOGIC_SOC
+	{ "py25q128", INFO(0x856518, 0, 64 * 1024, 256)
+		FLAGS(SECT_4K | SPI_NOR_DUAL_READ |
+		SPI_NOR_QUAD_READ)
+	},
+#endif
 };
 
 static void issi_nor_default_init(struct spi_nor *nor)
