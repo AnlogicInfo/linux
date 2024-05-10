@@ -1057,13 +1057,11 @@ static void stmmac_mac_link_up(struct phylink_config *config,
 
 	switch (speed) {
 	case SPEED_100:
-		*(volatile unsigned int *)(CFG_CTRL_GBE) = phy->phase_100M;
+		writel(phy->phase_100M, CFG_CTRL_GBE);
 		break;
 	case SPEED_1000:
-		*(volatile unsigned int *)(CFG_CTRL_GBE) = phy->phase_1000M;
+		writel(phy->phase_1000M, CFG_CTRL_GBE);
 		break;
-	default:
-		return;
 	}
 
 	iounmap(CFG_CTRL_GBE);
