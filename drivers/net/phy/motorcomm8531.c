@@ -1628,13 +1628,24 @@ static int yt8531S_config_init(struct phy_device *phydev)
     return ret;
 }
 
+static int yt8531_probe(struct phy_device *phydev)
+{
+#ifdef CONFIG_ANLOGIC_SOC
+	struct device *dev = &phydev->mdio.dev;
+	u32 cfg_ctrl_gbe_phy;
+
+	if (!of_property_read_u32(dev->of_node, "phase-100M", &phydev->phase_100M) &&
+	    !of_property_read_u32(dev->of_node, "phase-1000M", &phydev->phase_1000M) &&
+	    !of_property_read_u32(dev->of_node, "cfg_ctrl_gbe", &cfg_ctrl_gbe_phy))
+		phydev->cfg_ctrl_gbe_phy = devm_ioremap(dev, cfg_ctrl_gbe_phy, 4);
+#endif
+
+	return 0;
+}
+
 static int yt8531_config_init(struct phy_device *phydev)
 {
     int ret = 0, val = 0;
-
-#ifdef CONFIG_ANLOGIC_SOC
-    struct device *dev = &phydev->mdio.dev;
-#endif
 
 #if (YTPHY8531A_XTAL_INIT)
     ret = yt8531a_xtal_init(phydev);
@@ -1649,12 +1660,6 @@ static int yt8531_config_init(struct phy_device *phydev)
 #endif
     if (ret < 0)
         return ret;
-
-#ifdef CONFIG_ANLOGIC_SOC
-    of_property_read_u32(dev->of_node, "phase-100M", &phydev->phase_100M);
-    of_property_read_u32(dev->of_node, "phase-1000M", &phydev->phase_1000M);
-    of_property_read_u32(dev->of_node, "cfg_ctrl_gbe", &phydev->cfg_ctrl_gbe_phy);
-#endif
 
     val = ytphy_read_ext(phydev, 0xf);
     if(0x31 != val && 0x32 != val)
@@ -3079,6 +3084,7 @@ static struct phy_driver ytphy_drvs[] = {
 #else
         .soft_reset    = ytphy_soft_reset,
 #endif
+        .probe         = yt8531_probe,
         .config_init   = yt8531_config_init,
         .read_status   = genphy_read_status,
         .suspend       = genphy_suspend,

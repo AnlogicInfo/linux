@@ -987,9 +987,7 @@ static void stmmac_mac_link_up(struct phylink_config *config,
 {
 	struct stmmac_priv *priv = netdev_priv(to_net_dev(config->dev));
 	u32 old_ctrl, ctrl;
-#ifdef CONFIG_ANLOGIC_SOC
-	static void __iomem *CFG_CTRL_GBE;
-#endif
+
 	old_ctrl = readl(priv->ioaddr + MAC_CTRL_REG);
 	ctrl = old_ctrl & ~priv->hw->link.speed_mask;
 
@@ -1053,18 +1051,18 @@ static void stmmac_mac_link_up(struct phylink_config *config,
 	}
 
 #ifdef CONFIG_ANLOGIC_SOC
-	CFG_CTRL_GBE = ioremap(phy->cfg_ctrl_gbe_phy, 4);
-
-	switch (speed) {
-	case SPEED_100:
-		writel(phy->phase_100M, CFG_CTRL_GBE);
-		break;
-	case SPEED_1000:
-		writel(phy->phase_1000M, CFG_CTRL_GBE);
-		break;
+	if (phy->cfg_ctrl_gbe_phy) {
+		switch (speed) {
+		case SPEED_100:
+			writel(phy->phase_100M, phy->cfg_ctrl_gbe_phy);
+			break;
+		case SPEED_1000:
+			writel(phy->phase_1000M, phy->cfg_ctrl_gbe_phy);
+			break;
+		}
+	} else {
+		dev_warn(&phy->mdio.dev, "no phase setting\n");
 	}
-
-	iounmap(CFG_CTRL_GBE);
 #endif
 
 	priv->speed = speed;

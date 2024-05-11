@@ -98,6 +98,9 @@ static int rtl821x_probe(struct phy_device *phydev)
 	struct rtl821x_priv *priv;
 	u32 phy_id = phydev->drv->phy_id;
 	int ret;
+#ifdef CONFIG_ANLOGIC_SOC
+	u32 cfg_ctrl_gbe_phy;
+#endif
 
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
 	if (!priv)
@@ -123,9 +126,10 @@ static int rtl821x_probe(struct phy_device *phydev)
 	}
 
 #ifdef CONFIG_ANLOGIC_SOC
-	of_property_read_u32(dev->of_node, "phase-100M", &phydev->phase_100M);
-	of_property_read_u32(dev->of_node, "phase-1000M", &phydev->phase_1000M);
-	of_property_read_u32(dev->of_node, "cfg_ctrl_gbe", &phydev->cfg_ctrl_gbe_phy);
+	if (!of_property_read_u32(dev->of_node, "phase-100M", &phydev->phase_100M) &&
+	    !of_property_read_u32(dev->of_node, "phase-1000M", &phydev->phase_1000M) &&
+	    !of_property_read_u32(dev->of_node, "cfg_ctrl_gbe", &cfg_ctrl_gbe_phy))
+		phydev->cfg_ctrl_gbe_phy = devm_ioremap(dev, cfg_ctrl_gbe_phy, 4);
 #endif
 
 	phydev->priv = priv;
