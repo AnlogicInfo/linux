@@ -645,7 +645,7 @@ struct phy_device {
 #endif
 
 #ifdef CONFIG_ANLOGIC_SOC
-	u32 cfg_ctrl_gbe_phy;
+	void __iomem *cfg_ctrl_gbe_phy;
 	u32 phase_100M;
 	u32 phase_1000M;
 #endif
