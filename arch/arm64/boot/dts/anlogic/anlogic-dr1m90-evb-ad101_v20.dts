@@ -46,3 +46,7 @@
 	status = "disabled";
 };
 
+&sdhci1 {
+	status = "okay";
+};
+
