@@ -23,8 +23,9 @@ gd25q256_post_bfpt(struct spi_nor *nor,
 	 *      GD25Q256E      | SFDP_JESD216_MAJOR | SFDP_JESD216B_MINOR
 	 */
 	if (bfpt_header->major == SFDP_JESD216_MAJOR &&
-	    bfpt_header->minor == SFDP_JESD216_MINOR)
+	    bfpt_header->minor == SFDP_JESD216_MINOR) {
 		nor->params->quad_enable = spi_nor_sr1_bit6_quad_enable;
+	}
 
 	return 0;
 }
@@ -68,10 +69,10 @@ static const struct flash_info gigadevice_nor_parts[] = {
 		FIXUP_FLAGS(SPI_NOR_4B_OPCODES)
 		.fixups = &gd25q256_fixups },
 #ifdef CONFIG_ANLOGIC_SOC
-	{"gd25lb256e", INFO(0xc86719, 0, 64 * 1024, 512)
-		FLAGS(SECT_4K)
+	{ "gd25lb256e", INFO(0xc86719, 0, 64 * 1024, 512)
+		NO_SFDP_FLAGS(SECT_4K | SPI_NOR_QUAD_READ)
 		FIXUP_FLAGS(SPI_NOR_4B_OPCODES)
-	},
+		.fixups = &gd25q256_fixups },
 #endif
 };
 
