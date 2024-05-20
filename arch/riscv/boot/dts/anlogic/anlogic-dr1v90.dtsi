@@ -61,6 +61,7 @@
 		fpga_mgr: fpga-mgr@F8082000 {
 			compatible = "anlogic,dr1m90-pcap-fpga";
 			reg = <0x00 0xF8801000 0x00 0x1000>;
+			dma-noncoherent;
 		};
 
 		base_fpga_region {

@@ -25,23 +25,27 @@
 #define DR1M90_FLAG_BIG_ENDIAN			0x01
 
 #if IS_ENABLED(CONFIG_ARCH_RV64I)
-#define ALSIP_FPGA_PROG				(SBI_EXT_VENDOR_START+0)
+#define ALSIP_FPGA_PROG				(SBI_EXT_VENDOR_START + 0)
 #else
-#define ALSIP_FPGA_PROG				(0xFF000000+23)
+#define ALSIP_FPGA_PROG				(0xFF000000 + 23)
 #endif
 #define ALSIP_FPGA_PROG_START			0
 #define ALSIP_FPGA_PROG_LOAD			1
 #define ALSIP_FPGA_PROG_DONE			2
 #define ALSIP_FPGA_PLCLK_RST			3
+#define ALSIP_FPGA_PROG_INIT			4
 
 struct dr1m90_fpga_priv {
 	struct device *dev;
 	void __iomem *crp_cfg;
 	u32 flags;
 	u32 info_flags;
-	struct page *work_pages;
 	u32 *work_buf;
-	int orders;
+	dma_addr_t work_addr;
+	u32 work_size;
+	u32 *init_buf;
+	dma_addr_t init_addr;
+	u32 init_size;
 };
 
 static int dr1m90_fpga_be32(struct fpga_manager *mgr,
@@ -56,9 +60,8 @@ static int dr1m90_fpga_be32(struct fpga_manager *mgr,
 		return -1;
 	}
 
-	for (i = 0, j = 0; (i+4) <= size; i+=4, j++) {
-		out[j] = be32_to_cpu(*(const uint32_t*)&buf[i]);
-	}
+	for (i = 0, j = 0; (i + 4) <= size; i += 4, j++)
+		out[j] = be32_to_cpu(*(const uint32_t *)&buf[i]);
 
 	return 0;
 }
@@ -75,9 +78,8 @@ static int dr1m90_fpga_le32(struct fpga_manager *mgr,
 		return -1;
 	}
 
-	for (i = 0, j = 0; (i+4) <= size; i+=4, j++) {
-		out[j] = le32_to_cpu(*(const uint32_t*)&buf[i]);
-	}
+	for (i = 0, j = 0; (i + 4) <= size; i += 4, j++)
+		out[j] = le32_to_cpu(*(const uint32_t *)&buf[i]);
 
 	return 0;
 }
@@ -88,8 +90,12 @@ static unsigned long invoke_fpga_prog_fn(unsigned long function_id,
 {
 #if IS_ENABLED(CONFIG_ARCH_RV64I)
 	struct sbiret ret = {0};
+
 	ret = sbi_ecall((int)function_id, (int)arg0, arg1, arg2, arg3, 0, 0, 0);
-	return ret.error;
+	if (!ret.error)
+		return ret.value;
+	else
+		return ret.error;
 #else
 	struct arm_smccc_res res;
 
@@ -98,9 +104,19 @@ static unsigned long invoke_fpga_prog_fn(unsigned long function_id,
 #endif
 }
 
+static int dr1m90_fpga_prog_init(struct fpga_manager *mgr, phys_addr_t addr,
+			uint32_t len)
+{
+	unsigned long ret;
+
+	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PROG_INIT, addr, len, 0);
+	return (int)ret;
+}
+
 static int dr1m90_fpga_prog_start(struct fpga_manager *mgr)
 {
 	unsigned long ret;
+
 	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PROG_START, 0, 0, 0);
 	return (int)ret;
 }
@@ -109,6 +125,7 @@ static int dr1m90_fpga_prog_load(struct fpga_manager *mgr, phys_addr_t addr,
 			uint32_t len)
 {
 	unsigned long ret;
+
 	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PROG_LOAD, addr, len, 0);
 	return (int)ret;
 }
@@ -116,6 +133,7 @@ static int dr1m90_fpga_prog_load(struct fpga_manager *mgr, phys_addr_t addr,
 static int dr1m90_fpga_prog_done(struct fpga_manager *mgr, u32 done)
 {
 	unsigned long ret;
+
 	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PROG_DONE, done, 0, 0);
 	return (int)ret;
 }
@@ -123,6 +141,7 @@ static int dr1m90_fpga_prog_done(struct fpga_manager *mgr, u32 done)
 static int dr1m90_fpga_plclk_reset(struct fpga_manager *mgr, u32 reset)
 {
 	unsigned long ret;
+
 	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PLCLK_RST, reset, 0, 0);
 	return (int)ret;
 }
@@ -192,10 +211,11 @@ static int dr1m90_fpga_ops_write(struct fpga_manager *mgr,
 	struct dr1m90_fpga_priv *priv = mgr->priv;
 	const char *p = buf;
 	size_t sz = size, len, work_len, i;
-	int ret = 0;
+	int ret = 0, bitdata = 0;
 
 	//skip header
 	if (!memcmp(buf, dr1m90_bf_hd, strlen(dr1m90_bf_hd))) {
+		bitdata = 1;
 		for (i = 1; i < size; i++) {
 			if (buf[i-1] == 0xa && buf[i] == 0xa) {
 				i++;
@@ -215,16 +235,17 @@ static int dr1m90_fpga_ops_write(struct fpga_manager *mgr,
 		goto prog_fail;
 	}
 
-	work_len = (PAGE_SIZE << priv->orders);
+	work_len = priv->work_size;
 	while (sz > 0) {
 		len = (sz > work_len) ? work_len : sz;
-		if (priv->flags & DR1M90_FLAG_BIG_ENDIAN)
+		if (bitdata && priv->flags & DR1M90_FLAG_BIG_ENDIAN)
 			dr1m90_fpga_be32(mgr, p, len, priv->work_buf);
 		else
 			dr1m90_fpga_le32(mgr, p, len, priv->work_buf);
 
-		if (dr1m90_fpga_prog_load(mgr, page_to_phys(priv->work_pages), len)) {
-			dev_err(priv->dev, "fpga prog load fail\n");
+		ret = dr1m90_fpga_prog_load(mgr, priv->work_addr, len);
+		if (ret) {
+			dev_err(priv->dev, "fpga prog load fail: %d\n", ret);
 			ret = -EIO;
 			goto prog_fail;
 		}
@@ -243,12 +264,15 @@ static int dr1m90_fpga_ops_write_complete(struct fpga_manager *mgr,
 					  struct fpga_image_info *info)
 {
 	struct dr1m90_fpga_priv *priv = mgr->priv;
+	int ret;
 
-	if (dr1m90_fpga_prog_done(mgr, 1)) {
-		dev_err(priv->dev, "fpga prog done fail\n");
+	ret = dr1m90_fpga_prog_done(mgr, 1);
+	if (ret) {
+		dev_err(priv->dev, "fpga prog done fail: %d\n", ret);
 		return -EIO;
 	}
 
+	dev_info(priv->dev, "fpga prog successfully\n");
 	return 0;
 }
 
@@ -279,15 +303,11 @@ static int dr1m90_fpga_probe(struct platform_device *pdev)
 	struct device_node *np = dev->of_node;
 	struct dr1m90_fpga_priv *priv;
 	struct fpga_manager *mgr;
-	struct page **pages;
-	int count, i;
 	int ret;
 
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv) {
-		dev_err(dev, "alloc memory fail\n");
+	if (IS_ERR_OR_NULL(priv))
 		return -ENOMEM;
-	}
 
 	priv->flags = DR1M90_FLAG_BIG_ENDIAN;
 	priv->dev = dev;
@@ -299,54 +319,54 @@ static int dr1m90_fpga_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	priv->orders = get_order(8*PAGE_SIZE);
-	priv->work_pages = alloc_pages(GFP_KERNEL, priv->orders);
-	if (!priv->work_pages) {
-		dev_err(dev, "alloc work buffer fail\n");
+	dma_set_mask_and_coherent(dev, 0xFFFFFFFF);
+	priv->init_size = PAGE_SIZE;
+	priv->init_buf = dma_alloc_coherent(dev, priv->init_size,
+				&priv->init_addr, GFP_KERNEL);
+	if (!priv->init_buf)
 		return -ENOMEM;
-	}
 
-	count = (1 << priv->orders);
-	pages = kmalloc_array(count, sizeof(struct page *), GFP_KERNEL);
-	if (!pages) {
-		ret = -ENOMEM;
-		goto free_workpages;
-	}
-
-	for (i = 0; i < count; i++)
-		pages[i] = nth_page(priv->work_pages, i);
-
-	priv->work_buf = vmap(pages, count, 0, pgprot_noncached(PAGE_KERNEL));
-	kfree(pages);
+	priv->work_size = 8 * PAGE_SIZE;
+	priv->work_buf = dma_alloc_coherent(dev, priv->work_size,
+				&priv->work_addr, GFP_KERNEL);
 	if (!priv->work_buf) {
 		ret = -ENOMEM;
-		goto free_workpages;
+		goto free_initbuf;
 	}
-
 	mgr = devm_fpga_mgr_register(dev, "Anlogic dr1m90 FPGA Manager",
 				   &dr1m90_fpga_ops, priv);
 	if (IS_ERR(mgr)) {
 		ret = PTR_ERR(mgr);
 		dev_err(dev, "register fpga manager fail: %d\n", ret);
-		goto unmap_pages;
+		goto free_workbuf;
 	}
 
 	platform_set_drvdata(pdev, mgr);
+
+	ret = dr1m90_fpga_prog_init(mgr, priv->init_addr, priv->init_size);
+	if (ret < 0) {
+		dev_err(dev, "fpga init fail: %d\n", ret);
+		ret = -EIO;
+		goto free_workbuf;
+	}
+
 	return 0;
-unmap_pages:
-	vunmap(priv->work_buf);
-free_workpages:
-	__free_pages(priv->work_pages, priv->orders);
+
+free_workbuf:
+	dma_free_coherent(dev, priv->work_size, priv->work_buf, priv->work_addr);
+free_initbuf:
+	dma_free_coherent(dev, priv->init_size, priv->init_buf, priv->init_addr);
 	return ret;
 }
 
 static int dr1m90_fpga_remove(struct platform_device *pdev)
 {
+	struct device *dev = &pdev->dev;
 	struct fpga_manager *mgr = platform_get_drvdata(pdev);
 	struct dr1m90_fpga_priv *priv = mgr->priv;
 
-	vunmap(priv->work_buf);
-	__free_pages(priv->work_pages, priv->orders);
+	dma_free_coherent(dev, priv->work_size, priv->work_buf, priv->work_addr);
+	dma_free_coherent(dev, priv->init_size, priv->init_buf, priv->init_addr);
 
 	return 0;
 }
