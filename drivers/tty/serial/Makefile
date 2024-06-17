@@ -55,6 +55,7 @@ obj-$(CONFIG_SERIAL_TXX9) += serial_txx9.o
 obj-$(CONFIG_SERIAL_VR41XX) += vr41xx_siu.o
 obj-$(CONFIG_SERIAL_ATMEL) += atmel_serial.o
 obj-$(CONFIG_SERIAL_UARTLITE) += uartlite.o
+obj-$(CONFIG_SERIAL_ANLOGIC_UARTLITE) += anlogic_uartlite.o
 obj-$(CONFIG_SERIAL_MSM) += msm_serial.o
 obj-$(CONFIG_SERIAL_NUCLEI)	+= nuclei_uart.o
 obj-$(CONFIG_SERIAL_QCOM_GENI) += qcom_geni_serial.o
