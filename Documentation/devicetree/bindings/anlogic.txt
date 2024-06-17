@@ -1,0 +1,64 @@
+   a) Anlogic IP cores
+
+	(name): (generic-name)@(base-address) {
+		compatible = "anlogic,(ip-core-name)-(HW_VER)"
+			     [, (list of compatible devices), ...];
+		reg = <(baseaddr) (size)>;
+		interrupt-parent = <&interrupt-controller-phandle>;
+		interrupts = < ... >;
+		anlogic,(parameter1) = "(string-value)";
+		anlogic,(parameter2) = <(int-value)>;
+	};
+
+	(generic-name):   an open firmware-style name that describes the
+			generic class of device.  Preferably, this is one word, such
+			as 'serial' or 'ethernet'.
+	(ip-core-name):	the name of the ip block (given after the BEGIN
+			directive in system.mhs).  Should be in lowercase
+			and all underscores '_' converted to dashes '-'.
+	(name):		is derived from the "PARAMETER INSTANCE" value.
+	(parameter#):	C_* parameters from system.mhs.  The C_ prefix is
+			dropped from the parameter name, the name is converted
+			to lowercase and all underscore '_' characters are
+			converted to dashes '-'.
+	(baseaddr):	the baseaddr parameter value (often named C_BASEADDR).
+	(HW_VER):	from the HW_VER parameter.
+	(size):		the address range size (often C_HIGHADDR - C_BASEADDR + 1).
+
+   Typically, the compatible list will include the exact IP core version
+   followed by an older IP core version which implements the same
+   interface or any other device with the same interface.
+
+   'reg' and 'interrupts' are all optional properties.
+
+   For example, the following block from system.mhs:
+
+	BEGIN xps_uartlite
+		PARAMETER INSTANCE = xps_uartlite_0
+		PARAMETER HW_VER = 1.00.a
+		PARAMETER C_BAUDRATE = 115200
+		PARAMETER C_DATA_BITS = 8
+		PARAMETER C_ODD_PARITY = 0
+		PARAMETER C_USE_PARITY = 0
+		PARAMETER C_CLK_FREQ = 50000000
+		BUS_INTERFACE SOPB = xps_7
+		PORT OPB_Clk = CLK_50MHz
+		PORT Interrupt = xps_uartlite_0_Interrupt
+		PORT RX = xps_uartlite_0_RX
+		PORT TX = xps_uartlite_0_TX
+		PORT XPS_Rst = sys_bus_reset_0
+	END
+
+   becomes the following device tree node:
+
+	xps_uartlite_0: serial@A0000000 {
+		device_type = "serial";
+		compatible = "anlogic,xps-uartlite-1.00.a";
+		reg = <0x0 0xA0000000 0x0 0x1000>;
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		current-speed = <d#115200>;	// standard serial device prop
+		clock-frequency = <d#50000000>;	// standard serial device prop
+		anlogic,data-bits = <8>;
+		anlogic,odd-parity = <0>;
+		anlogic,use-parity = <0>;
+	};

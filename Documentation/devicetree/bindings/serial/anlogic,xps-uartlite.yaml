@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/serial/anlogic,opb-uartlite.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Anlogic Axi Uartlite
+
+properties:
+  compatible:
+    contains:
+      enum:
+        - anlogic,xps-uartlite-1.00.a
+
+  reg:
+    maxItems: 1
+
+  interrupts:
+    maxItems: 1
+
+  port-number:
+    $ref: /schemas/types.yaml#/definitions/uint32
+    description: Set Uart port number
+
+  clocks:
+    maxItems: 1
+
+  clock-names:
+    const: s_axi_aclk
+
+  current-speed:
+    $ref: /schemas/types.yaml#/definitions/uint32
+    description:
+      The fixed baud rate that the device was configured for.
+
+  anlogic,data-bits:
+    enum: [5, 6, 7, 8]
+    description:
+      The fixed number of data bits that the device was configured for.
+
+  anlogic,use-parity:
+    $ref: /schemas/types.yaml#/definitions/uint32
+    enum: [0, 1]
+    description:
+      Whether parity checking was enabled when the device was configured.
+
+  anlogic,odd-parity:
+    $ref: /schemas/types.yaml#/definitions/uint32
+    enum: [0, 1]
+    description:
+      Whether odd parity was configured.
+
+required:
+  - compatible
+  - reg
+  - interrupts
+  - current-speed
+  - anlogic,data-bits
+  - anlogic,use-parity
+
+allOf:
+  - $ref: /schemas/serial.yaml#
+  - if:
+      properties:
+        anlogic,use-parity:
+          contains:
+            const: 1
+    then:
+      required:
+        - anlogic,odd-parity
+
+unevaluatedProperties: false
+
+examples:
+  - |
+      serial@A0000000 {
+        compatible = "anlogic,xps-uartlite-1.00.a";
+        reg = <0x0 0xA0000000 0x0 0x1000>;
+        interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+        port-number = <0>;
+        current-speed = <115200>;
+        anlogic,data-bits = <8>;
+        anlogic,use-parity = <0>;
+      };
+...
