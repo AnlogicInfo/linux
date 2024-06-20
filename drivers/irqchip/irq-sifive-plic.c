@@ -101,6 +101,10 @@ static void plic_toggle(struct plic_handler *handler, int hwirq, int enable)
 {
 	raw_spin_lock(&handler->enable_lock);
 	__plic_toggle(handler->enable_base, hwirq, enable);
+#ifdef CONFIG_ANLOGIC_SOC
+	if (enable)
+		writel(hwirq, handler->hart_base + CONTEXT_CLAIM);
+#endif
 	raw_spin_unlock(&handler->enable_lock);
 }
 
