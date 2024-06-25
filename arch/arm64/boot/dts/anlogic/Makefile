@@ -5,3 +5,5 @@ dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-evb.dtb
 dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-evb-qt.dtb
 dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-evb-usb_device.dtb
 dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-evb-openamp.dtb
+dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-evb-ad101_v20.dtb
+dtb-$(CONFIG_ARCH_DR1M90) += anlogic-dr1m90-evb-ad101_v20-openamp.dtb

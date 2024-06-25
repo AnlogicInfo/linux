@@ -274,6 +274,12 @@
 			interrupts = <GIC_SPI 62 IRQ_TYPE_LEVEL_HIGH>;
 		};
 
+		sdhci1: mmc@f804a000 {
+			compatible = "snps,dwcmshc-sdhci";
+			reg = <0x0 0xf804a000 0x0 0x1000>;
+			interrupts = <GIC_SPI 63 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
 		ahb_dma:ahb_dma@F804D000 {
 			compatible = "snps,dma-spear1340";
 			reg = <0x0 0xF804D000 0x0 0x1000>;
@@ -296,10 +302,10 @@
 			//compatible = "anlogic,dr1x90-qspi";
 			//reg = <0x0 0xf804e000 0x0 0x1000>;
 			compatible = "snps,dwc-ssi-1.01a";
+			reg = <0x0 0xf804e000 0x0 0x1000 0x0 0X61000000 0x0 0x2000 0x0 0X61002000 0x0 0x2000>;
+			#qspi-ocm-buf = <2>;
 			#address-cells = <1>;
 			#size-cells = <0>;
-			#qspi-ocm-buf = <2>;
-			reg = <0x0 0xf804e000 0x0 0x1000 0x0 0X61000000 0x0 0x2000 0x0 0X61002000 0x0 0x2000>;
 			interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
 			num-cs = <1>;
 		};
@@ -337,6 +343,29 @@
 			timer-width = <32>;
 		};
 
+		axi_ethernetlite_1: ethernet@1C0000000 {
+			compatible = "anlogic,ethernetlite1.0";
+			device_type = "network";
+			interrupt-parent = <&gic>;
+			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+			local-mac-address = [E0 78 A3 00 00 05];
+			phy-handle = <&pl_eth_phy0>;
+			reg = <0x1 0xC0000000 0x0 0x10000>;
+
+			mdio {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				pl_eth_phy0: phy@1 {
+						device_type = "ethernet-phy";
+						reg = <1>;
+				} ;
+				//pl_eth_phy0: phy@0 {
+				//		device_type = "ethernet-phy";
+				//		reg = <0>;
+				//};
+			};
+		};
+
 		eqos0: ethernet0@F8100000 {
 			compatible = "snps,dwc-qos-ethernet-4.10";
 			#address-cells = <2>;
@@ -351,7 +380,6 @@
 			snps,pbl = <2>;
 			snps,en-tx-lpi-clockgating;
 			snps,tso;
-			phy-handle = <&eth_phy0>;
 			phy-mode = "rgmii";
 			phy-addr = <0x001>;
 
@@ -368,6 +396,16 @@
 					cfg_ctrl_gbe = <0xf8800140>;
 					phase-100M = <0x14a1>;
 					phase-1000M = <0x1461>;
+				};
+
+				eth_phy1: ethernet-phy@1 {
+					/* Motorcomm YT8531 (0x4f51e91b) */
+					reg = <0>;
+					yt,phy-delay = <0x001f>;
+					phy-connection-type = "rgmii-id";
+					cfg_ctrl_gbe = <0xf8800140>;
+					phase-100M = <0x361>;
+					phase-1000M = <0x621>;
 				};
 			};
 		};
@@ -386,7 +424,6 @@
 			snps,pbl = <2>;
 			snps,en-tx-lpi-clockgating;
 			snps,tso;
-			phy-handle = <&eth_phy1>;
 			phy-mode = "rgmii";
 			phy-addr = <0x011>;
 
@@ -395,7 +432,7 @@
 				#address-cells = <1>;
 				#size-cells = <0>;
 
-				eth_phy1: ethernet-phy@1 {
+				eth_phy2: ethernet-phy@2 {
 					/* Realtek RTL8211F (0x001cc916) */
 					reg = <0>;
 					reset-assert-us = <10000>;
@@ -403,6 +440,16 @@
 					cfg_ctrl_gbe = <0xf8800144>;
 					phase-100M = <0x14a1>;
 					phase-1000M = <0x1461>;
+				};
+
+				eth_phy3: ethernet-phy@3 {
+					/* Motorcomm YT8531 (0x4f51e91b) */
+					reg = <0>;
+					yt,phy-delay = <0x001f>;
+					phy-connection-type = "rgmii-id";
+					cfg_ctrl_gbe = <0xf8800144>;
+					phase-100M = <0x361>;
+					phase-1000M = <0x621>;
 				};
 			};
 		};
@@ -414,5 +461,52 @@
 			reg = <0x0 0xF8180000 0x0 0x40000>;
 			interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
 		};
+
+		adc:adc@f840b000 {
+			compatible = "anlogic,fpsoc-adc-1.00.a";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			reg = <0x0 0xf840b000 0x0 0x20>;
+			interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
+			resolution = <12>;
+			anlogic,channels {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				channel@0 {
+					reg = <0>;
+					iomux = <16>;
+				};
+			};
+		};
+
+
+		/*adc continuous acquisition through the GP port*/
+		//adc:adc@f840b000 {
+		//	compatible = "anlogic,axi-adc-1.00.a";
+		//	#address-cells = <2>;
+		//	#size-cells = <2>;
+		//	reg = <0x0 0xf840b000 0x0 0x20 0x0 0x80004000 0x0 0x1000>;
+		//	interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
+		//	resolution = <12>;
+		//	anlogic,channels {
+		//		#address-cells = <1>;
+		//		#size-cells = <0>;
+		//		channel@0 {
+		//			reg = <0>;
+		//			iomux = <16>;
+		//		};
+		//	};
+		//};
+
+		smcc: memory-controller@f841a000 {
+			compatible = "pl353-smc", "arm,primecell";
+			reg = <0x0 0xf841a000 0x0 0x1000>;
+			interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>;
+			clock-names = "memclk", "apb_pclk";
+			ranges = <0x0 0x0 0x0 0x64000000 0x0 0x1000000>; /* Nand CS region */
+			#address-cells = <2>;
+			#size-cells = <2>;
+		};
+
 	};
 };
