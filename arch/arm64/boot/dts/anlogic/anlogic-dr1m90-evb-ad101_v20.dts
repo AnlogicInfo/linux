@@ -3,6 +3,11 @@
 /dts-v1/;
 #include "anlogic-dr1m90-evb.dts"
 
+&cma {
+	alloc-ranges = <0x0 0x00000000 0x0 0x1fffffff>;
+	size = <0x0 0x8000000>;
+};
+
 &memory {
 	reg = <0 0x00000000 0 0x20000000>;
 };
