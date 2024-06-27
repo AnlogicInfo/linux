@@ -3,6 +3,7 @@ menu "Anlogic SoC drivers"
 
 config ANLOGIC_SOC
 	bool "Anlogic SoC"
+	select ARM_AMBA
 	default n
 	help
 	  Say yes if need codes for Anlogic SoCs.

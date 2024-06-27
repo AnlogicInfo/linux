@@ -352,5 +352,26 @@
 			interrupt-parent = <&plic0>;
 			interrupts = <57>;
 		};
+
+		dmac: dma-controller@F8418000 {
+			compatible = "arm,pl330", "arm,primecell";
+			reg = <0x0 0xF8418000  0x0 0x1000>;
+			clock-names = "apb_pclk";
+			interrupt-parent = <&plic0>;
+			interrupts = <38>,
+						<39>,
+						<40>,
+						<41>,
+						<42>,
+						<43>,
+						<44>,
+						<45>,
+						<46>;
+			arm,pl330-periph-burst;
+			#dma-cells = <1>;
+			#dma-channels = <8>;
+			#dma-requests = <32>;
+			dma-noncoherent;
+		};
 	};
 };
