@@ -198,6 +198,13 @@
 		clock-output-names = "ttc_clk";
 	};
 
+	axidma_clk: axidma_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <300000000>;
+		clock-names = "apb_pclk";
+	};
+
 	soft_adi_dma: dma@80400000 {
 		dma-noncoherent;
 		compatible = "adi,axi-dmac-1.00.a";
@@ -463,5 +470,10 @@
 	g-rx-fifo-size = <768>;
 	g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
 	g-use-dma;
+	status = "okay";
+};
+
+&dmac {
+	clocks = <&axidma_clk>;
 	status = "okay";
 };
