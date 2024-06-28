@@ -353,6 +353,46 @@
 			interrupts = <57>;
 		};
 
+		adc:adc@f840b000 {
+			compatible = "anlogic,fpsoc-adc-1.00.a";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			reg = <0x0 0xf840b000 0x0 0x20>;
+			interrupt-parent = <&plic0>;
+			interrupts = <25>;
+			resolution = <12>;
+			anlogic,channels {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				channel@0 {
+					reg = <0>;
+					iomux = <16>;
+				};
+			};
+		};
+
+		/*adc continuous acquisition through the GP port*/
+		/*
+		 * adc:adc@f840b000 {
+		 *	 compatible = "anlogic,axi-adc-1.00.a";
+		 *	 #address-cells = <2>;
+		 *	 #size-cells = <2>;
+		 *	 reg = <0x0 0xf840b000 0x0 0x20 0x0 0x80004000 0x0 0x1000>;
+		 *	 interrupt-parent = <&plic0>;
+		 *	 interrupts = <25>;
+		 *	 resolution = <12>;
+		 *	 anlogic,channels {
+		 *		 #address-cells = <1>;
+		 *		 #size-cells = <0>;
+		 *		 channel@0 {
+		 *			 reg = <0>;
+		 *			 iomux = <16>;
+		 *		 };
+		 *	 };
+		 * };
+		 */
+
+
 		dmac: dma-controller@F8418000 {
 			compatible = "arm,pl330", "arm,primecell";
 			reg = <0x0 0xF8418000  0x0 0x1000>;

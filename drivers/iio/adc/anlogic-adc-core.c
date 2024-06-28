@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2023 Anlogic, Inc.
  *
-*/
+ */
 
 #include <linux/clk.h>
 #include <linux/device.h>
@@ -548,14 +548,14 @@ static const struct iio_trigger_ops adc_trigger_ops = {
 };
 
 static struct iio_trigger *adc_alloc_trigger(struct iio_dev *indio_dev,
-	const char *name)
+						 const char *name)
 {
 	struct device *dev = indio_dev->dev.parent;
 	struct iio_trigger *trig;
 	int ret;
 
 	trig = devm_iio_trigger_alloc(dev, "%s%d-%s", indio_dev->name,
-				      iio_device_id(indio_dev), name);
+					  iio_device_id(indio_dev), name);
 	if (trig == NULL)
 		return ERR_PTR(-ENOMEM);
 
@@ -587,11 +587,11 @@ static int adc_postdisable(struct iio_dev *indio_dev)
 
 static int adc_preenable(struct iio_dev *indio_dev)
 {
- 	struct adc *adc = iio_priv(indio_dev);
- 	int ret;
+	struct adc *adc = iio_priv(indio_dev);
+	int ret;
 
- 	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_MODE_SEL_MASK,
- 		ADC_CONFIG3_CONV_MODE_CONTINUOUS);
+	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_MODE_SEL_MASK,
+		ADC_CONFIG3_CONV_MODE_CONTINUOUS);
 
 	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_REG_ADC_SOC_MASK,
 		 1 << ADC_CONFIG3_REG_SOC_SHIFT);
@@ -601,8 +601,8 @@ static int adc_preenable(struct iio_dev *indio_dev)
 
 	return 0;
  err:
- 	adc_postdisable(indio_dev);
- 	return ret;
+	adc_postdisable(indio_dev);
+	return ret;
 }
 
 static const struct iio_buffer_setup_ops adc_buffer_ops = {
@@ -746,7 +746,7 @@ static int adc_write_raw(struct iio_dev *indio_dev,
 
 static const struct of_device_id adc_of_match_table[] = {
 	{ .compatible = "anlogic,fpsoc-adc-1.00.a", (void *)&adc_fpsoc_ops },
-	{ .compatible = "anlogic,axi-adc-1.00.a", (void *)&adc_axi_ops },
+	/*{ .compatible = "anlogic,axi-adc-1.00.a", (void *)&adc_axi_ops },*/
 };
 MODULE_DEVICE_TABLE(of, adc_of_match_table);
 
@@ -924,8 +924,8 @@ static int adc_parse_dt_chan(struct iio_dev *indio_dev, struct device_node *np,
 
 	indio_dev->num_channels = num_channels;
 	indio_dev->channels = devm_krealloc(dev, channels,
-					    sizeof(*channels) * num_channels,
-					    GFP_KERNEL);
+						sizeof(*channels) * num_channels,
+						GFP_KERNEL);
 	/* If we can't resize the channels array, just use the original */
 	if (!indio_dev->channels)
 		indio_dev->channels = channels;
@@ -1050,13 +1050,14 @@ static int adc_probe(struct platform_device *pdev)
 
 	ret = adc_write_adc_reg(adc, ADC_REG_CONFIG0, config0);
 
+	ret = adc_write_adc_reg(adc, ADC_REG_CONFIG1, 0xf0f);
+
 	/* Set the iomux of channel 0 to 7 */
 	for (i = 0; i < indio_dev->num_channels; i++) {
-		if (i % 2 == 0) {
+		if (i%2 == 0)
 			adc_update_adc_reg(adc, ADC_CHAN_SEL(i), ADC_CHANNEL_0_1_CHAN0_MASK, iomux[i]);
-		} else {
+		else
 			adc_update_adc_reg(adc, ADC_CHAN_SEL(i), ADC_CHANNEL_0_1_CHAN1_MASK, iomux[i] << 8);
-		}
 	}
 
 	/* Set the conversion channel */
