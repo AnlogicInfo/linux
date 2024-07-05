@@ -1,4 +1,4 @@
-   a) Anlogic IP cores
+   a) Anlogic IP AXI-UART core
 
 	(name): (generic-name)@(base-address) {
 		compatible = "anlogic,(ip-core-name)-(HW_VER)"
@@ -61,4 +61,38 @@
 		anlogic,data-bits = <8>;
 		anlogic,odd-parity = <0>;
 		anlogic,use-parity = <0>;
+	};
+
+	b) Anlogic IP AXI-GPIO core
+
+	axi_gpio: gpio@80000000 {
+		compatible = "anlogic,axi-gpio-1.00.a";
+		reg = <0x0 0x80000000 0x0 0x10000>;
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		#gpio-cells = <2>;
+		#interrupt-cells = <0x2>;
+		gpio-controller;
+		anlogic,all-inputs = <0x0>;
+		anlogic,all-inputs-2 = <0x0>;
+		anlogic,all-outputs = <0x0>;
+		anlogic,all-outputs-2 = <0x0>;
+		anlogic,dout-default = <0x0>;
+		anlogic,dout-default-2 = <0x0>;
+		anlogic,gpio-width = <0x20>;
+		anlogic,gpio2-width = <0x20>;
+		anlogic,interrupt-present = <0x1>;
+		anlogic,is-dual = <0x1>;
+		anlogic,tri-default = <0xFFFFFFFF>;
+		anlogic,tri-default-2 = <0xFFFFFFFF>;
+	};
+
+	axi_gpio-keys {
+		compatible = "gpio-keys";
+		#address-cells = <0x1>;
+		#size-cells = <0x0>;
+		axi_sw5: axi_sw5 {
+			gpios = <&axi_gpio 0 GPIO_ACTIVE_LOW>;
+			linux,code = <103>; /* KEY_UP */
+			status = "okay";
+		};
 	};
