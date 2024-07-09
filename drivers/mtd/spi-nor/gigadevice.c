@@ -77,6 +77,10 @@ static const struct flash_info gigadevice_nor_parts[] = {
 		NO_SFDP_FLAGS(SECT_4K | SPI_NOR_QUAD_READ | SPI_NOR_DUAL_READ)
 		FIXUP_FLAGS(SPI_NOR_4B_OPCODES)
 		.fixups = &gd25q256_fixups},
+	{ "gd25b512me", INFO(0xc8471a, 0, 64 * 1024, 1024)
+		NO_SFDP_FLAGS(SECT_4K | SPI_NOR_QUAD_READ | SPI_NOR_DUAL_READ)
+		FIXUP_FLAGS(SPI_NOR_4B_OPCODES)
+		.fixups = &gd25q256_fixups},
 #endif
 };
 
