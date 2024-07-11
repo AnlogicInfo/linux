@@ -102,18 +102,6 @@
 			reg-io-width = <4>;
 		};
 
-		serialpl0: serial@A0000000 {
-			compatible = "anlogic,xps-uartlite-1.00.a";
-			reg = <0x0 0xA0000000 0x0 0x1000>;
-			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
-			port-number = <0>;
-			anlogic,baudrate = <115200>;
-			current-speed = <115200>;
-			anlogic,use-parity = <0x0>;
-			anlogic,odd-parity = <0x0>;
-			anlogic,data-bits = <0x8>;
-		};
-
 		fpga_mgr: fpga-mgr@F8082000 {
 			compatible = "anlogic,dr1m90-pcap-fpga";
 			reg = <0x00 0xF8801000 0x00 0x1000>;
@@ -343,29 +331,6 @@
 			timer-width = <32>;
 		};
 
-		axi_ethernetlite_1: ethernet@1C0000000 {
-			compatible = "anlogic,ethernetlite1.0";
-			device_type = "network";
-			interrupt-parent = <&gic>;
-			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
-			local-mac-address = [E0 78 A3 00 00 05];
-			phy-handle = <&pl_eth_phy0>;
-			reg = <0x1 0xC0000000 0x0 0x10000>;
-
-			mdio {
-				#address-cells = <1>;
-				#size-cells = <0>;
-				pl_eth_phy0: phy@1 {
-						device_type = "ethernet-phy";
-						reg = <1>;
-				} ;
-				//pl_eth_phy0: phy@0 {
-				//		device_type = "ethernet-phy";
-				//		reg = <0>;
-				//};
-			};
-		};
-
 		eqos0: ethernet0@F8100000 {
 			compatible = "snps,dwc-qos-ethernet-4.10";
 			#address-cells = <2>;
@@ -380,7 +345,6 @@
 			snps,pbl = <2>;
 			snps,en-tx-lpi-clockgating;
 			snps,tso;
-			phy-mode = "rgmii";
 			phy-addr = <0x001>;
 
 			mdio {
@@ -424,7 +388,6 @@
 			snps,pbl = <2>;
 			snps,en-tx-lpi-clockgating;
 			snps,tso;
-			phy-mode = "rgmii";
 			phy-addr = <0x011>;
 
 			mdio {
@@ -478,25 +441,5 @@
 				};
 			};
 		};
-
-
-		/*adc continuous acquisition through the GP port*/
-		//adc:adc@f840b000 {
-		//	compatible = "anlogic,axi-adc-1.00.a";
-		//	#address-cells = <2>;
-		//	#size-cells = <2>;
-		//	reg = <0x0 0xf840b000 0x0 0x20 0x0 0x80004000 0x0 0x1000>;
-		//	interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
-		//	resolution = <12>;
-		//	anlogic,channels {
-		//		#address-cells = <1>;
-		//		#size-cells = <0>;
-		//		channel@0 {
-		//			reg = <0>;
-		//			iomux = <16>;
-		//		};
-		//	};
-		//};
-
 	};
 };
