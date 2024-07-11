@@ -145,6 +145,13 @@
 		clock-frequency = <AL_QSPI_CLOCK>;
 		clock-output-names = "qspi_m_clk";
 	};
+
+	SMC_CLK: SMC_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <AL_SMC_CLOCK>;
+		clock-output-names = "SMC_CLK";
+	};
 };
 
 &cpu0 {
@@ -210,6 +217,11 @@
 &ipmscan1 {
 	clocks = <&CAN_CLK>;
 	clock-names = "ipms_can_clk";
+};
+
+&smcc {
+	clock-names = "smc_clk", "apb_pclk";
+	clocks = <&SMC_CLK>, <&APB_PCLK>;
 };
 
 &sdhci0 {
