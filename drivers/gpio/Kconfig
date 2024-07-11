@@ -126,12 +126,12 @@ config GPIO_74XX_MMIO
 	    8 bits:	74244 (Input), 74273 (Output)
 	    16 bits:	741624 (Input), 7416374 (Output)
 
-config GPIO_ANLOGIC
-        tristate "Anlogic AXI GPIO support"
+config GPIO_ANLOGIC_FPGA
+        tristate "Anlogic FPGA AXI GPIO support"
         select GPIOLIB_IRQCHIP
         depends on OF_GPIO
         help
-          Say yes here to support the Anlogic FPGA GPIO device.
+          Say yes here to support the Anlogic FPGA AXI GPIO device.
 
 config GPIO_ALTERA
 	tristate "Altera GPIO"

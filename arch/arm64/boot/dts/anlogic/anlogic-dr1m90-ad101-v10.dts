@@ -2,6 +2,7 @@
 
 /dts-v1/;
 #include "anlogic-dr1m90.dts"
+#include "anlogic-dr1m90-softip.dts"
 
 &cma {
 	alloc-ranges = <0x0 0x00000000 0x0 0xffffffff>;
@@ -17,20 +18,6 @@
 		compatible = "anlogic,soft_npu";
 		reg = <0x1 0xF0000000 0x0 0x00100000>;
 		interrupts = <GIC_SPI 97 IRQ_TYPE_LEVEL_HIGH>;
-	};
-
-	serialpl0: serial@A0000000 {
-		compatible = "anlogic,xps-uartlite-1.00.a";
-		reg = <0x0 0xA0000000 0x0 0x1000>;
-		clock-frequency = <50000000>;
-		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
-		port-number = <0>;
-		anlogic,baudrate = <115200>;
-		current-speed = <115200>;
-		anlogic,use-parity = <0x0>;
-		anlogic,odd-parity = <0x0>;
-		anlogic,data-bits = <0x8>;
-		status = "disabled";
 	};
 
 	leds {
