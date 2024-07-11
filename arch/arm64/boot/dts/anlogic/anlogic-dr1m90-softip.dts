@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+&soc {
+	axi_uart0: serial@A0000000 {
+		compatible = "anlogic,xps-uartlite-1.00.a";
+		reg = <0x0 0xA0000000 0x0 0x1000>;
+		clock-frequency = <50000000>;
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		port-number = <0>;
+		anlogic,baudrate = <115200>;
+		current-speed = <115200>;
+		anlogic,use-parity = <0x0>;
+		anlogic,odd-parity = <0x0>;
+		anlogic,data-bits = <0x8>;
+		status = "disabled";
+	};
+
+	axi_gpio: gpio@80000000 {
+		compatible = "anlogic,axi-gpio-1.00.a";
+		reg = <0x0 0x80000000 0x0 0x10000>;
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		#gpio-cells = <2>;
+		#interrupt-cells = <0x2>;
+		gpio-controller;
+		anlogic,all-inputs = <0x0>;
+		anlogic,all-inputs-2 = <0x0>;
+		anlogic,all-outputs = <0x0>;
+		anlogic,all-outputs-2 = <0x0>;
+		anlogic,dout-default = <0x0>;
+		anlogic,dout-default-2 = <0x0>;
+		anlogic,gpio-width = <0x20>;
+		anlogic,gpio2-width = <0x20>;
+		anlogic,interrupt-present = <0x1>;
+		anlogic,is-dual = <0x1>;
+		anlogic,tri-default = <0xFFFFFFFF>;
+		anlogic,tri-default-2 = <0xFFFFFFFF>;
+		status = "disabled";
+	};
+
+	axi_gpio-keys {
+		compatible = "gpio-keys";
+		#address-cells = <0x1>;
+		#size-cells = <0x0>;
+		axi_sw5: axi_sw5 {
+			gpios = <&axi_gpio 0 GPIO_ACTIVE_LOW>;
+			linux,code = <103>;
+			status = "disabled";
+		};
+	};
+};
