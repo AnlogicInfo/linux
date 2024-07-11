@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 
 /dts-v1/;
-#include "anlogic-dr1m90-evb.dts"
+#include "anlogic-dr1m90-ad101-v20.dts"
 
 &soc {
 	axi_dma_clk: axi_dma_clk {
@@ -57,8 +57,6 @@
 };
 
 &i2c1 {
-	clocks = <&IIC_CLK>;
-	clock-names = "IIC_CLK";
 	status = "okay";
 
 	adv7511: adv7511@39 {

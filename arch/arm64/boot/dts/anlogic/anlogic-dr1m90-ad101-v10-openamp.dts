@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 
 /dts-v1/;
-#include "anlogic-dr1m90-evb.dts"
+#include "anlogic-dr1m90-ad101-v10.dts"
 
 / {
 	chosen {
