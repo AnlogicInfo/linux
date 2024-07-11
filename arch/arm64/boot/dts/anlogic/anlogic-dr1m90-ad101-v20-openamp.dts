@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 
 /dts-v1/;
-#include "anlogic-dr1m90-evb-ad101_v20.dts"
+#include "anlogic-dr1m90-ad101-v20.dts"
 
-/ {
-	chosen {
-		bootargs = "console=ttyS0,115200n8 earlycon=uart,mmio32,0xf8400000 loglevel=8 maxcpus=1";
-	};
+&chosen {
+	bootargs = "console=ttyS0,115200n8 earlycon=uart,mmio32,0xf8400000 loglevel=8 maxcpus=1";
 };
 
 &reserved_memory {
