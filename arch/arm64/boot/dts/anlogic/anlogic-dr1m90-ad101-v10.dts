@@ -235,3 +235,25 @@
 &adc {
 	status = "disabled";
 };
+
+&smcc {
+	status = "disabled";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	nfc0: nand-controller@0 {
+		status = "disabled";
+		compatible = "arm,pl353-nand-r2p1";
+		reg = <0x0 0x0 0x0 0x1000000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		nand@0 {
+			// nand-ecc-mode = "hw";
+			// nand-bus-width = <8>;
+			label = "alnand0";
+			reg = <0x0>;
+
+		};
+	};
+};
