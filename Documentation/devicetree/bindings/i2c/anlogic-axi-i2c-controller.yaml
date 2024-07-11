@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: (GPL-2.0 OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: "http://devicetree.org/schemas/i2c/anlogic-axi-i2c-controller#"
+$schema: "http://devicetree.org/meta-schemas/core.yaml#"
+
+title: anlogic IIC controller
+
+maintainers:
+  - naiyuan.que@anlogic.com
+
+allOf:
+  - $ref: /schemas/i2c/i2c-controller.yaml#
+
+properties:
+  compatible:
+    const: anlogic-axi-i2c-controller
+
+  reg:
+    maxItems: 1
+
+  interrupts:
+    maxItems: 1
+
+  clocks:
+    minItems: 1
+
+  clock-name:
+    const: pclk
+    description: |
+      Input clock name.
+
+required:
+  - compatible
+  - reg
+  - interrupts
+  - clocks
+
+unevaluatedProperties: false
+
+examples:
+  - |
+    axi_i2c: axi_i2c@80000000 {
+        compatible = "anlogic-axi-i2c-controller";
+        interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+        reg = <0 0x80000000 0 0x1000>;
+        #address-cells = <1>;
+        #size-cells = <0>;
+        clocks = <&IIC_CLK>;
+        clock-names = "IIC_CLK";
+        status = "okay";
+    };
