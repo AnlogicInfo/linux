@@ -19,37 +19,22 @@
 #include <linux/pm_runtime.h>
 #include <linux/slab.h>
 
-/* Register Offset Definitions */
-#define PLGPIO_DATA_OFFSET   (0x0)	/* Data register  */
-#define PLGPIO_TRI_OFFSET    (0x4)	/* I/O direction register  */
+#define PLGPIO_DATA_OFFSET   (0x0)
+#define PLGPIO_TRI_OFFSET    (0x4)
 
 #define PLGPIO_CHANNEL_OFFSET	0x8
 
-#define PLGPIO_GIER_OFFSET	0x11c /* Global Interrupt Enable */
+#define PLGPIO_GIER_OFFSET	0x11c
 #define PLGPIO_GIER_IE		BIT(31)
-#define PLGPIO_IPISR_OFFSET	0x120 /* IP Interrupt Status */
-#define PLGPIO_IPIER_OFFSET	0x128 /* IP Interrupt Enable */
+#define PLGPIO_IPISR_OFFSET	0x120
+#define PLGPIO_IPIER_OFFSET	0x128
 
-/* Read/Write access to the GPIO registers */
+#define PLGPIO_LINE_NUM	64
+#define ANLOGIC_AXI_GPIO_DRIVER_NAME	"gpio-anlogic"
+
 # define plgpio_readreg(offset)		__raw_readl(offset)
 # define plgpio_writereg(offset, val)	__raw_writel(val, offset)
 
-/**
- * struct plgpio_instance - Stores information about GPIO device
- * @gc: GPIO chip
- * @regs: register block
- * @gpio_width: GPIO width for every channel
- * @gpio_state: GPIO write state shadow register
- * @gpio_last_irq_read: GPIO read state register from last interrupt
- * @gpio_dir: GPIO direction shadow register
- * @gpio_lock: Lock used for synchronization
- * @irq: IRQ used by GPIO device
- * @irqchip: IRQ chip
- * @irq_enable: GPIO IRQ enable/disable bitfield
- * @irq_rising_edge: GPIO IRQ rising edge enable/disable bitfield
- * @irq_falling_edge: GPIO IRQ falling edge enable/disable bitfield
- * @clk: clock resource for this driver
- */
 struct plgpio_instance {
 	struct gpio_chip gc;
 	void __iomem *regs;
@@ -57,7 +42,7 @@ struct plgpio_instance {
 	u32 gpio_state[2];
 	u32 gpio_last_irq_read[2];
 	u32 gpio_dir[2];
-	spinlock_t gpio_lock;	/* For serializing operations */
+	spinlock_t gpio_lock;
 	int irq;
 	struct irq_chip irqchip;
 	u32 irq_enable[2];
@@ -90,17 +75,6 @@ static inline int plgpio_offset(struct plgpio_instance *chip, int gpio)
 	return gpio;
 }
 
-/**
- * plgpio_get - Read the specified signal of the GPIO device.
- * @gc:     Pointer to gpio_chip device structure.
- * @gpio:   GPIO signal number.
- *
- * This function reads the specified signal of the GPIO device.
- *
- * Return:
- * 0 if direction of GPIO signals is set as input otherwise it
- * returns negative error value.
- */
 static int plgpio_get(struct gpio_chip *gc, unsigned int gpio)
 {
 	struct plgpio_instance *chip = gpiochip_get_data(gc);
@@ -112,15 +86,6 @@ static int plgpio_get(struct gpio_chip *gc, unsigned int gpio)
 	return !!(val & BIT(plgpio_offset(chip, gpio)));
 }
 
-/**
- * plgpio_set - Write the specified signal of the GPIO device.
- * @gc:     Pointer to gpio_chip device structure.
- * @gpio:   GPIO signal number.
- * @val:    Value to be written to specified signal.
- *
- * This function writes the specified value in to the specified signal of the
- * GPIO device.
- */
 static void plgpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
 {
 	unsigned long flags;
@@ -130,7 +95,6 @@ static void plgpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
 
 	spin_lock_irqsave(&chip->gpio_lock, flags);
 
-	/* Write to GPIO signal and set its direction to output */
 	if (val)
 		chip->gpio_state[index] |= BIT(offset);
 	else
@@ -142,62 +106,6 @@ static void plgpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
 	spin_unlock_irqrestore(&chip->gpio_lock, flags);
 }
 
-/**
- * plgpio_set_multiple - Write the specified signals of the GPIO device.
- * @gc:     Pointer to gpio_chip device structure.
- * @mask:   Mask of the GPIOS to modify.
- * @bits:   Value to be wrote on each GPIO
- *
- * This function writes the specified values into the specified signals of the
- * GPIO devices.
- */
-static void plgpio_set_multiple(struct gpio_chip *gc, unsigned long *mask,
-			       unsigned long *bits)
-{
-	unsigned long flags;
-	struct plgpio_instance *chip = gpiochip_get_data(gc);
-	int index = plgpio_index(chip, 0);
-	int offset, i;
-
-	spin_lock_irqsave(&chip->gpio_lock, flags);
-
-	/* Write to GPIO signals */
-	for (i = 0; i < gc->ngpio; i++) {
-		if (*mask == 0)
-			break;
-		/* Once finished with an index write it out to the register */
-		if (index !=  plgpio_index(chip, i)) {
-			plgpio_writereg(chip->regs + PLGPIO_DATA_OFFSET +
-				       index * PLGPIO_CHANNEL_OFFSET,
-				       chip->gpio_state[index]);
-			spin_unlock_irqrestore(&chip->gpio_lock, flags);
-			index =  plgpio_index(chip, i);
-			spin_lock_irqsave(&chip->gpio_lock, flags);
-		}
-		if (__test_and_clear_bit(i, mask)) {
-			offset =  plgpio_offset(chip, i);
-			if (test_bit(i, bits))
-				chip->gpio_state[index] |= BIT(offset);
-			else
-				chip->gpio_state[index] &= ~BIT(offset);
-		}
-	}
-
-	plgpio_writereg(chip->regs + PLGPIO_DATA_OFFSET +
-		       index * PLGPIO_CHANNEL_OFFSET, chip->gpio_state[index]);
-
-	spin_unlock_irqrestore(&chip->gpio_lock, flags);
-}
-
-/**
- * plgpio_dir_in - Set the direction of the specified GPIO signal as input.
- * @gc:     Pointer to gpio_chip device structure.
- * @gpio:   GPIO signal number.
- *
- * Return:
- * 0 - if direction of GPIO signals is set as input
- * otherwise it returns negative error value.
- */
 static int plgpio_dir_in(struct gpio_chip *gc, unsigned int gpio)
 {
 	unsigned long flags;
@@ -207,7 +115,6 @@ static int plgpio_dir_in(struct gpio_chip *gc, unsigned int gpio)
 
 	spin_lock_irqsave(&chip->gpio_lock, flags);
 
-	/* Set the GPIO bit in shadow register and set direction as input */
 	chip->gpio_dir[index] |= BIT(offset);
 	plgpio_writereg(chip->regs + PLGPIO_TRI_OFFSET +
 		       plgpio_regoffset(chip, gpio), chip->gpio_dir[index]);
@@ -217,18 +124,6 @@ static int plgpio_dir_in(struct gpio_chip *gc, unsigned int gpio)
 	return 0;
 }
 
-/**
- * plgpio_dir_out - Set the direction of the specified GPIO signal as output.
- * @gc:     Pointer to gpio_chip device structure.
- * @gpio:   GPIO signal number.
- * @val:    Value to be written to specified signal.
- *
- * This function sets the direction of specified GPIO signal as output.
- *
- * Return:
- * If all GPIO signals of GPIO chip is configured as input then it returns
- * error otherwise it returns 0.
- */
 static int plgpio_dir_out(struct gpio_chip *gc, unsigned int gpio, int val)
 {
 	unsigned long flags;
@@ -238,7 +133,6 @@ static int plgpio_dir_out(struct gpio_chip *gc, unsigned int gpio, int val)
 
 	spin_lock_irqsave(&chip->gpio_lock, flags);
 
-	/* Write state of GPIO signal */
 	if (val)
 		chip->gpio_state[index] |= BIT(offset);
 	else
@@ -246,7 +140,6 @@ static int plgpio_dir_out(struct gpio_chip *gc, unsigned int gpio, int val)
 	plgpio_writereg(chip->regs + PLGPIO_DATA_OFFSET +
 			plgpio_regoffset(chip, gpio), chip->gpio_state[index]);
 
-	/* Clear the GPIO bit in shadow register and set direction as output */
 	chip->gpio_dir[index] &= ~BIT(offset);
 	plgpio_writereg(chip->regs + PLGPIO_TRI_OFFSET +
 			plgpio_regoffset(chip, gpio), chip->gpio_dir[index]);
@@ -256,15 +149,6 @@ static int plgpio_dir_out(struct gpio_chip *gc, unsigned int gpio, int val)
 	return 0;
 }
 
-/**
- * plgpio_xlate - Translate gpio_spec to the GPIO number and flags
- * @gc: Pointer to gpio_chip device structure.
- * @gpiospec:  gpio specifier as found in the device tree
- * @flags: A flags pointer based on binding
- *
- * Return:
- * irq number
- */
 static int plgpio_xlate(struct gpio_chip *gc,
 		       const struct of_phandle_args *gpiospec, u32 *flags)
 {
@@ -278,10 +162,6 @@ static int plgpio_xlate(struct gpio_chip *gc,
 	return gpiospec->args[0];
 }
 
-/**
- * plgpio_save_regs - Set initial values of GPIO pins
- * @chip: Pointer to GPIO instance
- */
 static void plgpio_save_regs(struct plgpio_instance *chip)
 {
 	plgpio_writereg(chip->regs + PLGPIO_DATA_OFFSET,	chip->gpio_state[0]);
@@ -301,10 +181,7 @@ static int plgpio_request(struct gpio_chip *chip, unsigned int offset)
 	int ret;
 
 	ret = pm_runtime_get_sync(chip->parent);
-	/*
-	 * If the device is already active pm_runtime_get() will return 1 on
-	 * success, but gpio_request still needs to return 0.
-	 */
+
 	return ret < 0 ? ret : 0;
 }
 
@@ -313,96 +190,11 @@ static void plgpio_free(struct gpio_chip *chip, unsigned int offset)
 	pm_runtime_put(chip->parent);
 }
 
-static int __maybe_unused plgpio_suspend(struct device *dev)
-{
-	struct plgpio_instance *gpio = dev_get_drvdata(dev);
-	struct irq_data *data = irq_get_irq_data(gpio->irq);
-
-	if (!data) {
-		dev_dbg(dev, "IRQ not connected\n");
-		return pm_runtime_force_suspend(dev);
-	}
-
-	if (!irqd_is_wakeup_set(data))
-		return pm_runtime_force_suspend(dev);
-
-	return 0;
-}
-
-/**
- * plgpio_remove - Remove method for the GPIO device.
- * @pdev: pointer to the platform device
- *
- * This function remove gpiochips and frees all the allocated resources.
- *
- * Return: 0 always
- */
-static int plgpio_remove(struct platform_device *pdev)
-{
-	struct plgpio_instance *gpio = platform_get_drvdata(pdev);
-
-	pm_runtime_get_sync(&pdev->dev);
-	pm_runtime_put_noidle(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
-	clk_disable_unprepare(gpio->clk);
-
-	return 0;
-}
-
-/**
- * plgpio_irq_ack - Acknowledge a child GPIO interrupt.
- * @irq_data: per IRQ and chip data passed down to chip functions
- * This currently does nothing, but irq_ack is unconditionally called by
- * handle_edge_irq and therefore must be defined.
- */
 static void plgpio_irq_ack(struct irq_data *irq_data)
 {
+	/* do nothing */
 }
 
-static int __maybe_unused plgpio_resume(struct device *dev)
-{
-	struct plgpio_instance *gpio = dev_get_drvdata(dev);
-	struct irq_data *data = irq_get_irq_data(gpio->irq);
-
-	if (!data) {
-		dev_dbg(dev, "IRQ not connected\n");
-		return pm_runtime_force_resume(dev);
-	}
-
-	if (!irqd_is_wakeup_set(data))
-		return pm_runtime_force_resume(dev);
-
-	return 0;
-}
-
-static int __maybe_unused plgpio_runtime_suspend(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct plgpio_instance *gpio = platform_get_drvdata(pdev);
-
-	clk_disable(gpio->clk);
-
-	return 0;
-}
-
-static int __maybe_unused plgpio_runtime_resume(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct plgpio_instance *gpio = platform_get_drvdata(pdev);
-
-	return clk_enable(gpio->clk);
-}
-
-static const struct dev_pm_ops plgpio_dev_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(plgpio_suspend, plgpio_resume)
-	SET_RUNTIME_PM_OPS(plgpio_runtime_suspend,
-			   plgpio_runtime_resume, NULL)
-};
-
-/**
- * plgpio_irq_mask - Write the specified signal of the GPIO device.
- * @irq_data: per IRQ and chip data passed down to chip functions
- */
 static void plgpio_irq_mask(struct irq_data *irq_data)
 {
 	unsigned long flags;
@@ -416,7 +208,6 @@ static void plgpio_irq_mask(struct irq_data *irq_data)
 	chip->irq_enable[index] &= ~BIT(offset);
 
 	if (!chip->irq_enable[index]) {
-		/* Disable per channel interrupt */
 		u32 temp = plgpio_readreg(chip->regs + PLGPIO_IPIER_OFFSET);
 
 		temp &= ~BIT(index);
@@ -425,10 +216,6 @@ static void plgpio_irq_mask(struct irq_data *irq_data)
 	spin_unlock_irqrestore(&chip->gpio_lock, flags);
 }
 
-/**
- * plgpio_irq_unmask - Write the specified signal of the GPIO device.
- * @irq_data: per IRQ and chip data passed down to chip functions
- */
 static void plgpio_irq_unmask(struct irq_data *irq_data)
 {
 	unsigned long flags;
@@ -443,19 +230,16 @@ static void plgpio_irq_unmask(struct irq_data *irq_data)
 	chip->irq_enable[index] |= BIT(offset);
 
 	if (!old_enable) {
-		/* Clear any existing per-channel interrupts */
 		u32 val = plgpio_readreg(chip->regs + PLGPIO_IPISR_OFFSET) &
 			BIT(index);
 
 		if (val)
 			plgpio_writereg(chip->regs + PLGPIO_IPISR_OFFSET, val);
 
-		/* Update GPIO IRQ read data before enabling interrupt*/
 		val = plgpio_readreg(chip->regs + PLGPIO_DATA_OFFSET +
 				    index * PLGPIO_CHANNEL_OFFSET);
 		chip->gpio_last_irq_read[index] = val;
 
-		/* Enable per channel interrupt */
 		val = plgpio_readreg(chip->regs + PLGPIO_IPIER_OFFSET);
 		val |= BIT(index);
 		plgpio_writereg(chip->regs + PLGPIO_IPIER_OFFSET, val);
@@ -464,14 +248,6 @@ static void plgpio_irq_unmask(struct irq_data *irq_data)
 	spin_unlock_irqrestore(&chip->gpio_lock, flags);
 }
 
-/**
- * plgpio_set_irq_type - Write the specified signal of the GPIO device.
- * @irq_data: Per IRQ and chip data passed down to chip functions
- * @type: Interrupt type that is to be set for the gpio pin
- *
- * Return:
- * 0 if interrupt type is supported otherwise -EINVAL
- */
 static int plgpio_set_irq_type(struct irq_data *irq_data, unsigned int type)
 {
 	struct plgpio_instance *chip = irq_data_get_irq_chip_data(irq_data);
@@ -479,12 +255,6 @@ static int plgpio_set_irq_type(struct irq_data *irq_data, unsigned int type)
 	int index = plgpio_index(chip, irq_offset);
 	int offset = plgpio_offset(chip, irq_offset);
 
-	/*
-	 * The Xilinx GPIO hardware provides a single interrupt status
-	 * indication for any state change in a given GPIO channel (bank).
-	 * Therefore, only rising edge or falling edge triggers are
-	 * supported.
-	 */
 	switch (type & IRQ_TYPE_SENSE_MASK) {
 	case IRQ_TYPE_EDGE_BOTH:
 		chip->irq_rising_edge[index] |= BIT(offset);
@@ -506,10 +276,6 @@ static int plgpio_set_irq_type(struct irq_data *irq_data, unsigned int type)
 	return 0;
 }
 
-/**
- * plgpio_irqhandler - Gpio interrupt service routine
- * @desc: Pointer to interrupt description
- */
 static void plgpio_irqhandler(struct irq_desc *desc)
 {
 	struct plgpio_instance *chip = irq_desc_get_handler_data(desc);
@@ -558,14 +324,6 @@ static void plgpio_irqhandler(struct irq_desc *desc)
 	chained_irq_exit(irqchip, desc);
 }
 
-/**
- * plgpio_probe - Probe method for the GPIO device.
- * @pdev: pointer to the platform device
- *
- * Return:
- * It returns 0, if the driver is bound to the GPIO device, or
- * a negative value if there is an error.
- */
 static int plgpio_probe(struct platform_device *pdev)
 {
 	struct plgpio_instance *chip;
@@ -582,15 +340,12 @@ static int plgpio_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, chip);
 
-	/* Update GPIO state shadow register with default value */
 	if (of_property_read_u32(np, "anlogic,dout-default", &chip->gpio_state[0]))
 		chip->gpio_state[0] = 0x0;
 
-	/* Update GPIO direction shadow register with default value */
 	if (of_property_read_u32(np, "anlogic,tri-default", &chip->gpio_dir[0]))
 		chip->gpio_dir[0] = 0xFFFFFFFF;
 
-	/* Update cells with gpio-cells value */
 	if (of_property_read_u32(np, "#gpio-cells", &cells))
 		dev_dbg(&pdev->dev, "Missing gpio-cells property\n");
 
@@ -599,13 +354,7 @@ static int plgpio_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	/*
-	 * Check device node and parent device node for device width
-	 * and assume default width of 32
-	 */
-	if (of_property_read_u32(np, "anlogic,gpio-width", &chip->gpio_width[0]))
-		chip->gpio_width[0] = 32;
-
+	of_property_read_u32(np, "anlogic,gpio-width", &chip->gpio_width[0]);
 	if (chip->gpio_width[0] > 32)
 		return -EINVAL;
 
@@ -615,20 +364,14 @@ static int plgpio_probe(struct platform_device *pdev)
 		is_dual = 0;
 
 	if (is_dual) {
-		/* Update GPIO state shadow register with default value */
 		if (of_property_read_u32(np, "anlogic,dout-default-2",
 					 &chip->gpio_state[1]))
 			chip->gpio_state[1] = 0x0;
 
-		/* Update GPIO direction shadow register with default value */
 		if (of_property_read_u32(np, "anlogic,tri-default-2",
 					 &chip->gpio_dir[1]))
 			chip->gpio_dir[1] = 0xFFFFFFFF;
 
-		/*
-		 * Check device node and parent device node for device width
-		 * and assume default width of 32
-		 */
 		if (of_property_read_u32(np, "anlogic,gpio2-width",
 					 &chip->gpio_width[1]))
 			chip->gpio_width[1] = 32;
@@ -648,7 +391,6 @@ static int plgpio_probe(struct platform_device *pdev)
 	chip->gc.set = plgpio_set;
 	chip->gc.request = plgpio_request;
 	chip->gc.free = plgpio_free;
-	chip->gc.set_multiple = plgpio_set_multiple;
 
 	chip->gc.label = dev_name(&pdev->dev);
 
@@ -677,18 +419,17 @@ static int plgpio_probe(struct platform_device *pdev)
 	if (chip->irq <= 0)
 		goto skip_irq;
 
-	chip->irqchip.name = "axi-gpio-anlogic";
+	chip->irqchip.name = ANLOGIC_AXI_GPIO_DRIVER_NAME;
 	chip->irqchip.irq_ack = plgpio_irq_ack;
 	chip->irqchip.irq_mask = plgpio_irq_mask;
 	chip->irqchip.irq_unmask = plgpio_irq_unmask;
 	chip->irqchip.irq_set_type = plgpio_set_irq_type;
 
-	/* Disable per-channel interrupts */
 	plgpio_writereg(chip->regs + PLGPIO_IPIER_OFFSET, 0);
-	/* Clear any existing per-channel interrupts */
+
 	temp = plgpio_readreg(chip->regs + PLGPIO_IPISR_OFFSET);
 	plgpio_writereg(chip->regs + PLGPIO_IPISR_OFFSET, temp);
-	/* Enable global interrupts */
+
 	plgpio_writereg(chip->regs + PLGPIO_GIER_OFFSET, PLGPIO_GIER_IE);
 
 	girq = &chip->gc.irq;
@@ -730,29 +471,17 @@ static const struct of_device_id plgpio_of_match[] = {
 
 MODULE_DEVICE_TABLE(of, plgpio_of_match);
 
-static struct platform_driver plgpio_plat_driver = {
+static struct platform_driver plgpio_driver = {
 	.probe		= plgpio_probe,
-	.remove		= plgpio_remove,
 	.driver		= {
-			.name = "axi-gpio-anlogic",
+			.name = ANLOGIC_AXI_GPIO_DRIVER_NAME,
 			.of_match_table	= plgpio_of_match,
-			.pm = &plgpio_dev_pm_ops,
 	},
 };
 
-static int __init plgpio_init(void)
-{
-	return platform_driver_register(&plgpio_plat_driver);
-}
+module_platform_driver(plgpio_driver);
 
-subsys_initcall(plgpio_init);
-
-static void __exit plgpio_exit(void)
-{
-	platform_driver_unregister(&plgpio_plat_driver);
-}
-module_exit(plgpio_exit);
-
+MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Anlogic, Inc.");
 MODULE_DESCRIPTION("Anlogic AXI GPIO driver");
-MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:" ANLOGIC_AXI_GPIO_DRIVER_NAME);
