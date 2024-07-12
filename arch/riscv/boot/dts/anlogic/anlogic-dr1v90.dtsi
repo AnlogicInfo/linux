@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 
+#include "anlogic-dr1v90-plat.h"
+
 /dts-v1/;
 
 / {
@@ -249,6 +251,13 @@
 			reg = <0x0 0xf8049000 0x0 0x1000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <63>;
+		};
+
+		sdhci1: mmc@f804a000 {
+			compatible = "snps,dwcmshc-sdhci";
+			reg = <0x0 0xf804a000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <64>;
 		};
 
 		eqos0: ethernet0@F8100000 {
