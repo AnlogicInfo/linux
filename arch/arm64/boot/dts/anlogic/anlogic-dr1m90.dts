@@ -149,7 +149,7 @@
 	MEMCLK: MEMCLK {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
-		clock-frequency = <AL_AXI_DMAC_CLOCK>;
+		clock-frequency = <AL_SMC_CLOCK>;
 		clock-output-names = "MEMCLK";
 	};
 };
