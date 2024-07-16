@@ -21,7 +21,7 @@
 #define AL_SMC_CLOCK						50000000
 #define AL_UART_CLOCK						50000000
 #define AL_MMC0_PS_MAX_FREQ					50000000
-#define AL_MMC0_PS_CD_ENABLE				0
+#define AL_MMC0_PS_CD_ENABLE				1
 #define AL_MMC0_PS_CD_GPIO_BANK				porta
 #define AL_MMC0_PS_CD_GPIO_PORT				0
 #define AL_MMC0_PS_BUS_WIDTH				4
