@@ -247,13 +247,11 @@
 &eqos0 {
 	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
 	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
-	phy-handle = <&eth_phy0>;
 };
 
 &eqos1 {
 	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
 	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
-	phy-handle = <&eth_phy2>;
 };
 
 &usb_otg0 {

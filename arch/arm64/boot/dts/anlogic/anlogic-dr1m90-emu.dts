@@ -112,11 +112,33 @@
 };
 
 &eqos0 {
+	phy-handle = <&eth_phy0>;
+	status = "disabled";
+};
+
+&eth_phy0 {
+	/* Realtek RTL8211F (0x001cc916) */
+	status = "disabled";
+};
+
+&eth_phy1 {
+	/* Motorcomm YT8531 (0x4f51e91b) */
 	status = "disabled";
 };
 
 &eqos1 {
+	phy-handle = <&eth_phy2>;
 	status = "okay";
+};
+
+&eth_phy2 {
+	/* Realtek RTL8211F (0x001cc916) */
+	status = "okay";
+};
+
+&eth_phy3 {
+	/* Motorcomm YT8531 (0x4f51e91b) */
+	status = "disabled";
 };
 
 &usb_otg0 {
