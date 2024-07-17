@@ -220,7 +220,7 @@
 };
 
 &smcc {
-	clock-names = "smc_clk", "apb_pclk";
+	clock-names = "memclk", "apb_pclk";
 	clocks = <&SMC_CLK>, <&APB_PCLK>;
 };
 
