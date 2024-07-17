@@ -146,11 +146,11 @@
 		clock-output-names = "qspi_m_clk";
 	};
 
-	MEMCLK: MEMCLK {
+	SMC_CLK: SMC_CLK {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
 		clock-frequency = <AL_SMC_CLOCK>;
-		clock-output-names = "MEMCLK";
+		clock-output-names = "SMC_CLK";
 	};
 };
 
@@ -328,7 +328,7 @@
 
 &smcc {
 	clock-names = "memclk", "apb_pclk";
-	clocks = <&MEMCLK>, <&APB_PCLK>;
+	clocks = <&SMC_CLK>, <&APB_PCLK>;
 
 	nfc0: nand-controller@0 {
 		compatible = "arm,pl353-nand-r2p1";
