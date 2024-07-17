@@ -193,6 +193,7 @@
 };
 
 &eqos0 {
+	phy-handle = <&eth_phy0>;
 	status = "okay";
 };
 
@@ -207,6 +208,7 @@
 };
 
 &eqos1 {
+	phy-handle = <&eth_phy2>;
 	status = "disabled";
 };
 
