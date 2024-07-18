@@ -303,14 +303,12 @@
 &eqos0 {
 	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
 	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
-	phy-handle = <&eth_phy0>;
 	phy-mode = AL_ETH0_PHY_MODE;
 };
 
 &eqos1 {
 	clocks = <&GBE_CLK>,<&PHY_CLK>,<&PTP_CLK>;
 	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
-	phy-handle = <&eth_phy2>;
 	phy-mode = AL_ETH1_PHY_MODE;
 };
 

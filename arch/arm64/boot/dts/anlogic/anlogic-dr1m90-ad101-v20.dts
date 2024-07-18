@@ -138,10 +138,6 @@
 	status = "okay";
 };
 
-&eqos1 {
-	status = "disabled";
-};
-
 &eth_phy0 {
 	/* Realtek RTL8211F (0x001cc916) */
 	status = "disabled";
@@ -150,6 +146,11 @@
 &eth_phy1 {
 	/* Motorcomm YT8531 (0x4f51e91b) */
 	status = "okay";
+};
+
+&eqos1 {
+	phy-handle = <&eth_phy3>;
+	status = "disabled";
 };
 
 &eth_phy2 {
