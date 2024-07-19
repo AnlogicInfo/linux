@@ -8,11 +8,11 @@
 		clock-output-names = "AXI_I2C_CLK";
 	};
 
-	axi_uart0: serial@A0000000 {
+	axi_uart0: serial@80020000 {
 		compatible = "anlogic,xps-uartlite-1.00.a";
-		reg = <0x0 0xA0000000 0x0 0x1000>;
+		reg = <0x0 0x80020000 0x0 0x1000>;
+		interrupts = <GIC_SPI 84 IRQ_TYPE_LEVEL_HIGH>; /* BM 116 */
 		clock-frequency = <50000000>;
-		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
 		port-number = <0>;
 		anlogic,baudrate = <115200>;
 		current-speed = <115200>;
@@ -22,10 +22,48 @@
 		status = "disabled";
 	};
 
-	axi_gpio: gpio@80000000 {
+	axi_uart1: serial@A0020000 {
+		compatible = "anlogic,xps-uartlite-1.00.a";
+		reg = <0x0 0xA0020000 0x0 0x1000>;
+		interrupts = <GIC_SPI 92 IRQ_TYPE_LEVEL_HIGH>; /* BM 124 */
+		clock-frequency = <50000000>;
+		port-number = <1>;
+		anlogic,baudrate = <115200>;
+		current-speed = <115200>;
+		anlogic,use-parity = <0x0>;
+		anlogic,odd-parity = <0x0>;
+		anlogic,data-bits = <0x8>;
+		status = "disabled";
+	};
+
+	axi_gpio0: gpio@0x80010000 {
 		compatible = "anlogic,axi-gpio-1.00.a";
-		reg = <0x0 0x80000000 0x0 0x10000>;
-		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		/*reg = <0x0 0x80000000 0x0 0x10000>;*/
+		/*interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;*/ /* BM 114 */
+		reg = <0x0 0x80010000 0x0 0x10000>;
+		interrupts = <GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>;/* BM 115 */
+		#gpio-cells = <2>;
+		#interrupt-cells = <0x2>;
+		gpio-controller;
+		anlogic,all-inputs = <0x0>;
+		anlogic,all-inputs-2 = <0x0>;
+		anlogic,all-outputs = <0x0>;
+		anlogic,all-outputs-2 = <0x0>;
+		anlogic,dout-default = <0x0>;
+		anlogic,dout-default-2 = <0x0>;
+		anlogic,gpio-width = <0x20>;
+		anlogic,gpio2-width = <0x20>;
+		anlogic,interrupt-present = <0x1>;
+		anlogic,is-dual = <0x1>;
+		anlogic,tri-default = <0xFFFFFFFF>;
+		anlogic,tri-default-2 = <0xFFFFFFFF>;
+		status = "disabled";
+	};
+
+	axi_gpio1: gpio@A0000000 {
+		compatible = "anlogic,axi-gpio-1.00.a";
+		reg = <0x0 0xA0000000 0x0 0x10000>;
+		interrupts = <GIC_SPI 91 IRQ_TYPE_LEVEL_HIGH>;/* BM 123 */
 		#gpio-cells = <2>;
 		#interrupt-cells = <0x2>;
 		gpio-controller;
@@ -48,9 +86,31 @@
 		compatible = "gpio-keys";
 		#address-cells = <0x1>;
 		#size-cells = <0x0>;
-		axi_sw5: axi_sw5 {
-			gpios = <&axi_gpio 0 GPIO_ACTIVE_LOW>;
-			linux,code = <103>;
+		axi_key1: axi_key1 {
+			/* gpio0_ch1_io[0] */
+			gpios = <&axi_gpio0 0 GPIO_ACTIVE_LOW>;
+			linux,code = <103>;/* KEY_UP */
+			status = "disabled";
+		};
+
+		axi_key2: axi_key2 {
+			/* gpio0_ch2_io[0] */
+			gpios = <&axi_gpio0 32 GPIO_ACTIVE_LOW>;
+			linux,code = <108>;/* KEY_DOWN */
+			status = "disabled";
+		};
+
+		axi_key3: axi_key3 {
+			/* gpio1_ch1_io[0] */
+			gpios = <&axi_gpio1 0 GPIO_ACTIVE_LOW>;
+			linux,code = <105>;/* KEY_LEFT */
+			status = "disabled";
+		};
+
+		axi_key4: axi_key4 {
+			/* gpio1_ch1_io[1] */
+			gpios = <&axi_gpio1 1 GPIO_ACTIVE_LOW>;
+			linux,code = <106>;/* KEY_RIGHT */
 			status = "disabled";
 		};
 	};
@@ -104,7 +164,6 @@
 					status = "okay";
 				};
 			};
-
 		};
 	};
 };

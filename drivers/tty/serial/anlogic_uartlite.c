@@ -22,7 +22,7 @@
 #include <linux/tty_flip.h>
 #include <linux/tty.h>
 
-#define PLUART_NAME			"ttyUL"
+#define PLUART_NAME			"ttySL"
 #define PLUART_MAJOR		204
 #define PLUART_MINOR		187
 #define PLUART_NR_UARTS		CONFIG_SERIAL_ANLOGIC_UARTLITE_NR_UARTS
