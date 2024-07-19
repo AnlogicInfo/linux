@@ -8,12 +8,28 @@
 		clock-output-names = "AXI_I2C_CLK";
 	};
 
-	axi_uart0: serial@A0000000 {
+	axi_uart0: serial@80020000 {
 		compatible = "anlogic,xps-uartlite-1.00.a";
-		reg = <0x0 0xA0000000 0x0 0x1000>;
+		/* reg = <0x0 0xA0000000 0x0 0x1000>; */
+		/* interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>; */ /* BM 114 */
+		reg = <0x0 0x80020000 0x0 0x1000>;
+		interrupts = <GIC_SPI 84 IRQ_TYPE_LEVEL_HIGH>; /* BM 116 */
 		clock-frequency = <50000000>;
-		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
 		port-number = <0>;
+		anlogic,baudrate = <115200>;
+		current-speed = <115200>;
+		anlogic,use-parity = <0x0>;
+		anlogic,odd-parity = <0x0>;
+		anlogic,data-bits = <0x8>;
+		status = "disabled";
+	};
+
+	axi_uart1: serial@A0020000 {
+		compatible = "anlogic,xps-uartlite-1.00.a";
+		reg = <0x0 0xA0020000 0x0 0x1000>;
+		interrupts = <GIC_SPI 92 IRQ_TYPE_LEVEL_HIGH>; /* BM 124 */
+		clock-frequency = <50000000>;
+		port-number = <1>;
 		anlogic,baudrate = <115200>;
 		current-speed = <115200>;
 		anlogic,use-parity = <0x0>;
@@ -46,9 +62,9 @@
 		status = "disabled";
 	};
 
-	axi_gpio1: gpio@a0000000 {
+	axi_gpio1: gpio@A0000000 {
 		compatible = "anlogic,axi-gpio-1.00.a";
-		reg = <0x0 0xa0000000 0x0 0x10000>;
+		reg = <0x0 0xA0000000 0x0 0x10000>;
 		interrupts = <GIC_SPI 91 IRQ_TYPE_LEVEL_HIGH>;/* BM 123 */
 		#gpio-cells = <2>;
 		#interrupt-cells = <0x2>;
