@@ -10,6 +10,8 @@
 		eqos0 = &eqos0;
 		ethernet0 = &eqos0;
 		ethernet1 = &eqos1;
+		mmc0 = &sdhci0;
+		mmc1 = &sdhci1;
 	};
 
 	chosen: chosen {
