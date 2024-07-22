@@ -189,7 +189,7 @@
 };
 
 &sdhci1 {
-	status = "disabled";
+	status = "okay";
 };
 
 &eqos0 {
