@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
+ * Anlogic QSPI core controller driver (refer spi-dw-core.c)
+ *
  * Copyright (C) 2023 Anlogic, Inc.
  *
  * Author: HuangJian <jian.huang@anlogic.com>
@@ -100,7 +102,8 @@ void al_qspi_set_cs(struct spi_device *spi, bool enable)
 		al_writel(qspi, AL_QSPI_SER_OFFSET, 0);
 }
 
-static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi, const struct spi_mem_op *op)
+static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi,
+				   const struct spi_mem_op *op)
 {
 	u32 room = 0, entries, sts;
 	unsigned int len = 0;
@@ -118,17 +121,21 @@ static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi,
 	if (qspi->info.spi_frame_format == SPI_STANDARD_FORMAT) {
 		switch (qspi->info.dfs - 1) {
 		case QSPI_DFS_32BITS:
-			al_writel(qspi, AL_QSPI_DR0_OFFSET, (op->cmd.opcode & 0xff) | ((op->addr.val & 0xff) << 24)
-												| (((op->addr.val >> 8) & 0xff) << 16) | (((op->addr.val >> 16) & 0xff) << 8));
-			while(dummy_temp) {
+			al_writel(qspi, AL_QSPI_DR0_OFFSET, (op->cmd.opcode & 0xff) |
+				  ((op->addr.val & 0xff) << 24) |
+				  (((op->addr.val >> 8) & 0xff) << 16) |
+				  (((op->addr.val >> 16) & 0xff) << 8));
+			while (dummy_temp) {
 				al_writel(qspi, AL_QSPI_DR0_OFFSET, 0x0);
 				dummy_temp -= 4;
 			}
 			break;
 		case QSPI_DFS_16BITS:
-			al_writel(qspi, AL_QSPI_DR0_OFFSET, (((op->addr.val >> 24) & 0xff) << 8) | (op->cmd.opcode & 0xff));
-			al_writel(qspi, AL_QSPI_DR0_OFFSET, ((op->addr.val & 0xff) << 8) | ((op->addr.val >> 8) & 0xff));
-			while(dummy_temp) {
+			al_writel(qspi, AL_QSPI_DR0_OFFSET, (((op->addr.val >> 24) & 0xff) << 8) |
+				  (op->cmd.opcode & 0xff));
+			al_writel(qspi, AL_QSPI_DR0_OFFSET, ((op->addr.val & 0xff) << 8) |
+				  ((op->addr.val >> 8) & 0xff));
+			while (dummy_temp) {
 				al_writel(qspi, AL_QSPI_DR0_OFFSET, 0x0);
 				dummy_temp -= 2;
 			}
@@ -136,10 +143,12 @@ static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi,
 		case QSPI_DFS_8BITS:
 			al_writel(qspi, AL_QSPI_DR0_OFFSET, (op->cmd.opcode & 0xff));
 			while (op->addr.nbytes > room) {
-				al_writel(qspi, AL_QSPI_DR0_OFFSET, (op->addr.val >> ((op->addr.nbytes - room - 1) * 8)) & 0xff);
+				al_writel(qspi, AL_QSPI_DR0_OFFSET,
+					  (op->addr.val >> ((op->addr.nbytes - room - 1) * 8)) &
+					  0xff);
 				room++;
 			}
-			while(dummy_temp) {
+			while (dummy_temp) {
 				al_writel(qspi, AL_QSPI_DR0_OFFSET, 0x0);
 				dummy_temp--;
 			}
@@ -151,27 +160,31 @@ static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi,
 		switch (qspi->info.dfs - 1) {
 		case QSPI_DFS_32BITS:
 			al_writel(qspi, AL_QSPI_DR0_OFFSET, (op->cmd.opcode & 0xff) << 24);
-			if(op->addr.nbytes != 0)
-			al_writel(qspi, AL_QSPI_DR0_OFFSET, ((op->addr.val & 0xff) << 24) | (((op->addr.val >> 8) & 0xff) << 16)
-					| (((op->addr.val >> 16) & 0xff) << 8) | ((op->addr.val >> 24) & 0xff));
+			if (op->addr.nbytes != 0)
+				al_writel(qspi, AL_QSPI_DR0_OFFSET, ((op->addr.val & 0xff) << 24) |
+					  (((op->addr.val >> 8) & 0xff) << 16) |
+					  (((op->addr.val >> 16) & 0xff) << 8) |
+					  ((op->addr.val >> 24) & 0xff));
 			break;
 		case QSPI_DFS_16BITS:
 			al_writel(qspi, AL_QSPI_DR0_OFFSET, (op->cmd.opcode & 0xff) << 8);
-			if(op->addr.nbytes != 0)
-			al_writel(qspi, AL_QSPI_DR0_OFFSET, ((op->addr.val & 0xff) << 8) | ((op->addr.val >> 8) & 0xff)
-					| (((op->addr.val >> 16) & 0xff) << 24) | (((op->addr.val >> 24) & 0xff) << 16));
+			if (op->addr.nbytes != 0)
+				al_writel(qspi, AL_QSPI_DR0_OFFSET, ((op->addr.val & 0xff) << 8) |
+					  ((op->addr.val >> 8) & 0xff) |
+					  (((op->addr.val >> 16) & 0xff) << 24) |
+					  (((op->addr.val >> 24) & 0xff) << 16));
 			break;
 		case QSPI_DFS_8BITS:
-			al_writel(qspi, AL_QSPI_DR0_OFFSET, (op->cmd.opcode& 0xff));
-			if(op->addr.nbytes != 0)
-			al_writel(qspi, AL_QSPI_DR0_OFFSET, op->addr.val);
+			al_writel(qspi, AL_QSPI_DR0_OFFSET, (op->cmd.opcode & 0xff));
+			if (op->addr.nbytes != 0)
+				al_writel(qspi, AL_QSPI_DR0_OFFSET, op->addr.val);
 			break;
 		default:
 			break;
 		}
 	}
 
-	if (SPI_MEM_DATA_OUT == op->data.dir) {
+	if (op->data.dir == SPI_MEM_DATA_OUT) {
 		len = qspi->fifo_len - al_readl(qspi, AL_QSPI_TXFLR_OFFSET);
 		len = min(len, (op->data.nbytes ? (op->data.nbytes / (qspi->info.dfs / 8)) : 0));
 		buf = (u8 *)op->data.buf.out;
@@ -188,7 +201,7 @@ static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi,
 	 * otherwise the CS de-assertion will happen whereupon the memory
 	 * operation will be pre-terminated.
 	 */
-	if (SPI_MEM_DATA_OUT == op->data.dir)
+	if (op->data.dir == SPI_MEM_DATA_OUT)
 		len = (op->data.nbytes - ((void *)buf - op->data.buf.out)) / (qspi->info.dfs / 8);
 
 	al_qspi_set_cs(spi, false);
@@ -211,7 +224,7 @@ static int al_qspi_write_then_read(struct al_qspi *qspi, struct spi_device *spi,
 	 * activated. We have to keep up with the incoming data pace to
 	 * prevent the Rx FIFO overflow causing the inbound data loss.
 	 */
-	if (SPI_MEM_DATA_IN == op->data.dir) {
+	if (op->data.dir == SPI_MEM_DATA_IN) {
 		len = op->data.nbytes / (qspi->info.dfs / 8);
 		buf = (u8 *)op->data.buf.in;
 	}
@@ -329,9 +342,8 @@ static bool al_qspi_supports_mem_op(struct spi_mem *mem,
 		return false;
 	}
 
-	if (op->data.nbytes > 0x40000) {
+	if (op->data.nbytes > 0x40000)
 		return false;
-	}
 
 	return spi_mem_default_supports_op(mem, op);
 }
@@ -368,8 +380,9 @@ static inline u32 rx_max(struct al_qspi *qspi)
 static void al_writer(struct al_qspi *qspi)
 {
 	u32 max = tx_max(qspi);
+
 	al_reg32_set_bits(qspi, AL_QSPI_TXFTLR_OFFSET, QSPI_TXFTLR_TXFTHR_SHIFT,
-							QSPI_TXFTLR_TXFTHR_SIZE, max ? max - 1 : 0);
+			  QSPI_TXFTLR_TXFTHR_SIZE, max ? max - 1 : 0);
 	while (max--) {
 		if (qspi->tx) {
 			al_write_data(qspi, qspi->tx);
@@ -414,36 +427,35 @@ static int al_qspi_exec_mem_op(struct spi_mem *mem,
 
 	qspi_enable_chip(qspi, 0);
 	al_reg32_set_bits(qspi, AL_QSPI_CTRLR0_OFFSET, QSPI_CTRLR0_SPI_FRF_SHIFT,
-							QSPI_CTRLR0_SPI_FRF_SIZE, al_qspi_modes[mode].config_frame_format);
+			  QSPI_CTRLR0_SPI_FRF_SIZE, al_qspi_modes[mode].config_frame_format);
 
 	al_reg32_set_bits(qspi, AL_QSPI_SPI_CTRLR0_OFFSET, QSPI_SPI_CTRLR0_TRANS_TYPE_SHIFT,
-							QSPI_SPI_CTRLR0_TRANS_TYPE_SIZE, al_qspi_modes[mode].config_trans_type);
+			  QSPI_SPI_CTRLR0_TRANS_TYPE_SIZE, al_qspi_modes[mode].config_trans_type);
 	qspi->info.addr_length = op->addr.nbytes * 2;
 	qspi->info.inst_length = op->cmd.nbytes + 1;
-	if(0 != op->dummy.buswidth)
+	if (op->dummy.buswidth != 0)
 		qspi->info.wait_cycles = op->dummy.nbytes * 8 / op->dummy.buswidth;
 	else
 		qspi->info.wait_cycles = 0;
-	al_reg32_set_bits(qspi,AL_QSPI_SPI_CTRLR0_OFFSET , QSPI_SPI_CTRLR0_WAIT_CYCLES_SHIFT,
-							QSPI_SPI_CTRLR0_WAIT_CYCLES_SIZE, qspi->info.wait_cycles);
+	al_reg32_set_bits(qspi, AL_QSPI_SPI_CTRLR0_OFFSET, QSPI_SPI_CTRLR0_WAIT_CYCLES_SHIFT,
+			  QSPI_SPI_CTRLR0_WAIT_CYCLES_SIZE, qspi->info.wait_cycles);
 	al_reg32_set_bits(qspi, AL_QSPI_SPI_CTRLR0_OFFSET, QSPI_SPI_CTRLR0_INST_L_SHIFT,
-							QSPI_SPI_CTRLR0_INST_L_SIZE, qspi->info.inst_length);
+			  QSPI_SPI_CTRLR0_INST_L_SIZE, qspi->info.inst_length);
 	al_reg32_set_bits(qspi, AL_QSPI_SPI_CTRLR0_OFFSET, QSPI_SPI_CTRLR0_ADDR_L_SHIFT,
-							QSPI_SPI_CTRLR0_ADDR_L_SIZE, qspi->info.addr_length);
-	if((0 != op->data.nbytes) && (0 != op->addr.nbytes) &&
-		(SPI_STANDARD_FORMAT != al_qspi_modes[mode].config_frame_format)) {
-		if(0 == op->data.nbytes % 4) {
+			  QSPI_SPI_CTRLR0_ADDR_L_SIZE, qspi->info.addr_length);
+	if ((op->data.nbytes != 0) && (op->addr.nbytes != 0) &&
+		(al_qspi_modes[mode].config_frame_format != SPI_STANDARD_FORMAT)) {
+		if (op->data.nbytes % 4 == 0)
 			qspi->info.dfs = 32;
-		} else if(0 == op->data.nbytes % 2) {
+		else if (op->data.nbytes % 2 == 0)
 			qspi->info.dfs = 16;
-		} else {
+		else
 			qspi->info.dfs = 8;
-		}
 	} else {
 		qspi->info.dfs = 8;
 	}
 	al_reg32_set_bits(qspi, AL_QSPI_CTRLR0_OFFSET, QSPI_CTRLR0_DFS_SHIFT,
-							QSPI_CTRLR0_DFS_SIZE, qspi->info.dfs - 1);
+			  QSPI_CTRLR0_DFS_SIZE, qspi->info.dfs - 1);
 
 	qspi->info.freq = clamp(mem->spi->max_speed_hz, 0U, qspi->max_mem_freq);
 	clk_div = (DIV_ROUND_UP(qspi->max_freq, qspi->info.freq) + 1) & 0xfffe;
@@ -454,24 +466,26 @@ static int al_qspi_exec_mem_op(struct spi_mem *mem,
 		qspi->current_freq = speed_hz;
 	}
 	if (op->data.dir == SPI_MEM_DATA_IN) {
-		if(SPI_STANDARD_FORMAT == al_qspi_modes[mode].config_frame_format)
+		if (al_qspi_modes[mode].config_frame_format == SPI_STANDARD_FORMAT)
 			qspi->info.tmod = SPI_TMOD_EPROMREAD;
 		else
 			qspi->info.tmod = SPI_TMOD_RO;
-		al_writel(qspi, AL_QSPI_RXFTLR_OFFSET, min(qspi->fifo_len/2, op->data.nbytes * 8 / qspi->info.dfs));
+		al_writel(qspi, AL_QSPI_RXFTLR_OFFSET,
+			  min(qspi->fifo_len / 2, op->data.nbytes * 8 / qspi->info.dfs));
 	} else {
 		qspi->info.tmod = SPI_TMOD_TO;
-		al_writel(qspi, AL_QSPI_TXFTLR_OFFSET, min(qspi->fifo_len/2, op->data.nbytes * 8 / qspi->info.dfs));
+		al_writel(qspi, AL_QSPI_TXFTLR_OFFSET,
+			  min(qspi->fifo_len / 2, op->data.nbytes * 8 / qspi->info.dfs));
 	}
 	al_reg32_set_bits(qspi, AL_QSPI_CTRLR0_OFFSET, QSPI_CTRLR0_TMOD_SHIFT,
-							QSPI_CTRLR0_TMOD_SIZE, qspi->info.tmod);
-	if(SPI_STANDARD_FORMAT == al_qspi_modes[mode].config_frame_format)
+			  QSPI_CTRLR0_TMOD_SIZE, qspi->info.tmod);
+	if (al_qspi_modes[mode].config_frame_format == SPI_STANDARD_FORMAT)
 		len = min(qspi->fifo_len / 2, op->data.nbytes + op->cmd.nbytes + op->addr.nbytes);
 	else
 		len = min(qspi->fifo_len / 2, op->data.nbytes * 8 / qspi->info.dfs + 2);
 
 	al_reg32_set_bits(qspi, AL_QSPI_TXFTLR_OFFSET, QSPI_TXFTLR_TXFTHR_SHIFT,
-							QSPI_TXFTLR_TXFTHR_SIZE, 0);
+			  QSPI_TXFTLR_TXFTHR_SIZE, 0);
 
 	qspi->info.ndf = op->data.nbytes / (qspi->info.dfs / 8);
 	al_writel(qspi, AL_QSPI_CTRLR1_OFFSET, qspi->info.ndf ? qspi->info.ndf - 1 : 0);
@@ -508,7 +522,7 @@ static int al_qspi_exec_mem_op(struct spi_mem *mem,
 	 * qspi->max_mem_freq parameter.
 	 */
 	if (qspi->info.spi_frame_format == SPI_STANDARD_FORMAT) {
- 		local_irq_save(flags);
+		local_irq_save(flags);
 		preempt_disable();
 	}
 	ret = al_qspi_write_then_read(qspi, mem->spi, op);
@@ -645,6 +659,7 @@ static int al_qspi_transfer_one(struct spi_master *master,
 	u32 speed_hz;
 
 	struct al_qspi *qspi = spi_controller_get_devdata(master);
+
 	qspi->info.tmod = SPI_TMOD_TR;
 	qspi->info.dfs = transfer->bits_per_word;
 	qspi->info.freq = transfer->speed_hz;
@@ -665,13 +680,13 @@ static int al_qspi_transfer_one(struct spi_master *master,
 			 transfer->rx_nbits == SPI_NBITS_SINGLE)
 		qspi->info.spi_frame_format = SPI_STANDARD_FORMAT;
 	else
-		return EINVAL;
+		return -EINVAL;
 
-	if((qspi->info.spi_frame_format == SPI_STANDARD_FORMAT) && (qspi->info.dfs > 8))
-		return EINVAL;
+	if ((qspi->info.spi_frame_format == SPI_STANDARD_FORMAT) && (qspi->info.dfs > 8))
+		return -EINVAL;
 
-	if(qspi->tx_len > 0x10000)
-		return EINVAL;
+	if (qspi->tx_len > 0x10000)
+		return -EINVAL;
 
 	/* Ensure the data above is visible for all CPUs */
 	smp_mb();
@@ -679,11 +694,11 @@ static int al_qspi_transfer_one(struct spi_master *master,
 	qspi_enable_chip(qspi, 0);
 
 	al_reg32_set_bits(qspi, AL_QSPI_CTRLR0_OFFSET, QSPI_CTRLR0_TMOD_SHIFT,
-							QSPI_CTRLR0_TMOD_SIZE, qspi->info.tmod);
+			  QSPI_CTRLR0_TMOD_SIZE, qspi->info.tmod);
 	al_reg32_set_bits(qspi, AL_QSPI_CTRLR0_OFFSET, QSPI_CTRLR0_DFS_SHIFT,
-							QSPI_CTRLR0_DFS_SIZE, qspi->info.dfs - 1);
+			  QSPI_CTRLR0_DFS_SIZE, qspi->info.dfs - 1);
 	al_reg32_set_bits(qspi, AL_QSPI_CTRLR0_OFFSET, QSPI_CTRLR0_SPI_FRF_SHIFT,
-							QSPI_CTRLR0_SPI_FRF_SIZE, qspi->info.spi_frame_format);
+			  QSPI_CTRLR0_SPI_FRF_SIZE, qspi->info.spi_frame_format);
 
 	al_writel(qspi, AL_QSPI_CTRLR1_OFFSET, qspi->rx_len - 1);
 
@@ -698,13 +713,13 @@ static int al_qspi_transfer_one(struct spi_master *master,
 	transfer->effective_speed_hz = qspi->current_freq;
 
 	al_reg32_set_bits(qspi, AL_QSPI_SPI_CTRLR0_OFFSET, QSPI_SPI_CTRLR0_WAIT_CYCLES_SHIFT,
-							QSPI_SPI_CTRLR0_WAIT_CYCLES_SIZE, 0);
-	al_reg32_set_bits(qspi,AL_QSPI_SPI_CTRLR0_OFFSET , QSPI_SPI_CTRLR0_INST_L_SHIFT,
-							QSPI_SPI_CTRLR0_INST_L_SIZE, 0);
-	al_reg32_set_bits(qspi,AL_QSPI_SPI_CTRLR0_OFFSET , QSPI_SPI_CTRLR0_ADDR_L_SHIFT,
-							QSPI_SPI_CTRLR0_ADDR_L_SIZE, 0);
+			  QSPI_SPI_CTRLR0_WAIT_CYCLES_SIZE, 0);
+	al_reg32_set_bits(qspi, AL_QSPI_SPI_CTRLR0_OFFSET, QSPI_SPI_CTRLR0_INST_L_SHIFT,
+			  QSPI_SPI_CTRLR0_INST_L_SIZE, 0);
+	al_reg32_set_bits(qspi, AL_QSPI_SPI_CTRLR0_OFFSET, QSPI_SPI_CTRLR0_ADDR_L_SHIFT,
+			  QSPI_SPI_CTRLR0_ADDR_L_SIZE, 0);
 	al_reg32_set_bits(qspi, AL_QSPI_SPI_CTRLR0_OFFSET, QSPI_SPI_CTRLR0_TRANS_TYPE_SHIFT,
-							QSPI_SPI_CTRLR0_TRANS_TYPE_SIZE, 0);
+			  QSPI_SPI_CTRLR0_TRANS_TYPE_SIZE, 0);
 
 	/* For poll mode just disable all interrupts */
 	qspi_mask_intr(qspi, 0xff);
@@ -734,9 +749,9 @@ static void al_qspi_hardware_init(struct al_qspi *qspi, struct device *dev)
 	device_property_read_u32(dev, "rx-sample-delay-ns",
 				 &qspi->def_rx_sample_dly_ns);
 	al_reg32_set_bit(qspi, AL_QSPI_SPI_CTRLR0_OFFSET,
-						QSPI_SPI_CTRLR0_CLK_STRETCH_EN_SHIFT, 1);
+			 QSPI_SPI_CTRLR0_CLK_STRETCH_EN_SHIFT, 1);
 	al_reg32_set_bit(qspi, AL_QSPI_CTRLR0_OFFSET,
-						QSPI_CTRLR0_SSTE_SHIFT, 0);
+			 QSPI_CTRLR0_SSTE_SHIFT, 0);
 	al_writel(qspi, AL_QSPI_SER_OFFSET, 0);
 	qspi_enable_chip(qspi, 1);
 }
@@ -794,7 +809,7 @@ static int al_qspi_probe(struct platform_device *pdev)
 
 	err = clk_prepare_enable(qspi->clk);
 	if (err)
-		 goto exit;
+		goto exit;
 
 	/* find an optional reset controller */
 	qspi->rstc = devm_reset_control_get_optional_exclusive(&pdev->dev, "spi");
@@ -806,8 +821,7 @@ static int al_qspi_probe(struct platform_device *pdev)
 
 	/* Optional clock needed to access the registers */
 	qspi->pclk = devm_clk_get_optional(&pdev->dev, "pclk");
-	if (IS_ERR(qspi->pclk))
-	{
+	if (IS_ERR(qspi->pclk)) {
 		err = PTR_ERR(qspi->pclk);
 		goto out_clk;
 	}
@@ -828,7 +842,7 @@ static int al_qspi_probe(struct platform_device *pdev)
 	master->cleanup = al_qspi_cleanup;
 
 	if (!qspi->max_mem_freq)
-			qspi->max_mem_freq = qspi->max_freq;
+		qspi->max_mem_freq = qspi->max_freq;
 	master->max_speed_hz = qspi->max_freq;
 	platform_set_drvdata(pdev, master);
 
@@ -838,7 +852,7 @@ static int al_qspi_probe(struct platform_device *pdev)
 	}
 
 	err = devm_request_irq(&pdev->dev, irq, al_qspi_irq,
-					 0, dev_name(&pdev->dev), qspi);
+			       0, dev_name(&pdev->dev), qspi);
 	if (err)
 		goto out;
 
