@@ -115,16 +115,20 @@
 		};
 	};
 
-	axi_i2c: axi_i2c@80000000 {
+	axi_i2c: axi_i2c@80030000 {
 		compatible = "anlogic-axi-i2c-controller";
-		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
-		reg = <0 0x80000000 0 0x1000>;
+		interrupts = <GIC_SPI 85 IRQ_TYPE_LEVEL_HIGH>;
+		reg = <0 0x80030000 0 0x10000>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		clocks = <&AXI_I2C_CLK>;
 		clock-names = "AXI_I2C_CLK";
 		status = "disabled";
 
+		/*
+		 * for dr1m90-ad101-v10,
+		 * if using axi i2c, it is necessary to block i2c0 on the PS side.
+		 */
 		i2c-mux@74 {
 			compatible = "nxp,pca9548";
 			#address-cells = <1>;
