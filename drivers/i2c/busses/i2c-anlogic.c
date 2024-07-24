@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * anlogic AXI I2C Controller Driver
+ * anlogic axi i2c Controller Driver
  *
  * Copyright (c) 2024 anlogic Technologies Co., Ltd.
  */
@@ -19,8 +19,9 @@
 
 #define ANLOGIC_I2C_SLV_ADDR_VAL GENMASK(9, 0)
 #define ANLOGIC_I2C_DATA_CNT GENMASK(7, 0)
+#define ANLOGIC_I2C_INT_ALL	GENMASK(9, 0)
 
-/* anlogic AXI I2C Register Offsets */
+/* anlogic axi i2c register offsets */
 #define AXI_I2C_ID (0x00) /* ID Register */
 #define AXI_I2C_CFG (0x10) /* Configuration Register */
 #define AXI_I2C_INTEN (0x14) /* Interrupt Enable Register */
@@ -204,13 +205,18 @@ static int anlogic_i2c_start_xfer(struct anlogic_i2c_controller *ctlr,
 {
 	u32 cr_reg, setup_reg, addr_reg;
 
-	/* 1. Add start/Address/data/stop byte */
+	/* 1. add start/address/stop byte, conditionally add data byte */
 	cr_reg = readl(ctlr->iobase + AXI_I2C_CR);
-	cr_reg |= ((1 << CR_PHASE_START) | (1 << CR_PHASE_ADDR) |
-		   (1 << CR_PHASE_DATA) | (1 << CR_PHASE_STOP));
+	cr_reg |= ((1 << CR_PHASE_START) | (1 << CR_PHASE_ADDR) | (1 << CR_PHASE_STOP));
+
+	/* conditionally set the data phase */
+	if (msg->len > 0)
+		cr_reg |= (1 << CR_PHASE_DATA);
+	else
+		cr_reg &= ~(1 << CR_PHASE_DATA);
 	writel(cr_reg, ctlr->iobase + AXI_I2C_CR);
 
-	/* 2. Set Address mode */
+	/* 2. set address mode */
 	setup_reg = readl(ctlr->iobase + AXI_I2C_SETUP);
 	if (msg->flags & I2C_M_TEN)
 		setup_reg |= (AL_AXI_I2C_10BIT << I2C_ADDRESS_MODE);
@@ -218,17 +224,17 @@ static int anlogic_i2c_start_xfer(struct anlogic_i2c_controller *ctlr,
 		setup_reg &= ~(AL_AXI_I2C_10BIT << I2C_ADDRESS_MODE);
 	writel(setup_reg, ctlr->iobase + AXI_I2C_SETUP);
 
-	/* 3. Set slave address */
+	/* 3. set slave address */
 	addr_reg = FIELD_PREP(ANLOGIC_I2C_SLV_ADDR_VAL, msg->addr);
 	writel(addr_reg, ctlr->iobase + AXI_I2C_ADDR);
 
-	/* 4. Set Transaction direction */
+	/* 4. set transaction direction */
 	if (msg->flags & I2C_M_RD)
 		cr_reg |= (MASTER_RX_SLAVE_TX << CR_DIR);
 	else
 		cr_reg &= ~(MASTER_RX_SLAVE_TX << CR_DIR);
 
-	/* 5. Set DATA count */
+	/* 5. set data count */
 	cr_reg &= ~ANLOGIC_I2C_DATA_CNT;
 	cr_reg |= FIELD_PREP(ANLOGIC_I2C_DATA_CNT, msg->len);
 	writel(cr_reg, ctlr->iobase + AXI_I2C_CR);
@@ -236,7 +242,7 @@ static int anlogic_i2c_start_xfer(struct anlogic_i2c_controller *ctlr,
 	anlogic_i2c_clear_int(ctlr, mask);
 	anlogic_i2c_enable_int(ctlr, mask);
 
-	/* 6. Start Transaction */
+	/* 6. start transaction */
 	ctlr->state = I2C_XFER_STATE_SENDING_ADDR;
 	writel(AL_AXI_I2C_CMD_TRANS, ctlr->iobase + AXI_I2C_CMD);
 
@@ -257,7 +263,6 @@ static int anlogic_i2c_master_xfer(struct i2c_adapter *adap,
 	struct anlogic_i2c_controller *ctlr = i2c_get_adapdata(adap);
 	DECLARE_COMPLETION_ONSTACK(done);
 	int ret = num;
-	u32 mask;
 
 	ctlr->completion = &done;
 	ctlr->num_messages = num;
@@ -267,19 +272,20 @@ static int anlogic_i2c_master_xfer(struct i2c_adapter *adap,
 	for (ctlr->current_msg_index = 0; ctlr->current_msg_index < ctlr->num_messages;
 		ctlr->current_msg_index++) {
 		struct i2c_msg *current_msg = &ctlr->msgs[ctlr->current_msg_index];
-		/* Reset ctlr related indices */
+		/* reset ctlr related indices */
 		anlogic_i2c_reset_xfer(ctlr);
 		reinit_completion(ctlr->completion);
 
-		/* Start the transfer with only address hit interrupt enabled */
+		/* start the transfer with only address hit interrupt enabled */
 		anlogic_i2c_start_xfer(ctlr, current_msg, (1 << INT_ADDR_HIT));
 
-		/* Wait for the current message transfer to complete */
+		/* wait for the current message transfer to complete */
 		if (!wait_for_completion_timeout(ctlr->completion, adap->timeout)) {
-			anlogic_i2c_disable_int(ctlr, mask);
+			anlogic_i2c_clear_int(ctlr, ANLOGIC_I2C_INT_ALL);
+			anlogic_i2c_disable_int(ctlr, ANLOGIC_I2C_INT_ALL);
 			synchronize_irq(ctlr->irq);
 			i2c_recover_bus(&ctlr->adapter);
-			ret = -ETIMEDOUT;
+			ret = -EIO;
 			goto out;
 		}
 
@@ -312,7 +318,7 @@ static int anlogic_i2c_read_rx_fifo(struct anlogic_i2c_controller *ctlr)
 {
 	struct i2c_msg *current_msg = &ctlr->msgs[ctlr->current_msg_index];
 
-	/* Receive data while the FIFO is not empty and there is space in the buffer */
+	/* receive data while the fifo is not empty and there is space in the buffer */
 	while (!(readl(ctlr->iobase + AXI_I2C_SR) & (1 << SR_FIFO_EMPTY)) &&
 	       ctlr->rx_buffer_index < current_msg->len) {
 		current_msg->buf[ctlr->rx_buffer_index] =
@@ -333,7 +339,7 @@ static void anlogic_i2c_xfer_msg(struct anlogic_i2c_controller *ctlr)
 {
 	struct i2c_msg *current_msg = &ctlr->msgs[ctlr->current_msg_index];
 
-	/* Send data while the FIFO is not full and there is data to send */
+	/* send data while the fifo is not full and there is data to send */
 	while (!(readl(ctlr->iobase + AXI_I2C_SR) & (1 << SR_FIFO_FULL)) &&
 	       ctlr->tx_buffer_index < current_msg->len) {
 		writel(current_msg->buf[ctlr->tx_buffer_index], ctlr->iobase + AXI_I2C_DATA);
@@ -341,7 +347,7 @@ static void anlogic_i2c_xfer_msg(struct anlogic_i2c_controller *ctlr)
 	}
 
 	/*
-	 * Disable the TX_EMPTY interrupt after finishing all messages
+	 * disable the INT_FIFO_EMPTY interrupt after finishing all messages
 	 * to avoid overwhelming the CPU
 	 */
 	if (ctlr->tx_buffer_index == current_msg->len) {
@@ -361,14 +367,18 @@ static irqreturn_t anlogic_i2c_irq(int irq, void *context)
 	if (!ctlr->completion)
 		return IRQ_NONE;
 
-	int_stat = readl(ctlr->iobase + AXI_I2C_SR); /* Read status register */
-	anlogic_i2c_clear_int(ctlr, int_stat); /* Clear interrupt status */
+	int_stat = readl(ctlr->iobase + AXI_I2C_SR);
+	anlogic_i2c_clear_int(ctlr, int_stat);
 
-	if (int_stat & (1 << SR_ADDR_HIT)
-		&& ctlr->state == I2C_XFER_STATE_SENDING_ADDR) {
+	if (int_stat & (1 << SR_ADDR_HIT) && ctlr->state == I2C_XFER_STATE_SENDING_ADDR) {
+		anlogic_i2c_disable_int(ctlr, (1 << INT_ADDR_HIT));
+		if (ctlr->msgs[ctlr->current_msg_index].len == 0) {
+			ctlr->state = I2C_XFER_STATE_STOPPING;
+			complete(ctlr->completion);
+			return IRQ_HANDLED;
+		}
 		ctlr->state = (ctlr->msgs[ctlr->current_msg_index].flags & I2C_M_RD) ?
 		I2C_XFER_STATE_RECVING_DATA : I2C_XFER_STATE_SENDING_DATA;
-		anlogic_i2c_disable_int(ctlr, (1 << INT_ADDR_HIT));
 		anlogic_i2c_enable_int(ctlr, ctlr->msgs[ctlr->current_msg_index].flags & I2C_M_RD ?
 			I2C_RECV_INT : I2C_SEND_INT);
 		return IRQ_HANDLED;
@@ -387,10 +397,9 @@ static irqreturn_t anlogic_i2c_irq(int irq, void *context)
 
 	if (int_stat & (1 << SR_CMPL)
 		&& (ctlr->state == I2C_XFER_STATE_COMPLETE)) {
-		ctlr->state = I2C_XFER_STATE_STOPPING;   /* Transition to stop state */
-		anlogic_i2c_clear_int(ctlr, int_stat);   /* Clear interrupts status */
-		anlogic_i2c_disable_int(ctlr, int_stat); /* Disable interrupts */
-		complete(ctlr->completion); /* Signal transfer completion or error */
+		ctlr->state = I2C_XFER_STATE_STOPPING;
+		anlogic_i2c_disable_int(ctlr, I2C_RECV_INT | I2C_SEND_INT);
+		complete(ctlr->completion);
 	}
 
 	return IRQ_HANDLED;
@@ -400,10 +409,10 @@ static void anlogic_deinit(struct anlogic_i2c_controller *ctlr)
 {
 	u8 setup_reg;
 
-	/* Reset AXI I2C */
+	/* reset axi i2c */
 	writel(AL_AXI_I2C_CMD_RST, ctlr->iobase + AXI_I2C_CFG);
 
-	/* Disable AXI I2C */
+	/* disable axi i2c */
 	setup_reg = readl(ctlr->iobase + AXI_I2C_SETUP);
 	setup_reg &= ~(1 << I2C_EN);
 	writel(setup_reg, ctlr->iobase + AXI_I2C_SETUP);
@@ -414,14 +423,14 @@ static void anlogic_i2c_set_scl(struct anlogic_i2c_controller *ctlr)
 	u32 setup_reg;
 	u32 Tsclh;
 
-	/* Read the current setup register value */
+	/* read the current setup register value */
 	setup_reg = readl(ctlr->iobase + AXI_I2C_SETUP);
 
-	/* Set SCL Ratio */
+	/* set scl ratio */
 	setup_reg &= ~(AL_AXI_I2C_SCL_RATIO_2 << T_SCL_RATIO);
 	writel(setup_reg, ctlr->iobase + AXI_I2C_SETUP);
 
-	/* Set SCL High Time */
+	/* set scl high time */
 	Tsclh = (5000 / 20) - 5;
 	setup_reg |= (Tsclh << T_SCL_HIGH);
 	writel(setup_reg, ctlr->iobase + AXI_I2C_SETUP);
@@ -432,20 +441,20 @@ static void anlogic_i2c_configure_bus(struct anlogic_i2c_controller *ctlr)
 	u32 setup_reg;
 	u32 axi_i2c_controller_id;
 
-	/* 1. Reset AXI I2C */
+	/* 1. reset axi i2c */
 	writel(AL_AXI_I2C_CMD_RST, ctlr->iobase + AXI_I2C_CFG);
 
-	/* 2. Check I2C ID */
+	/* 2. check axi i2c id */
 	axi_i2c_controller_id = ((readl(ctlr->iobase + AXI_I2C_ID)) & 0xFFFFFF00) >> 8;
 	dev_info(ctlr->dev, "anlogic axi i2c controller id 0x%x\n",
 		 axi_i2c_controller_id);
 
-	/* 3. Enable IP and Set Master/Slave Mode */
+	/* 3. enable axi i2c and set master/slave mode */
 	setup_reg = readl(ctlr->iobase + AXI_I2C_SETUP);
 	setup_reg |= (1 << I2C_EN) | (AL_AXI_I2C_MASTER << I2C_MODE);
 	writel(setup_reg, ctlr->iobase + AXI_I2C_SETUP);
 
-	/* 4. Set default speed Mode: I2C_STANDARD_MODE */
+	/* 4. set default speed mode: standard */
 	anlogic_i2c_set_scl(ctlr);
 }
 
@@ -473,7 +482,7 @@ static int anlogic_i2c_probe(struct platform_device *pdev)
 	ret = devm_request_irq(dev, ctlr->irq, anlogic_i2c_irq, 0,
 			       "anlogic-axi-i2c", ctlr);
 	if (ret) {
-		dev_err(dev, "Failed to request IRQ handler, ret = %d\n", ret);
+		dev_err(dev, "failed to request irq handler, ret = %d\n", ret);
 		return ret;
 	}
 
@@ -481,7 +490,7 @@ static int anlogic_i2c_probe(struct platform_device *pdev)
 
 	adapter = &ctlr->adapter;
 	snprintf(adapter->name, sizeof(adapter->name),
-		 "anlogic axi i2c Controller %s", dev_name(dev));
+		 "anlogic axi i2c controller %s", dev_name(dev));
 	adapter->owner = THIS_MODULE;
 	adapter->algo = &anlogic_i2c_algo;
 	adapter->dev.parent = dev;
