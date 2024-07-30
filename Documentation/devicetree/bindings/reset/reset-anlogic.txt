@@ -1,0 +1,23 @@
+Anlogic Reset Manager
+
+The Anlogic has several different resets.
+
+Required properties:
+- compatible: "anlogic,reset-controller"
+- #reset-cells: Must be 1
+- reset-gpios: gpio pin for reset
+- reset-delays: reset delay times
+
+Example:
+	reset: reset-controller {
+		compatible = "anlogic,reset-controller";
+		#reset-cells = <1>;
+		reset-gpios = <&porta 7 GPIO_ACTIVE_LOW>;
+		reset-delays = <10>;
+	};
+
+
+Reset outputs:
+ 0  : usb reset
+ 1  : gbe reset
+
