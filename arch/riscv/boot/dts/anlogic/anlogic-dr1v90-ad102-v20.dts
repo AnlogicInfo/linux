@@ -64,6 +64,13 @@
 			status = "disabled";
 		};
 	};
+
+	reset: reset-controller {
+		compatible = "anlogic,reset-controller";
+		#reset-cells = <1>;
+		reset-gpios = <&porta 7 GPIO_ACTIVE_LOW>;
+		reset-delays = <10>;
+	};
 };
 
 &uart0 {
@@ -224,6 +231,8 @@
 
 &usb_otg0 {
 	status = "okay";
+	resets = <&reset 0>;
+	reset-names = "dwc2";
 };
 
 &dmac {
