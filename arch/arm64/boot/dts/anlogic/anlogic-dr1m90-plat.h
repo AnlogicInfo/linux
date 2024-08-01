@@ -57,9 +57,10 @@
 #define AL_AHB_DMA_CLOCK					400000000
 #endif
 
-#ifndef AL_I2C_CLOCK
+// #ifndef AL_I2C_CLOCK
+#undef AL_I2C_CLOCK
 #define AL_I2C_CLOCK						100000000
-#endif
+// #endif
 
 #ifndef AL_GPIO_CLOCK
 #define AL_GPIO_CLOCK						25000000
