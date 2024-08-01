@@ -351,11 +351,15 @@ static int bgpio_dir_in(struct gpio_chip *gc, unsigned int gpio)
 
 	gc->bgpio_dir &= ~bgpio_line2mask(gc, gpio);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	if (gc->reg_dir_in)
+		gc->write_reg(gc->reg_dir_in, bgpio_line2mask(gc, gpio));
+#else
 	if (gc->reg_dir_in)
 		gc->write_reg(gc->reg_dir_in, ~gc->bgpio_dir);
 	if (gc->reg_dir_out)
 		gc->write_reg(gc->reg_dir_out, gc->bgpio_dir);
-
+#endif
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
 
 	return 0;
@@ -370,6 +374,13 @@ static int bgpio_get_dir(struct gpio_chip *gc, unsigned int gpio)
 		return GPIO_LINE_DIRECTION_IN;
 	}
 
+#ifdef CONFIG_ANLOGIC_SOC
+	if (gc->reg_dir_out) {
+		if (gc->read_reg(gc->reg_dir_out) & (1 << gpio))
+			return GPIO_LINE_DIRECTION_OUT;
+		return GPIO_LINE_DIRECTION_IN;
+	}
+#else
 	if (gc->reg_dir_out) {
 		if (gc->read_reg(gc->reg_dir_out) & bgpio_line2mask(gc, gpio))
 			return GPIO_LINE_DIRECTION_OUT;
@@ -379,7 +390,7 @@ static int bgpio_get_dir(struct gpio_chip *gc, unsigned int gpio)
 	if (gc->reg_dir_in)
 		if (!(gc->read_reg(gc->reg_dir_in) & bgpio_line2mask(gc, gpio)))
 			return GPIO_LINE_DIRECTION_OUT;
-
+#endif
 	return GPIO_LINE_DIRECTION_IN;
 }
 
@@ -391,11 +402,15 @@ static void bgpio_dir_out(struct gpio_chip *gc, unsigned int gpio, int val)
 
 	gc->bgpio_dir |= bgpio_line2mask(gc, gpio);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	if (gc->reg_dir_out)
+		gc->write_reg(gc->reg_dir_out, bgpio_line2mask(gc, gpio));
+#else
 	if (gc->reg_dir_in)
 		gc->write_reg(gc->reg_dir_in, ~gc->bgpio_dir);
 	if (gc->reg_dir_out)
 		gc->write_reg(gc->reg_dir_out, gc->bgpio_dir);
-
+#endif
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
 }
 
