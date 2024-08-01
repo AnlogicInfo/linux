@@ -2,6 +2,7 @@
 
 /dts-v1/;
 #include "anlogic-dr1v90.dts"
+#include "anlogic-dr1v90-softip.dts"
 
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
