@@ -58,7 +58,7 @@
 #endif
 
 #ifndef AL_I2C_CLOCK
-#define AL_I2C_CLOCK						40000000
+#define AL_I2C_CLOCK						100000000
 #endif
 
 #ifndef AL_GPIO_CLOCK
@@ -140,5 +140,10 @@
 #ifndef AL_SPI1_MAX_FREQUENCY
 #define AL_SPI1_MAX_FREQUENCY				8000000
 #endif
+
+#ifndef AL_IIC_RATE
+#define AL_IIC_RATE							400000
+#endif
+
 
 #endif /* _ANLOGIC_DRM190_PLAT_H_ */
