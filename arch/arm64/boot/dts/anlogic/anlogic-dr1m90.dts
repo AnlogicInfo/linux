@@ -179,11 +179,19 @@
 &i2c0 {
 	clocks = <&IIC_CLK>;
 	clock-names = "IIC_CLK";
+	clock-frequency = <AL_IIC_RATE>;
+	i2c-sda-hold-time-ns = <300>;
+	i2c-sda-falling-time-ns = <300>;
+	i2c-scl-falling-time-ns = <300>;
 };
 
 &i2c1 {
 	clocks = <&IIC_CLK>;
 	clock-names = "IIC_CLK";
+	clock-frequency = <AL_IIC_RATE>;
+	i2c-sda-hold-time-ns = <300>;
+	i2c-sda-falling-time-ns = <300>;
+	i2c-scl-falling-time-ns = <300>;
 };
 
 &gpio0 {
