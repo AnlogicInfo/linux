@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 
 &soc {
-	AXI_I2C_CLK: AXI_I2C_CLK {
-		#clock-cells = <0>;
-		compatible = "fixed-clock";
-		clock-frequency = <50000000>;
-		clock-output-names = "AXI_I2C_CLK";
-	};
-
 	axi_uart0: serial@80020000 {
 		compatible = "anlogic,xps-uartlite-1.00.a";
 		/* reg = <0x0 0xA0000000 0x0 0x1000>; */
@@ -117,59 +110,23 @@
 		};
 	};
 
-	axi_i2c: axi_i2c@80030000 {
+	axi_i2c0: axi_i2c@80030000 {
 		compatible = "anlogic-axi-i2c-controller";
 		interrupts = <GIC_SPI 85 IRQ_TYPE_LEVEL_HIGH>;
+		clock-frequency = <50000000>;
 		reg = <0 0x80030000 0 0x10000>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		clocks = <&AXI_I2C_CLK>;
-		clock-names = "AXI_I2C_CLK";
 		status = "disabled";
+	};
 
-		/*
-		 * for dr1m90-ad101-v10,
-		 * if using axi i2c, it is necessary to block i2c0 on the PS side.
-		 */
-		i2c-mux@74 {
-			compatible = "nxp,pca9548";
-			#address-cells = <1>;
-			#size-cells = <0>;
-			reg = <0x74>;
-			status = "okay";
-
-			i2c@2 {
-				#address-cells = <1>;
-				#size-cells = <0>;
-				reg = <2>;
-				/*
-				 * IIC_EEPROM 1kB memory which uses 256B blocks
-				 * where every block has different address.
-				 *    0 - 256B address 0x54
-				 * 256B - 512B address 0x55
-				 * 512B - 768B address 0x56
-				 * 768B - 1024B address 0x57
-				 */
-				axi_m24c08: eeprom@54 {
-					compatible = "atmel,24c08";
-					reg = <0x54>;
-					pagesize = <16>;
-					address-width = <8>;
-					status = "okay";
-				};
-			};
-
-			i2c@3 {
-				#address-cells = <1>;
-				#size-cells = <0>;
-				reg = <3>;
-				axi_ds1337: rtc@68 {
-					compatible = "dallas,ds1337";
-					reg = <0x68>;
-					trickle-resistor-ohms = <250>;
-					status = "okay";
-				};
-			};
-		};
+	axi_i2c1: axi_i2c@1f1030000 {
+		compatible = "anlogic-axi-i2c-controller";
+		interrupts = <GIC_SPI 93 IRQ_TYPE_LEVEL_HIGH>;
+		clock-frequency = <50000000>;
+		reg = <0x1 0xf1030000 0 0x10000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
 	};
 };
