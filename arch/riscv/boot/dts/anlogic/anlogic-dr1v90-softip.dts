@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 
 &soc {
-	AXI_I2C_CLK: AXI_I2C_CLK {
-		#clock-cells = <0>;
-		compatible = "fixed-clock";
-		clock-frequency = <50000000>;
-		clock-output-names = "AXI_I2C_CLK";
-	};
-
 	axi_uart0: serial@80020000 {
 		compatible = "anlogic,xps-uartlite-1.00.a";
 		reg = <0x0 0x80020000 0x0 0x1000>;
@@ -104,4 +97,27 @@
 			status = "disabled";
 		};
 	};
+
+	axi_i2c0: axi_i2c@80030000 {
+		compatible = "anlogic-axi-i2c-controller";
+		interrupt-parent = <&plic0>;
+		interrupts = <86>;
+		clock-frequency = <50000000>;
+		reg = <0 0x80030000 0 0x10000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
+	};
+
+	axi_i2c1: axi_i2c@1f1030000 {
+		compatible = "anlogic-axi-i2c-controller";
+		interrupt-parent = <&plic0>;
+		interrupts = <94>;
+		clock-frequency = <50000000>;
+		reg = <0x1 0xf1030000 0 0x10000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
+	};
+
 };
