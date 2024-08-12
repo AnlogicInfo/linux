@@ -1,0 +1,27 @@
+Anlogic generic uio driver
+
+This binding document describes the bindings for the Anlogic generic uio driver.
+
+The Anlogic generic uio driver is kernel part driver for uio. It can be used
+together with anlogic user space uio wrapper interfaces.
+
+Required properties:
+	- compatible: Should be "anlogic,uio-gen"
+	- reg: Address and length of the register set for the device
+
+Optional properties:
+	- interrupts: Interrupt for this device.
+	- al,uioname: The name of uio device. You can use this name
+	  to open this uio device in user space.
+	- al,dmem: A list of dma memory lengths which will be allocated
+	  for this device. Each is 32bit.
+
+
+Examples:
+	testuio0: testuio@78000000 {
+		compatible = "anlogic,uio-gen";
+		reg = <0 0x78000000 0 0x1000>;
+		al,uioname = "testuioname0";
+		al,dmem = <0x2000 0x1000>;
+		status = "okay";
+	};
