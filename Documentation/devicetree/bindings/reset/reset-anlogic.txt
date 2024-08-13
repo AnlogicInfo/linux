@@ -7,15 +7,16 @@ Required properties:
 - #reset-cells: Must be 1
 - reset-gpios: gpio pin for reset
 - reset-delays: reset delay times
+- reset-post-delays: reset delay post times
 
 Example:
 	reset: reset-controller {
 		compatible = "anlogic,reset-controller";
 		#reset-cells = <1>;
-		reset-gpios = <&porta 7 GPIO_ACTIVE_LOW>;
-		reset-delays = <10>;
+		reset-gpios = <&porta 7 GPIO_ACTIVE_LOW>, <&porta 8 GPIO_ACTIVE_LOW>;
+		reset-delays = <10>, <10>;
+		reset-post-delays = <0>, <100>;
 	};
-
 
 Reset outputs:
  0  : usb reset
