@@ -165,4 +165,10 @@ config UIO_HV_GENERIC
 	  to network and storage devices from userspace.
 
 	  If you compile this as a module, it will be called uio_hv_generic.
+
+config UIO_AL_GENERIC
+	tristate "Anlogic generic uio driver for platform device"
+	default n
+	help
+	  Anlogic generic uio driver for platform device.
 endif
