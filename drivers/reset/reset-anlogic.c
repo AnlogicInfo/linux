@@ -20,6 +20,7 @@ struct anlogic_reset_data {
 	struct reset_controller_dev rcdev; // reset controller device structure
 	struct gpio_desc **reset_gpios;    // array of reset GPIO descriptors
 	unsigned int *reset_delays;        // array of reset delays (in milliseconds)
+	unsigned int *reset_post_delays;   // array of post reset delays (in milliseconds)
 	unsigned int num_resets;           // number of reset lines
 };
 
@@ -53,6 +54,9 @@ static int anlogic_reset_deassert(struct reset_controller_dev *rcdev, unsigned l
 	/* deassert the reset by setting the logical state to low */
 	gpiod_set_value(priv->reset_gpios[id], RESET_DEASSERT);
 
+	if (priv->reset_post_delays[id])
+		mdelay(priv->reset_post_delays[id]);
+
 	return 0;
 }
 
@@ -66,7 +70,7 @@ static int anlogic_reset_probe(struct platform_device *pdev)
 	struct anlogic_reset_data *priv;
 	struct device_node *np = pdev->dev.of_node;
 	int num_resets, i;
-	u32 delay;
+	u32 delays;
 
 	num_resets = of_gpio_named_count(np, "reset-gpios");
 	if (num_resets < 0)
@@ -82,7 +86,10 @@ static int anlogic_reset_probe(struct platform_device *pdev)
 	priv->reset_delays = devm_kzalloc(&pdev->dev,
 					num_resets * sizeof(unsigned int),
 					GFP_KERNEL);
-	if (!priv->reset_gpios || !priv->reset_delays)
+	priv->reset_post_delays = devm_kzalloc(&pdev->dev,
+					num_resets * sizeof(unsigned int),
+					GFP_KERNEL);
+	if (!priv->reset_gpios || !priv->reset_delays || !priv->reset_post_delays)
 		return -ENOMEM;
 
 	/* initialize the reset GPIOs and delays */
@@ -96,11 +103,17 @@ static int anlogic_reset_probe(struct platform_device *pdev)
 			return PTR_ERR(priv->reset_gpios[i]);
 		}
 		/* get the reset delay for each GPIO from the device tree */
-		if (of_property_read_u32_index(np, "reset-delays", i, &delay)) {
+		if (of_property_read_u32_index(np, "reset-delays", i, &delays)) {
 			dev_err(&pdev->dev, "Failed to get reset delay\n");
 			return -EINVAL;
 		}
-		priv->reset_delays[i] = delay;
+		priv->reset_delays[i] = delays;
+		/* get the post delay for each GPIO from the device tree */
+		if (of_property_read_u32_index(np, "reset-post-delays", i, &delays)) {
+			dev_err(&pdev->dev, "Failed to get reset post delay\n");
+			return -EINVAL;
+		}
+		priv->reset_post_delays[i] = delays;
 	}
 
 	priv->num_resets = num_resets;
