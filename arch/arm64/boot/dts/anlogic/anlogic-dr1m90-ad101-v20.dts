@@ -202,6 +202,7 @@
 };
 
 &qspi0 {
+	rx-sample-delay-ns = <2>;
 	status = "okay";
 
 	//spidev@0 {
@@ -216,7 +217,7 @@
 		reg = <0x0>;
 		spi-tx-bus-width = <4>;
 		spi-rx-bus-width = <4>;
-		spi-max-frequency = <10000000>;
+		spi-max-frequency = <AL_QSPI_MAX_FREQUENCY>;
 	};
 
 	//num-cs = <2>;

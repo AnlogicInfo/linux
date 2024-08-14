@@ -54,3 +54,8 @@
 	/* Motorcomm YT8531 (0x4f51e91b) */
 	status = "disabled";
 };
+
+&qspi0 {
+	rx-sample-delay-ns = <2>;
+	status = "okay";
+};

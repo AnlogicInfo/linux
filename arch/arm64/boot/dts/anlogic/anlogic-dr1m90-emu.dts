@@ -144,3 +144,9 @@
 &usb_otg0 {
 	status = "okay";
 };
+
+&qspi0 {
+	rx-sample-delay-ns = <2>;
+	status = "okay";
+};
+
