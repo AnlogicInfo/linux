@@ -746,8 +746,10 @@ static void al_qspi_hardware_init(struct al_qspi *qspi, struct device *dev)
 	qspi_reset_chip(qspi);
 	qspi_enable_chip(qspi, 0);
 	/* Get default rx sample delay */
-	device_property_read_u32(dev, "rx-sample-delay-ns",
-				 &qspi->def_rx_sample_dly_ns);
+	device_property_read_u32(dev, "rx-sample-delay-ns", &qspi->def_rx_sample_dly_ns);
+	al_reg32_set_bits(qspi, AL_QSPI_RX_SAMPLE_DELAY_OFFSET,
+			 QSPI_RX_SAMPLE_DELAY_RSD_SHIFT,
+			 QSPI_RX_SAMPLE_DELAY_RSD_SIZE, qspi->def_rx_sample_dly_ns);
 	al_reg32_set_bit(qspi, AL_QSPI_SPI_CTRLR0_OFFSET,
 			 QSPI_SPI_CTRLR0_CLK_STRETCH_EN_SHIFT, 1);
 	al_reg32_set_bit(qspi, AL_QSPI_CTRLR0_OFFSET,
