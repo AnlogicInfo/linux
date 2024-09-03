@@ -150,6 +150,20 @@
 		clock-frequency = <AL_AXI_DMAC_CLOCK>;
 		clock-names = "apb_pclk";
 	};
+
+	APB_PCLK: APB_PCLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <AL_AXI_DMAC_CLOCK>;
+		clock-output-names = "APB_PCLK";
+	};
+
+	SMC_CLK: SMC_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <AL_SMC_CLOCK>;
+		clock-output-names = "SMC_CLK";
+	};
 };
 
 &uart0 {
@@ -278,4 +292,9 @@
 
 &adc {
 	clocks = <&ADC_CLK>;
+};
+
+&smcc {
+	clock-names = "memclk", "apb_pclk";
+	clocks = <&SMC_CLK>, <&APB_PCLK>;
 };
