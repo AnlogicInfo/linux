@@ -416,5 +416,22 @@
 			#dma-requests = <32>;
 			dma-noncoherent;
 		};
+
+		smcc: memory-controller@f841a000 {
+			compatible = "pl353-smc", "arm,primecell";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			reg = <0x0 0xf841a000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <48>;
+			ranges = <0x0 0x0 0x1 0xA4000000 0x0 0x1000000>; /* Nand CS region */
+
+			nfc0: nand-controller@0 {
+				compatible = "arm,pl353-nand-r2p1";
+				reg = <0x0 0x0 0x0 0x1000000>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+			};
+		};
 	};
 };

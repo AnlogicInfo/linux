@@ -59,3 +59,20 @@
 	rx-sample-delay-ns = <2>;
 	status = "okay";
 };
+
+&smcc {
+	status = "disabled";
+};
+
+&nfc0 {
+	status = "disabled";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	nand@0 {
+		nand-ecc-mode = "hw";
+		nand-bus-width = <8>;
+		label = "alnand0";
+		reg = <0x0>;
+	};
+};
