@@ -1,52 +1,109 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * anlogic_uartlite.c: Serial driver for Anlogic pl_uart serial controller
+ * anlogic_uartlite.c:: Serial driver for Anlogic pluart serial controller
  *
  * Copyright (C) 2006 Peter Korsgaard <jacmet@sunsite.dk>
  * Copyright (C) 2007 Secret Lab Technologies Ltd.
- * Copyright (C) 2023 Anlogic, Inc.
+ * Copyright (C) 2024 Anlogic, Inc.
  */
-#include <linux/clk.h>
-#include <linux/console.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
+
 #include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/pm_wakeirq.h>
-#include <linux/serial_core.h>
+#include <linux/module.h>
+#include <linux/console.h>
 #include <linux/serial.h>
-#include <linux/tty_flip.h>
+#include <linux/serial_core.h>
 #include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/of_platform.h>
+#include <linux/clk.h>
+#include <linux/pm_runtime.h>
 
 #define PLUART_NAME			"ttySL"
-#define PLUART_MAJOR		204
-#define PLUART_MINOR		187
+#define PLUART_MAJOR		0
+#define PLUART_MINOR		0
 #define PLUART_NR_UARTS		CONFIG_SERIAL_ANLOGIC_UARTLITE_NR_UARTS
 
-#define PLUART_TX_EN		0x00
-#define PLUART_RX			0x08
-#define PLUART_TX			0x04
 
-#define PLUART_INTR_STATUS	0x14
-#define PLUART_STATUS		0x0c
+#define PLUART_RX			0x00
+#define PLUART_TX			0x04
+#define PLUART_STATUS		0x08
+#define PLUART_CONTROL		0x0c
+
 #define PLUART_REGION		16
 
-struct pluart_data {
+#define PLUART_STATUS_RXVALID		0x01
+#define PLUART_STATUS_RXFULL		0x02
+#define PLUART_STATUS_TXEMPTY		0x04
+#define PLUART_STATUS_TXFULL		0x08
+#define PLUART_STATUS_IE			0x10
+#define PLUART_STATUS_OVERRUN		0x20
+#define PLUART_STATUS_FRAME			0x40
+#define PLUART_STATUS_PARITY		0x80
+
+#define PLUART_CONTROL_RST_TX		0x01
+#define PLUART_CONTROL_RST_RX		0x02
+#define PLUART_CONTROL_IE			0x10
+#define UART_AUTOSUSPEND_TIMEOUT	3000
+
+struct uartlite_data {
+	const struct uartlite_reg_ops *reg_ops;
 	struct clk *clk;
+};
+
+struct uartlite_reg_ops {
+	u32 (*in)(void __iomem *addr);
+	void (*out)(u32 val, void __iomem *addr);
+};
+
+static u32 uartlite_inbe32(void __iomem *addr)
+{
+	return ioread32be(addr);
+}
+
+static void uartlite_outbe32(u32 val, void __iomem *addr)
+{
+	iowrite32be(val, addr);
+}
+
+static const struct uartlite_reg_ops uartlite_be = {
+	.in = uartlite_inbe32,
+	.out = uartlite_outbe32,
+};
+
+static u32 uartlite_inle32(void __iomem *addr)
+{
+	return ioread32(addr);
+}
+
+static void uartlite_outle32(u32 val, void __iomem *addr)
+{
+	iowrite32(val, addr);
+}
+
+static const struct uartlite_reg_ops uartlite_le = {
+	.in = uartlite_inle32,
+	.out = uartlite_outle32,
 };
 
 static inline u32 uart_in32(u32 offset, struct uart_port *port)
 {
-	return ioread32(port->membase + offset);
+	struct uartlite_data *pdata = port->private_data;
+
+	return pdata->reg_ops->in(port->membase + offset);
 }
 
 static inline void uart_out32(u32 val, u32 offset, struct uart_port *port)
 {
-	iowrite32(val, port->membase + offset);
+	struct uartlite_data *pdata = port->private_data;
+
+	pdata->reg_ops->out(val, port->membase + offset);
 }
 
 static struct uart_port pluart_ports[PLUART_NR_UARTS];
@@ -57,11 +114,43 @@ static int pluart_receive(struct uart_port *port, int stat)
 	unsigned char ch = 0;
 	char flag = TTY_NORMAL;
 
-	port->icount.rx++;
-	ch = uart_in32(PLUART_RX, port);
-		port->icount.parity++;
-	flag = TTY_PARITY;
-	tty_insert_flip_char(tport, ch, flag);
+	if ((stat & (PLUART_STATUS_RXVALID | PLUART_STATUS_OVERRUN
+		     | PLUART_STATUS_FRAME)) == 0)
+		return 0;
+
+	if (stat & PLUART_STATUS_RXVALID) {
+		port->icount.rx++;
+		ch = uart_in32(PLUART_RX, port);
+
+		if (stat & PLUART_STATUS_PARITY)
+			port->icount.parity++;
+	}
+
+	if (stat & PLUART_STATUS_OVERRUN)
+		port->icount.overrun++;
+
+	if (stat & PLUART_STATUS_FRAME)
+		port->icount.frame++;
+
+	if (stat & port->ignore_status_mask & PLUART_STATUS_PARITY)
+		stat &= ~PLUART_STATUS_RXVALID;
+
+	stat &= port->read_status_mask;
+
+	if (stat & PLUART_STATUS_PARITY)
+		flag = TTY_PARITY;
+
+
+	stat &= ~port->ignore_status_mask;
+
+	if (stat & PLUART_STATUS_RXVALID)
+		tty_insert_flip_char(tport, ch, flag);
+
+	if (stat & PLUART_STATUS_FRAME)
+		tty_insert_flip_char(tport, 0, TTY_FRAME);
+
+	if (stat & PLUART_STATUS_OVERRUN)
+		tty_insert_flip_char(tport, 0, TTY_OVERRUN);
 
 	return 1;
 }
@@ -70,8 +159,11 @@ static int pluart_transmit(struct uart_port *port, int stat)
 {
 	struct circ_buf *xmit  = &port->state->xmit;
 
+	if (stat & PLUART_STATUS_TXFULL)
+		return 0;
+
 	if (port->x_char) {
-		uart_out32(port->x_char | 0x100, PLUART_TX, port);
+		uart_out32(port->x_char, PLUART_TX, port);
 		port->x_char = 0;
 		port->icount.tx++;
 		return 1;
@@ -80,7 +172,7 @@ static int pluart_transmit(struct uart_port *port, int stat)
 	if (uart_circ_empty(xmit) || uart_tx_stopped(port))
 		return 0;
 
-	uart_out32(xmit->buf[xmit->tail] | 0x100, PLUART_TX, port);
+	uart_out32(xmit->buf[xmit->tail], PLUART_TX, port);
 	xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE-1);
 	port->icount.tx++;
 
@@ -93,46 +185,36 @@ static int pluart_transmit(struct uart_port *port, int stat)
 static irqreturn_t pluart_isr(int irq, void *dev_id)
 {
 	struct uart_port *port = dev_id;
-	int stat, busy = 0, n = 0;
+	int stat, busy, n = 0;
 	unsigned long flags;
 
-	int rx_intr_flag = 0x02;
-	int tx_intr_flag = 0x01;
+	do {
+		spin_lock_irqsave(&port->lock, flags);
+		stat = uart_in32(PLUART_STATUS, port);
+		busy  = pluart_receive(port, stat);
+		busy |= pluart_transmit(port, stat);
+		spin_unlock_irqrestore(&port->lock, flags);
+		n++;
+	} while (busy);
 
-
-	spin_lock_irqsave(&port->lock, flags);
-
-	stat = uart_in32(PLUART_INTR_STATUS, port);
-	if (stat & rx_intr_flag) {
-		pluart_receive(port, stat);
-		/* 0:rx intr clear */
-		uart_out32(uart_in32(PLUART_STATUS, port) & ~0x10,
-					PLUART_STATUS, port);
-		/* 0:rx intr unmask */
-		uart_out32(uart_in32(PLUART_STATUS, port) & ~0x4,
-					PLUART_STATUS, port);
+	if (n > 1) {
+		tty_flip_buffer_push(&port->state->port);
+		return IRQ_HANDLED;
+	} else {
+		return IRQ_NONE;
 	}
-
-	if (stat & tx_intr_flag) {
-		pluart_transmit(port, stat);
-		/* 0:tx intr clear */
-		uart_out32(uart_in32(PLUART_STATUS, port) & ~0x8,
-					PLUART_STATUS, port);
-		/* 0:tx intr unmask */
-		uart_out32(uart_in32(PLUART_STATUS, port) & ~0x2,
-					PLUART_STATUS, port);
-	}
-
-	spin_unlock_irqrestore(&port->lock, flags);
-
-	tty_flip_buffer_push(&port->state->port);
-
-	return IRQ_HANDLED;
 }
 
 static unsigned int pluart_tx_empty(struct uart_port *port)
 {
-	return TIOCSER_TEMT;
+	unsigned long flags;
+	unsigned int ret;
+
+	spin_lock_irqsave(&port->lock, flags);
+	ret = uart_in32(PLUART_STATUS, port);
+	spin_unlock_irqrestore(&port->lock, flags);
+
+	return ret & PLUART_STATUS_TXEMPTY ? TIOCSER_TEMT : 0;
 }
 
 static unsigned int pluart_get_mctrl(struct uart_port *port)
@@ -157,7 +239,8 @@ static void pluart_start_tx(struct uart_port *port)
 
 static void pluart_stop_rx(struct uart_port *port)
 {
-	/* N/A */
+	port->ignore_status_mask = PLUART_STATUS_RXVALID | PLUART_STATUS_PARITY
+		| PLUART_STATUS_FRAME | PLUART_STATUS_OVERRUN;
 }
 
 static void pluart_break_ctl(struct uart_port *port, int ctl)
@@ -167,33 +250,65 @@ static void pluart_break_ctl(struct uart_port *port, int ctl)
 
 static int pluart_startup(struct uart_port *port)
 {
+	struct uartlite_data *pdata = port->private_data;
 	int ret;
+
+	ret = clk_enable(pdata->clk);
+	if (ret) {
+		dev_err(port->dev, "Failed to enable clock\n");
+		return ret;
+	}
 
 	ret = request_irq(port->irq, pluart_isr, IRQF_SHARED | IRQF_TRIGGER_RISING,
 			  "uartlite", port);
 	if (ret)
 		return ret;
 
-	/* enable tx/rx */
-	uart_out32(uart_in32(PLUART_TX_EN, port) & ~0x1, PLUART_TX_EN, port);
-	uart_out32(uart_in32(PLUART_TX_EN, port) | 0x1, PLUART_TX_EN, port);
-
-	/* enable intr */
-	uart_out32(uart_in32(PLUART_STATUS, port) & ~0x1, PLUART_STATUS, port);
-	uart_out32(uart_in32(PLUART_STATUS, port) | 0x1, PLUART_STATUS, port);
+	uart_out32(PLUART_CONTROL_RST_RX | PLUART_CONTROL_RST_TX,
+		PLUART_CONTROL, port);
+	uart_out32(PLUART_CONTROL_IE, PLUART_CONTROL, port);
 
 	return 0;
 }
 
 static void pluart_shutdown(struct uart_port *port)
 {
+	struct uartlite_data *pdata = port->private_data;
+
+	uart_out32(0, PLUART_CONTROL, port);
 	free_irq(port->irq, port);
+	clk_disable(pdata->clk);
 }
 
 static void pluart_set_termios(struct uart_port *port, struct ktermios *termios,
 			      struct ktermios *old)
 {
-	/* N/A */
+	unsigned long flags;
+	unsigned int baud;
+
+	spin_lock_irqsave(&port->lock, flags);
+
+	port->read_status_mask = PLUART_STATUS_RXVALID | PLUART_STATUS_OVERRUN
+		| PLUART_STATUS_TXFULL;
+
+	if (termios->c_iflag & INPCK)
+		port->read_status_mask |=
+			PLUART_STATUS_PARITY | PLUART_STATUS_FRAME;
+
+	port->ignore_status_mask = 0;
+	if (termios->c_iflag & IGNPAR)
+		port->ignore_status_mask |= PLUART_STATUS_PARITY
+			| PLUART_STATUS_FRAME | PLUART_STATUS_OVERRUN;
+
+	if ((termios->c_cflag & CREAD) == 0)
+		port->ignore_status_mask |=
+			PLUART_STATUS_RXVALID | PLUART_STATUS_PARITY
+			| PLUART_STATUS_FRAME | PLUART_STATUS_OVERRUN;
+
+	baud = uart_get_baud_rate(port, termios, old, 0, 460800);
+	uart_update_timeout(port, termios->c_cflag, baud);
+
+	spin_unlock_irqrestore(&port->lock, flags);
 }
 
 static const char *pluart_type(struct uart_port *port)
@@ -210,7 +325,11 @@ static void pluart_release_port(struct uart_port *port)
 
 static int pluart_request_port(struct uart_port *port)
 {
-	struct pluart_data *pdata = port->private_data;
+	struct uartlite_data *pdata = port->private_data;
+	int ret;
+
+	pr_debug("ulite console: port=%p; port->mapbase=%llx\n",
+		 port, (unsigned long long) port->mapbase);
 
 	if (!request_mem_region(port->mapbase, PLUART_REGION, "uartlite")) {
 		dev_err(port->dev, "Memory region busy\n");
@@ -224,6 +343,13 @@ static int pluart_request_port(struct uart_port *port)
 		return -EBUSY;
 	}
 
+	pdata->reg_ops = &uartlite_be;
+	uart_out32(PLUART_CONTROL_RST_TX, PLUART_CONTROL, port);
+	ret = uart_in32(PLUART_STATUS, port);
+
+	if ((ret & PLUART_STATUS_TXEMPTY) != PLUART_STATUS_TXEMPTY)
+		pdata->reg_ops = &uartlite_le;
+
 	return 0;
 }
 
@@ -235,19 +361,22 @@ static void pluart_config_port(struct uart_port *port, int flags)
 
 static int pluart_verify_port(struct uart_port *port, struct serial_struct *ser)
 {
-	/* No user changeable parameters */
 	return -EINVAL;
 }
 
 static void pluart_pm(struct uart_port *port, unsigned int state,
 		     unsigned int oldstate)
 {
-	struct pluart_data *pdata = port->private_data;
+	int ret;
 
-	if (!state)
-		clk_enable(pdata->clk);
-	else
-		clk_disable(pdata->clk);
+	if (!state) {
+		ret = pm_runtime_get_sync(port->dev);
+		if (ret < 0)
+			dev_err(port->dev, "Failed to enable clocks\n");
+	} else {
+		pm_runtime_mark_last_busy(port->dev);
+		pm_runtime_put_autosuspend(port->dev);
+	}
 }
 
 static const struct uart_ops pluart_ops = {
@@ -261,12 +390,12 @@ static const struct uart_ops pluart_ops = {
 	.startup	= pluart_startup,
 	.shutdown	= pluart_shutdown,
 	.set_termios	= pluart_set_termios,
-	.type			= pluart_type,
+	.type		= pluart_type,
 	.release_port	= pluart_release_port,
 	.request_port	= pluart_request_port,
 	.config_port	= pluart_config_port,
 	.verify_port	= pluart_verify_port,
-	.pm				= pluart_pm,
+	.pm		= pluart_pm,
 };
 
 static struct uart_driver pluart_uart_driver = {
@@ -279,7 +408,7 @@ static struct uart_driver pluart_uart_driver = {
 };
 
 static int pluart_assign(struct device *dev, int id, u32 base, int irq,
-			struct pluart_data *pdata)
+			struct uartlite_data *pdata)
 {
 	struct uart_port *port;
 	int rc;
@@ -364,7 +493,34 @@ static int __maybe_unused pluart_resume(struct device *dev)
 	return 0;
 }
 
-static SIMPLE_DEV_PM_OPS(pluart_pm_ops, pluart_suspend, pluart_resume);
+static int __maybe_unused pluart_runtime_suspend(struct device *dev)
+{
+	struct uart_port *port = dev_get_drvdata(dev);
+	struct uartlite_data *pdata = port->private_data;
+
+	clk_disable(pdata->clk);
+	return 0;
+};
+
+static int __maybe_unused pluart_runtime_resume(struct device *dev)
+{
+	struct uart_port *port = dev_get_drvdata(dev);
+	struct uartlite_data *pdata = port->private_data;
+	int ret;
+
+	ret = clk_enable(pdata->clk);
+	if (ret) {
+		dev_err(dev, "Cannot enable clock.\n");
+		return ret;
+	}
+	return 0;
+}
+
+static const struct dev_pm_ops pluart_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(pluart_suspend, pluart_resume)
+	SET_RUNTIME_PM_OPS(pluart_runtime_suspend,
+			   pluart_runtime_resume, NULL)
+};
 
 #if defined(CONFIG_OF)
 /* Match table for of_platform binding */
@@ -378,7 +534,7 @@ MODULE_DEVICE_TABLE(of, pluart_of_match);
 static int pluart_probe(struct platform_device *pdev)
 {
 	struct resource *res;
-	struct pluart_data *pdata;
+	struct uartlite_data *pdata;
 	int irq, ret;
 	int id = pdev->id;
 #ifdef CONFIG_OF
@@ -388,7 +544,7 @@ static int pluart_probe(struct platform_device *pdev)
 	if (prop)
 		id = be32_to_cpup(prop);
 #endif
-	pdata = devm_kzalloc(&pdev->dev, sizeof(struct pluart_data),
+	pdata = devm_kzalloc(&pdev->dev, sizeof(struct uartlite_data),
 			     GFP_KERNEL);
 	if (!pdata)
 		return -ENOMEM;
@@ -420,24 +576,39 @@ static int pluart_probe(struct platform_device *pdev)
 		ret = uart_register_driver(&pluart_uart_driver);
 		if (ret < 0) {
 			dev_err(&pdev->dev, "Failed to register driver\n");
-			return ret;
+			goto err_out_clk_disable;
 		}
 	}
 
+	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runtime_set_autosuspend_delay(&pdev->dev, UART_AUTOSUSPEND_TIMEOUT);
+	pm_runtime_set_active(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+
 	ret = pluart_assign(&pdev->dev, id, res->start, irq, pdata);
 
-	clk_disable(pdata->clk);
+	pm_runtime_mark_last_busy(&pdev->dev);
+	pm_runtime_put_autosuspend(&pdev->dev);
 
+	return ret;
+
+err_out_clk_disable:
+	clk_disable_unprepare(pdata->clk);
 	return ret;
 }
 
 static int pluart_remove(struct platform_device *pdev)
 {
 	struct uart_port *port = dev_get_drvdata(&pdev->dev);
-	struct pluart_data *pdata = port->private_data;
+	struct uartlite_data *pdata = port->private_data;
+	int rc;
 
 	clk_disable_unprepare(pdata->clk);
-	return pluart_release(&pdev->dev);
+	rc = pluart_release(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
+	pm_runtime_dont_use_autosuspend(&pdev->dev);
+	return rc;
 }
 
 MODULE_ALIAS("platform:uartlite");
@@ -454,18 +625,20 @@ static struct platform_driver pluart_platform_driver = {
 
 static int __init pluart_init(void)
 {
+
+	pr_debug("uartlite: calling platform_driver_register()\n");
 	return platform_driver_register(&pluart_platform_driver);
 }
 
 static void __exit pluart_exit(void)
 {
 	platform_driver_unregister(&pluart_platform_driver);
-	uart_unregister_driver(&pluart_uart_driver);
+	if (pluart_uart_driver.state)
+		uart_unregister_driver(&pluart_uart_driver);
 }
 
 module_init(pluart_init);
 module_exit(pluart_exit);
 
-MODULE_AUTHOR("chenxi huang <chenxi.huang@anlogic.com>");
-MODULE_DESCRIPTION("pl_uart serial driver");
+MODULE_DESCRIPTION("pluart serial driver");
 MODULE_LICENSE("GPL");
