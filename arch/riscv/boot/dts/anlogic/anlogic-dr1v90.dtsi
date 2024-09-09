@@ -199,7 +199,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			interrupt-parent = <&plic0>;
-			interrupts = <48>;
+			interrupts = <49>;
 			num-cs = <1>;
 		};
 
@@ -209,7 +209,7 @@
 			#size-cells = <0>;
 			reg = <0x0 0xf8404000 0x0 0x1000>;
 			interrupt-parent = <&plic0>;
-			interrupts = <66>;
+			interrupts = <67>;
 			num-cs = <1>;
 		};
 
@@ -219,14 +219,14 @@
 			#size-cells = <0>;
 			reg = <0x0 0xf8405000 0x0 0x1000>;
 			interrupt-parent = <&plic0>;
-			interrupts = <68>;
+			interrupts = <69>;
 			num-cs = <1>;
 		};
 
 		ttc0: ttc0@f840c000 {
 			compatible = "cdns,ttc";
 			interrupt-parent = <&plic0>;
-			interrupts = <29>, <30>, <31>;
+			interrupts = <30>, <31>, <32>;
 			reg = <0x0 0xf840c000 0x0 0x1000>;
 			timer-width = <32>;
 		};
@@ -235,7 +235,7 @@
 			compatible = "cdns,ttc";
 			#pwm-cells = <3>;
 			interrupt-parent = <&plic0>;
-			interrupts = <32>, <33>, <34>;
+			interrupts = <33>, <34>, <35>;
 			reg = <0x0 0xf840d000 0x0 0x1000>;
 			timer-width = <32>;
 		};
