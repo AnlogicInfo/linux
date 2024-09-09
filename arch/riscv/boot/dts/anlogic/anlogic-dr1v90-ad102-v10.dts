@@ -138,7 +138,7 @@
 };
 
 &qspi0 {
-	rx-sample-delay-ns = <2>;
+	rx-sample-delay-ns = <1>;
 	status = "okay";
 
 	//spidev@0 {
