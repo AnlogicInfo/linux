@@ -69,8 +69,8 @@ static int al_qspi_find_mode(const struct spi_mem_op *op)
 
 static irqreturn_t al_qspi_irq(int irq, void *dev_id)
 {
-	struct spi_controller *master = dev_id;
-	struct al_qspi *qspi = spi_controller_get_devdata(master);
+	struct al_qspi *qspi = dev_id;
+	struct spi_controller *master = qspi->master;
 	u16 irq_status = al_readl(qspi, AL_QSPI_ISR_OFFSET) & 0x3f;
 
 	if (!irq_status)
