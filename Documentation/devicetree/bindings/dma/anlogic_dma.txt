@@ -1,0 +1,76 @@
+Anlogic AXI DMA engine, it does transfers between memory and AXI4 stream
+target devices. It can be configured to have one channel or two channels.
+If configured as two channels, one is to transmit to the device and another
+is to receive from the device.
+
+Required properties:
+- compatible: Should be one of-
+		"anlogic,axi-dma"
+- #dma-cells: Should be <1>, see "dmas" property below
+- reg: Should contain DMA registers location and length.
+- anlogic,addrwidth: Should be the vdma addressing size in bits(ex: 32 bits).
+- dma-channel child node: Should have at least one channel and can have up to
+	two channels per device. This node specifies the properties of each
+	DMA channel (see child node properties below).
+
+Optional properties for AXI DMA:
+- anlogic,sg-length-width: Should be set to the width in bits of the length
+	register as configured in h/w. Takes values {8...26}. If the property
+	is missing or invalid then the default value 23 is used. This is the
+	maximum value that is supported by all IP versions.
+
+Required child node properties:
+- compatible:
+	For AXIDMA: It should be either "anlogic,axi-dma-mm2s-channel"
+	or "anlogic,axi-dma-s2mm-channel".
+- interrupts: Should contain per channel DMA interrupts.
+- anlogic,datawidth: Should contain the stream data width, take values
+	{32,64...1024}.
+
+Optional child node properties:
+- anlogic,include-dre: Tells hardware is configured for Data
+	Realignment Engine.
+
+
+Example:
+++++++++
+
+axi_dma: axidma@80000000 {
+	#dma-cells = <1>;
+	compatible = "anlogic,axi-dma";
+	interrupt-parent = <&gic>;
+	interrupts = <GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>,
+			<GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+	reg = <0x0 0x80000000 0x0 0x1000>;
+	anlogic,addrwidth = <0x20>;
+	anlogic,include-sg;
+	dma-channel@80000000 {
+		compatible = "anlogic,axi-dma-mm2s-channel";
+		dma-channels = <0x1>;
+		interrupts = <GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>;
+		anlogic,datawidth = <0x20>;
+		anlogic,device-id = <0x0>;
+		anlogic,include-dre;
+	};
+	dma-channel@80000030 {
+		compatible = "anlogic,axi-dma-s2mm-channel";
+		dma-channels = <0x1>;
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		anlogic,datawidth = <0x20>;
+		anlogic,device-id = <0x0>;
+		anlogic,include-dre;
+	};
+};
+
+
+* DMA client
+
+Example:
+++++++++
+
+axidmatest: axidmatest@1 {
+	compatible ="anlogic,axi-dma-test";
+	dmas = <&axi_dma 0>,
+		<&axi_dma 1>;
+	dma-names = "axidma_mm2s", "axidma_s2mm";
+};
