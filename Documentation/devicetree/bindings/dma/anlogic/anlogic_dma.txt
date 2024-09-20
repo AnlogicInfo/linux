@@ -59,16 +59,3 @@ axi_dma: axidma@80000000 {
 		anlogic,include-dre;
 	};
 };
-
-
-* DMA client
-
-Example:
-++++++++
-
-axidmatest: axidmatest@1 {
-	compatible ="anlogic,axi-dma-test";
-	dmas = <&axi_dma 0>,
-		<&axi_dma 1>;
-	dma-names = "axidma_mm2s", "axidma_s2mm";
-};
