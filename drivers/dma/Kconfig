@@ -762,6 +762,18 @@ config ANLOGIC_DMA
 	help
 	  Enable support for Anlogic AXI DMA Soft IP.
 
+config AXI_DMA
+	tristate "AXI DMA support"
+	depends on ANLOGIC_DMA
+	help
+	  Enable support for AXI DMA.
+
+config AXI_DMA_TEST
+	tristate "AXI DMA Test Driver"
+	depends on ANLOGIC_DMA
+	help
+	  Enable support for the AXI DMA test driver.
+
 # driver files
 source "drivers/dma/bestcomm/Kconfig"
 
