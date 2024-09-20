@@ -1,0 +1,21 @@
+Anlogic AXI DMA Test Driver
+
+This is a test driver for the Anlogic AXI DMA engine. This driver is used for
+testing and demonstrative purposes.
+
+Required properties:
+- compatible: Should be "anlogic,axi-dma-test".
+- dmas: List of DMA specifiers for the DMA channels.
+- dma-names: Names of the DMA channels. Should be "axidma_mm2s" for the memory
+	to stream channel, and "axidma_s2mm" for the stream to memory channel.
+
+
+Example:
+++++++++
+
+axidmatest: axidmatest@1 {
+	compatible = "anlogic,axi-dma-test";
+	dmas = <&dma_example 0>,
+	       <&dma_example 1>;
+	dma-names = "axidma_mm2s", "axidma_s2mm";
+};

@@ -49,7 +49,6 @@ axi_dma: axidma@80000000 {
 		dma-channels = <0x1>;
 		interrupts = <GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>;
 		anlogic,datawidth = <0x20>;
-		anlogic,device-id = <0x0>;
 		anlogic,include-dre;
 	};
 	dma-channel@80000030 {
@@ -57,20 +56,6 @@ axi_dma: axidma@80000000 {
 		dma-channels = <0x1>;
 		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
 		anlogic,datawidth = <0x20>;
-		anlogic,device-id = <0x0>;
 		anlogic,include-dre;
 	};
-};
-
-
-* DMA client
-
-Example:
-++++++++
-
-axidmatest: axidmatest@1 {
-	compatible ="anlogic,axi-dma-test";
-	dmas = <&axi_dma 0>,
-		<&axi_dma 1>;
-	dma-names = "axidma_mm2s", "axidma_s2mm";
 };
