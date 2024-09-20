@@ -113,4 +113,32 @@
 		#size-cells = <0>;
 		status = "disabled";
 	};
+
+	axi_dma: axidma@80000000 {
+		#dma-cells = <1>;
+		compatible = "anlogic,axi-dma";
+		interrupt-parent = <&gic>;
+		interrupts = <GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		reg = <0x0 0x80000000 0x0 0x1000>;
+		anlogic,addrwidth = <0x20>;
+		anlogic,include-sg;
+		status = "disabled";
+
+		dma-channel@80000000 {
+			compatible = "anlogic,axi-dma-mm2s-channel";
+			dma-channels = <0x1>;
+			interrupts = <GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>;
+			anlogic,datawidth = <0x20>;
+			anlogic,include-dre;
+		};
+
+		dma-channel@80000030 {
+			compatible = "anlogic,axi-dma-s2mm-channel";
+			dma-channels = <0x1>;
+			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+			anlogic,datawidth = <0x20>;
+			anlogic,include-dre;
+		};
+	};
 };

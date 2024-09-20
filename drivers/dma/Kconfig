@@ -755,6 +755,13 @@ config XILINX_ZYNQMP_DPDMA
 	  driver provides the dmaengine required by the DisplayPort subsystem
 	  display driver.
 
+config ANLOGIC_DMA
+	tristate "Anlogic AXI DMAS Engine"
+	depends on (MICROBLAZE || ARM64)
+	select DMA_ENGINE
+	help
+	  Enable support for Anlogic AXI DMA Soft IP.
+
 # driver files
 source "drivers/dma/bestcomm/Kconfig"
 
