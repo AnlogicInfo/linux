@@ -1101,6 +1101,11 @@ config SPI_ZYNQ_QSPI
 config SPI_ANLOGIC_QSPI
 	tristate "Anlogic QSPI controller"
 
+config SPI_ANLOGIC_AXI
+	tristate "Anlogic Axi QSPI controller"
+	help
+	  This enables support for the Anlogic Axi QSPI controller.
+
 config SPI_ZYNQMP_GQSPI
 	tristate "Xilinx ZynqMP GQSPI controller"
 	depends on (SPI_MASTER && HAS_DMA) || COMPILE_TEST
