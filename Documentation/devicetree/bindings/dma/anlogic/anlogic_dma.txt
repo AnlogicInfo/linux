@@ -6,6 +6,7 @@ is to receive from the device.
 Required properties:
 - compatible: Should be one of-
 		"anlogic,axi-dma"
+		"anlogic,axi-vdma"
 - #dma-cells: Should be <1>, see "dmas" property below
 - reg: Should contain DMA registers location and length.
 - anlogic,addrwidth: Should be the vdma addressing size in bits(ex: 32 bits).
@@ -13,16 +14,27 @@ Required properties:
 	two channels per device. This node specifies the properties of each
 	DMA channel (see child node properties below).
 
+Required properties for VDMA:
+- anlogic,num-fstores: Should be the number of framebuffers as configured in h/w.
+
 Optional properties for AXI DMA:
 - anlogic,sg-length-width: Should be set to the width in bits of the length
 	register as configured in h/w. Takes values {8...26}. If the property
 	is missing or invalid then the default value 23 is used. This is the
 	maximum value that is supported by all IP versions.
+Optional properties for VDMA:
+- anlogic,flush-fsync: Tells which channel to Flush on Frame sync.
+	It takes following values:
+	{1}, flush both channels
+	{2}, flush mm2s channel
+	{3}, flush s2mm channel
 
 Required child node properties:
 - compatible:
 	For AXIDMA: It should be either "anlogic,axi-dma-mm2s-channel"
 	or "anlogic,axi-dma-s2mm-channel".
+	For VDMA: It should be either "anlogic,axi-vdma-mm2s-channel" or
+	"anlogic,axi-vdma-s2mm-channel".
 - interrupts: Should contain per channel DMA interrupts.
 - anlogic,datawidth: Should contain the stream data width, take values
 	{32,64...1024}.
@@ -30,6 +42,11 @@ Required child node properties:
 Optional child node properties:
 - anlogic,include-dre: Tells hardware is configured for Data
 	Realignment Engine.
+Optional child node properties for VDMA:
+- anlogic,genlock-mode: Tells Genlock synchronization is
+	enabled/disabled in hardware.
+- anlogic,enable-vert-flip: Tells vertical flip is
+	enabled/disabled in hardware(S2MM path).
 
 
 Example:
@@ -59,3 +76,24 @@ axi_dma: axidma@80000000 {
 		anlogic,include-dre;
 	};
 };
+
+axi_vdma_0: axivdma@80002000 {
+	compatible = "anlogic,axi-vdma";
+	#dma-cells = <1>;
+	reg = <0x0 0x80002000 0x0 0x10000 >;
+	interrupt-parent = <&gic>;
+	interrupts = <GIC_SPI 83 IRQ_TYPE_EDGE_RISING>, <GIC_SPI 82 IRQ_TYPE_EDGE_RISING>;
+	anlogic,num-fstores = <0x5>;
+	anlogic,flush-fsync = <0x1>;
+	anlogic,addrwidth = <0x20>;
+	dma-channel@80002000 {
+		compatible = "anlogic,axi-vdma-mm2s-channel";
+		interrupts = <GIC_SPI 83 IRQ_TYPE_EDGE_RISING>;
+		anlogic,datawidth = <0x20>;
+	} ;
+	dma-channel@80002030 {
+		compatible = "anlogic,axi-vdma-s2mm-channel";
+		interrupts = <GIC_SPI 82 IRQ_TYPE_EDGE_RISING>;
+		anlogic,datawidth = <0x20>;
+	} ;
+} ;
