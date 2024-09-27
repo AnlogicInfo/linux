@@ -63,6 +63,12 @@ void anlogic_dma_free_tx_segment(struct anlogic_dma_chan *chan,
 	list_add_tail(&segment->node, &chan->free_seg_list);
 }
 
+void anlogic_vdma_free_tx_segment(struct anlogic_dma_chan *chan,
+					struct anlogic_vdma_tx_segment *segment)
+{
+	dma_pool_free(chan->desc_pool, segment, segment->phys);
+}
+
 struct anlogic_dma_tx_descriptor *anlogic_dma_alloc_tx_descriptor(struct anlogic_dma_chan *chan)
 {
 	struct anlogic_dma_tx_descriptor *desc;
@@ -395,17 +401,47 @@ static int anlogic_dma_chan_probe(struct anlogic_dma_device *al_dev,
 	if (!has_dre)
 		al_dev->common.copy_align = (enum dmaengine_alignment)fls(width - 1);
 
-	if (of_device_is_compatible(node, "anlogic,axi-dma-mm2s-channel")) {
+	if (of_device_is_compatible(node, "anlogic,axi-vdma-mm2s-channel") ||
+		of_device_is_compatible(node, "anlogic,axi-dma-mm2s-channel")) {
 		chan->direction = DMA_MEM_TO_DEV;
 		chan->id = al_dev->mm2s_chan_id++;
 		chan->tdest = chan->id;
 
 		chan->ctrl_offset = ANLOGIC_DMA_MM2S_CTRL_OFFSET;
-	} else if (of_device_is_compatible(node, "anlogic,axi-dma-s2mm-channel")) {
+
+		if (al_dev->dma_config->dmatype == AL_DMA_TYPE_VDMA) {
+			chan->desc_offset = ANLOGIC_VDMA_MM2S_DESC_OFFSET;
+			chan->config.park = 1;
+
+			if (al_dev->flush_on_fsync == ANLOGIC_DMA_FLUSH_BOTH ||
+				al_dev->flush_on_fsync == ANLOGIC_DMA_FLUSH_MM2S)
+				chan->flush_on_fsync = true;
+		}
+
+	} else if (of_device_is_compatible(node,
+					   "anlogic,axi-vdma-s2mm-channel") ||
+			of_device_is_compatible(node, "anlogic,axi-dma-s2mm-channel")) {
 		chan->direction = DMA_DEV_TO_MEM;
 		chan->id = al_dev->s2mm_chan_id++;
 		chan->tdest = chan->id - al_dev->dma_config->max_channels / 2;
 		chan->ctrl_offset = ANLOGIC_DMA_S2MM_CTRL_OFFSET;
+
+		chan->has_vflip = of_property_read_bool(node,
+					"anlogic,enable-vert-flip");
+		if (chan->has_vflip) {
+			chan->config.vflip_en = dma_read(chan,
+				ANLOGIC_VDMA_REG_ENABLE_VERTICAL_FLIP) &
+				ANLOGIC_VDMA_ENABLE_VERTICAL_FLIP;
+		}
+
+		if (al_dev->dma_config->dmatype == AL_DMA_TYPE_VDMA) {
+			chan->desc_offset = ANLOGIC_VDMA_S2MM_DESC_OFFSET;
+			chan->config.park = 1;
+
+			if (al_dev->flush_on_fsync == ANLOGIC_DMA_FLUSH_BOTH ||
+			    al_dev->flush_on_fsync == ANLOGIC_DMA_FLUSH_S2MM)
+				chan->flush_on_fsync = true;
+		}
 
 	} else {
 		dev_err(al_dev->dev, "Invalid channel compatible node\n");
@@ -427,6 +463,9 @@ static int anlogic_dma_chan_probe(struct anlogic_dma_device *al_dev,
 	if (al_dev->dma_config->dmatype == AL_DMA_TYPE_AXIDMA) {
 		chan->start_transfer = axidma_init.start_transfer;
 		chan->stop_transfer = axidma_init.stop_transfer;
+	} else if (al_dev->dma_config->dmatype == AL_DMA_TYPE_VDMA) {
+		chan->start_transfer = axivdma_init.start_transfer;
+		chan->stop_transfer = axivdma_init.stop_transfer;
 	}
 
 	if (dma_ctrl_read(chan, ANLOGIC_DMA_REG_DMASR) & ANLOGIC_DMA_DMASR_SG_MASK) {
@@ -492,8 +531,15 @@ static const struct anlogic_dma_config axidma_config = {
 	.max_channels = ANLOGIC_DMA_MAX_CHANS_PER_DEVICE,
 };
 
+static const struct anlogic_dma_config axivdma_config = {
+	.dmatype = AL_DMA_TYPE_VDMA,
+	.irq_handler = anlogic_dma_irq_handler,
+	.max_channels = ANLOGIC_DMA_MAX_CHANS_PER_DEVICE,
+};
+
 static const struct of_device_id anlogic_dma_of_ids[] = {
 	{ .compatible = "anlogic,axi-dma", .data = &axidma_config },
+	{ .compatible = "anlogic,axi-vdma", .data = &axivdma_config },
 	{}
 };
 MODULE_DEVICE_TABLE(of, anlogic_dma_of_ids);
@@ -503,7 +549,7 @@ static int anlogic_dma_probe(struct platform_device *pdev)
 	struct device_node *node = pdev->dev.of_node;
 	struct anlogic_dma_device *al_dev;
 	struct device_node *child, *np = pdev->dev.of_node;
-	u32 addr_width, len_width;
+	u32 num_frames, addr_width, len_width;
 	int i, err;
 
 	/* Allocate and initialize the DMA engine structure */
@@ -547,6 +593,22 @@ static int anlogic_dma_probe(struct platform_device *pdev)
 		}
 	}
 
+	if (al_dev->dma_config->dmatype == AL_DMA_TYPE_VDMA) {
+		err = of_property_read_u32(node, "anlogic,num-fstores",
+					   &num_frames);
+		if (err < 0) {
+			dev_err(al_dev->dev,
+				"missing anlogic,num-fstores property\n");
+			return err;
+		}
+
+		err = of_property_read_u32(node, "anlogic,flush-fsync",
+					   &al_dev->flush_on_fsync);
+		if (err < 0)
+			dev_warn(al_dev->dev,
+				 "missing anlogic,flush-fsync property\n");
+	}
+
 	err = of_property_read_u32(node, "anlogic,addrwidth", &addr_width);
 	if (err < 0)
 		dev_warn(al_dev->dev, "missing anlogic,addrwidth property\n");
@@ -570,6 +632,12 @@ static int anlogic_dma_probe(struct platform_device *pdev)
 		dma_cap_set(DMA_PRIVATE, al_dev->common.cap_mask);
 		dma_cap_set(DMA_CYCLIC, al_dev->common.cap_mask);
 		dev_info(&pdev->dev, "Anlogic AXI DMA Engine Driver Probed\n");
+	} else if (al_dev->dma_config->dmatype == AL_DMA_TYPE_VDMA) {
+		al_dev->common = axivdma_init.dma_ops;
+		al_dev->desc_ops = axivdma_init.desc_ops;
+		dma_cap_set(DMA_SLAVE, al_dev->common.cap_mask);
+		dma_cap_set(DMA_PRIVATE, al_dev->common.cap_mask);
+		dev_info(&pdev->dev, "Anlogic AXI VDMA Engine Driver Probed\n");
 	}
 
 	/* Initialize the DMA engine */
@@ -585,6 +653,12 @@ static int anlogic_dma_probe(struct platform_device *pdev)
 			of_node_put(child);
 			goto error;
 		}
+	}
+
+	if (al_dev->dma_config->dmatype == AL_DMA_TYPE_AXIDMA) {
+		for (i = 0; i < al_dev->dma_config->max_channels; i++)
+			if (al_dev->chan[i])
+				al_dev->chan[i]->num_frms = num_frames;
 	}
 
 	/* Register the DMA engine with the core */

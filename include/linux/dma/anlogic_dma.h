@@ -10,20 +10,8 @@
 
 #include <linux/dma-mapping.h>
 #include <linux/dmaengine.h>
-
-struct anlogic_vdma_config {
-	int frm_dly;
-	int gen_lock;
-	int master;
-	int frm_cnt_en;
-	int park;
-	int park_frm;
-	int coalesc;
-	int delay;
-	int reset;
-	int ext_fsync;
-	bool vflip_en;
-};
+#include <linux/interrupt.h>
+#include <linux/io-64-nonatomic-lo-hi.h>
 
 /* Register/Descriptor Offsets */
 #define ANLOGIC_DMA_MM2S_CTRL_OFFSET		0x0000
@@ -130,6 +118,11 @@ struct anlogic_vdma_config {
 		 ANLOGIC_DMA_DMASR_SOF_EARLY_ERR | \
 		 ANLOGIC_DMA_DMASR_DMA_INT_ERR)
 
+/* Axi VDMA Flush on Fsync bits */
+#define ANLOGIC_DMA_FLUSH_S2MM		3
+#define ANLOGIC_DMA_FLUSH_MM2S		2
+#define ANLOGIC_DMA_FLUSH_BOTH		1
+
 /* Delay loop counter to prevent hardware failure */
 #define ANLOGIC_DMA_LOOP_COUNT		1000000
 
@@ -153,6 +146,31 @@ struct anlogic_vdma_config {
 #define anlogic_prep_dma_addr_t(addr)	\
 	((dma_addr_t)((u64)addr##_##msb << 32 | (addr)))
 
+
+struct anlogic_vdma_config {
+	int frm_dly;
+	int gen_lock;
+	int master;
+	int frm_cnt_en;
+	int park;
+	int park_frm;
+	int coalesc;
+	int delay;
+	int reset;
+	int ext_fsync;
+	bool vflip_en;
+};
+
+struct anlogic_vdma_desc_hw {
+	u32 next_desc;
+	u32 pad1;
+	u32 buf_addr;
+	u32 buf_addr_msb;
+	u32 vsize;
+	u32 hsize;
+	u32 stride;
+} __aligned(64);
+
 struct anlogic_axidma_desc_hw {
 	u32 next_desc;
 	u32 next_desc_msb;
@@ -163,6 +181,12 @@ struct anlogic_axidma_desc_hw {
 	u32 control;
 	u32 status;
 	u32 app[ANLOGIC_DMA_NUM_APP_WORDS];
+} __aligned(64);
+
+struct anlogic_vdma_tx_segment {
+	struct anlogic_vdma_desc_hw hw;
+	struct list_head node;
+	dma_addr_t phys;
 } __aligned(64);
 
 struct anlogic_axidma_tx_segment {
@@ -331,6 +355,22 @@ static inline void anlogic_axidma_buf(struct anlogic_dma_chan *chan,
 	}
 }
 
+static inline void vdma_desc_write_64(struct anlogic_dma_chan *chan, u32 reg,
+				      u32 value_lsb, u32 value_msb)
+{
+	/* Write the lsb 32 bits*/
+	writel(value_lsb, chan->al_dev->regs + chan->desc_offset + reg);
+
+	/* Write the msb 32 bits */
+	writel(value_msb, chan->al_dev->regs + chan->desc_offset + reg + 4);
+}
+
+static inline void vdma_desc_write(struct anlogic_dma_chan *chan, u32 reg,
+				   u32 value)
+{
+	dma_write(chan, chan->desc_offset + reg, value);
+}
+
 // Universal interface
 int anlogic_dma_chan_reset(struct anlogic_dma_chan *chan);
 struct anlogic_dma_tx_descriptor *anlogic_dma_alloc_tx_descriptor(
@@ -349,5 +389,14 @@ void anlogic_dma_start(struct anlogic_dma_chan *chan);
 
 // axi dma interface
 extern struct anlogic_dma_init axidma_init;
+
+// axi vdma interface
+extern struct anlogic_dma_init axivdma_init;
+
+int anlogic_vdma_channel_set_config(struct dma_chan *dchan,
+					struct anlogic_vdma_config *cfg);
+
+void anlogic_vdma_free_tx_segment(struct anlogic_dma_chan *chan,
+					struct anlogic_vdma_tx_segment *segment);
 
 #endif
