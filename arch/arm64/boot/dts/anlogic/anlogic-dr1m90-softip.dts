@@ -175,4 +175,28 @@
 			spi-max-frequency = <50000000>;
 		};
 	};
+
+	axi_vdma_0: axivdma@80002000 {
+		compatible = "anlogic,axi-vdma";
+		#dma-cells = <1>;
+		reg = <0x0 0x80002000 0x0 0x10000 >;
+		interrupt-parent = <&gic>;
+		interrupts = <GIC_SPI 83 IRQ_TYPE_EDGE_RISING>, <GIC_SPI 82 IRQ_TYPE_EDGE_RISING>;
+		anlogic,num-fstores = <0x5>;
+		anlogic,flush-fsync = <0x1>;
+		anlogic,addrwidth = <0x20>;
+		status = "disabled";
+
+		dma-channel@80002000 {
+			compatible = "anlogic,axi-vdma-mm2s-channel";
+			interrupts = <GIC_SPI 83 IRQ_TYPE_EDGE_RISING>;
+			anlogic,datawidth = <0x20>;
+		} ;
+
+		dma-channel@80002030 {
+			compatible = "anlogic,axi-vdma-s2mm-channel";
+			interrupts = <GIC_SPI 82 IRQ_TYPE_EDGE_RISING>;
+			anlogic,datawidth = <0x20>;
+		} ;
+	} ;
 };
