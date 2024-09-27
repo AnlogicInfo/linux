@@ -461,11 +461,15 @@ static int anlogic_dma_chan_probe(struct anlogic_dma_device *al_dev,
 	}
 
 	if (al_dev->dma_config->dmatype == AL_DMA_TYPE_AXIDMA) {
+#ifdef CONFIG_AXI_DMA
 		chan->start_transfer = axidma_init.start_transfer;
 		chan->stop_transfer = axidma_init.stop_transfer;
+#endif
 	} else if (al_dev->dma_config->dmatype == AL_DMA_TYPE_VDMA) {
+#ifdef CONFIG_AXI_VDMA
 		chan->start_transfer = axivdma_init.start_transfer;
 		chan->stop_transfer = axivdma_init.stop_transfer;
+#endif
 	}
 
 	if (dma_ctrl_read(chan, ANLOGIC_DMA_REG_DMASR) & ANLOGIC_DMA_DMASR_SG_MASK) {
@@ -538,8 +542,12 @@ static const struct anlogic_dma_config axivdma_config = {
 };
 
 static const struct of_device_id anlogic_dma_of_ids[] = {
+#ifdef CONFIG_AXI_DMA
 	{ .compatible = "anlogic,axi-dma", .data = &axidma_config },
+#endif
+#ifdef CONFIG_AXI_VDMA
 	{ .compatible = "anlogic,axi-vdma", .data = &axivdma_config },
+#endif
 	{}
 };
 MODULE_DEVICE_TABLE(of, anlogic_dma_of_ids);
@@ -626,18 +634,22 @@ static int anlogic_dma_probe(struct platform_device *pdev)
 	}
 
 	if (al_dev->dma_config->dmatype == AL_DMA_TYPE_AXIDMA) {
+#ifdef CONFIG_AXI_DMA
 		al_dev->common = axidma_init.dma_ops;
 		al_dev->desc_ops = axidma_init.desc_ops;
 		dma_cap_set(DMA_SLAVE, al_dev->common.cap_mask);
 		dma_cap_set(DMA_PRIVATE, al_dev->common.cap_mask);
 		dma_cap_set(DMA_CYCLIC, al_dev->common.cap_mask);
 		dev_info(&pdev->dev, "Anlogic AXI DMA Engine Driver Probed\n");
+#endif
 	} else if (al_dev->dma_config->dmatype == AL_DMA_TYPE_VDMA) {
+#ifdef CONFIG_AXI_VDMA
 		al_dev->common = axivdma_init.dma_ops;
 		al_dev->desc_ops = axivdma_init.desc_ops;
 		dma_cap_set(DMA_SLAVE, al_dev->common.cap_mask);
 		dma_cap_set(DMA_PRIVATE, al_dev->common.cap_mask);
 		dev_info(&pdev->dev, "Anlogic AXI VDMA Engine Driver Probed\n");
+#endif
 	}
 
 	/* Initialize the DMA engine */
