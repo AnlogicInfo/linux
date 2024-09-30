@@ -2922,6 +2922,12 @@ int is_console_locked(void)
 }
 EXPORT_SYMBOL(is_console_locked);
 
+/*
+ * Check if the given console is currently capable and allowed to print
+ * records.
+ *
+ * Requires the console_lock.
+ */
 static inline bool __console_is_usable(short flags)
 {
 	if (!(flags & CON_ENABLED))
