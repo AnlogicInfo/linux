@@ -725,6 +725,12 @@ config AXI_DMA
 	help
 	  Enable support for AXI DMA.
 
+config AXI_VDMA
+	tristate "AXI VDMA support"
+	depends on ANLOGIC_DMA
+	help
+	  Enable support for AXI VDMA.
+
 config AXI_DMA_TEST
 	tristate "AXI DMA Test Driver"
 	depends on ANLOGIC_DMA
