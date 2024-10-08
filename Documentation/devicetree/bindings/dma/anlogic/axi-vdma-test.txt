@@ -1,0 +1,26 @@
+Anlogic AXI VDMA Test Driver
+
+This is a test driver for the Anlogic AXI VDMA engine. This driver is used for
+testing and demonstrative purposes.
+
+Required properties:
+- compatible: Should be "anlogic,axi-dma-test".
+- dmas: a list of <[Video DMA device phandle] [Channel ID]> pairs,
+	where Channel ID is '0' for write/tx and '1' for read/rx
+	channel. For MCMDA, MM2S channel(write/tx) ID start from
+	'0' and is in [0-15] range. S2MM channel(read/rx) ID start
+	from '16' and is in [16-31] range. These channels ID are
+	fixed irrespective of IP configuration.
+
+- dma-names: a list of DMA channel names, one per "dmas" entry
+
+Example:
+++++++++
+
+vdmatest_1: vdmatest@1 {
+	compatible ="anlogic,axi-vdma-test";
+	anlogic,num-fstores = <0x5>;
+	dmas = <&axi_vdma_0 0
+		&axi_vdma_0 1>;
+	dma-names = "vdma0", "vdma1";
+} ;
