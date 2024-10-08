@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Anlogic device configuration
+#
+
+config ANLOGIC_ETHLITE
+	tristate "Anlogic 10/100 Ethernet Lite support"
+
+	help
+	  This option enables support for the Anlogic 10/100 Ethernet Lite
+	  controller. If you have a board with an Anlogic Ethernet Lite
+	  controller, say Y or M here to include support for it in your
+	  kernel. If unsure, say N.
+
+	  To compile this driver as a module, choose M here. The module
+	  will be called anlogic_ethlite.
+
+	  This driver provides 10/100 Mbps Ethernet support and is suitable
+	  for Anlogic FPSoC that feature the Ethernet Lite controller. It
+	  supports both half-duplex and full-duplex modes, as well as a
+	  variety of network protocols.
