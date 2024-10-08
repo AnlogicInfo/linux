@@ -737,6 +737,12 @@ config AXI_DMA_TEST
 	help
 	  Enable support for the AXI DMA test driver.
 
+config AXI_VDMA_TEST
+	tristate "AXI VDMA Test Driver"
+	depends on ANLOGIC_DMA
+	help
+	  Enable support for the AXI VDMA test driver.
+
 # driver files
 source "drivers/dma/bestcomm/Kconfig"
 
