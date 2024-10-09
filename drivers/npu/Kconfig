@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# npu related drivers
+#
+
+menu "NPU Modules"
+
+menuconfig NPU_MODULE
+        bool "NPU related Modules"
+        help
+                This option enables the NPU related modules, including hard_npu_driver,
+                soft_npu_driver and cma_mem_driver.
+
+if NPU_MODULE
+
+config HARD_NPU_DRIVER
+        tristate "hard_npu_driver"
+        help
+                This option enables the NPU driver for hard NPU device. hard NPU device is
+                used to accelerate conv and gemm operations.
+
+config SOFT_NPU_DRIVER
+        tristate "soft_npu_driver"
+        help
+                This option enables the NPU driver for soft NPU device. soft NPU device is
+                used to accelerate operations except for conv and gemm.
+
+config CMA_MEM_DRIVER
+        tristate "cma_mem_driver"
+        help
+                This option enables the NPU driver for cma memory. hard NPU and soft NPU device
+                exchange data through cma memory.
+
+endif # NPU_MODULE
+
+endmenu
+
