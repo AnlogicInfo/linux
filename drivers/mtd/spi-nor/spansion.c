@@ -387,7 +387,11 @@ static const struct flash_info spansion_nor_parts[] = {
 		MFR_FLAGS(USE_CLSR)
 	},
 	{ "s25fl512s",  INFO6(0x010220, 0x4d0080, 256 * 1024, 256)
+#ifdef CONFIG_ANLOGIC_SOC
+		FLAGS(SPI_NOR_QUAD_PP | SPI_NOR_HAS_LOCK)
+#else
 		FLAGS(SPI_NOR_HAS_LOCK)
+#endif
 		NO_SFDP_FLAGS(SPI_NOR_DUAL_READ | SPI_NOR_QUAD_READ)
 		MFR_FLAGS(USE_CLSR)
 	},
