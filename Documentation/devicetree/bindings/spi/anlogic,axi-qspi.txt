@@ -1,0 +1,36 @@
+Anlogic Devices AXI QSPI controller Device Tree Bindings. It can be configured
+to Standard SPI, Dual SPI or Qual SPI.
+
+Required properties:
+- compatible: should be "anlogic-axi-qspi-controller"
+- reg: spi/qspi controller memory mapped registers
+- interrupts: Interrupt specifier for the controllers interrupt.
+
+Optional subnodes:
+	Subnodes are use to represent the SPI slave devices connected to the SPI
+	master. They follow the generic SPI bindings as outlined in spi-bus.txt.
+
+Example:
+
+axi_qspi0: spi@80000000 {
+	compatible = "anlogic-axi-qspi-controller";
+	interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+	clock-frequency = <25000000>;
+	reg = <0x0 0x80000000 0 0x10000>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+	al-sync-clk = <0>;
+	al-spi-mem-addr-bits = <24>;
+	al-axi4-type = <1>;
+	al-xip-mode = <0>;
+	al-xip-perf = <0>;
+	al-fifo-depth = <256>;
+	al-sck-ratio = <2>;
+	al-num-ss-bits = <1>;
+	al-num-trans-bits = <8>;
+	al-spi-mode = <0>;
+	al-spi-memory = <3>;
+
+	/* SPI devices */
+};
