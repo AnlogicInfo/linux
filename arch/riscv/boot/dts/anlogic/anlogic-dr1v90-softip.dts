@@ -120,4 +120,10 @@
 		status = "disabled";
 	};
 
+	soft_npu: soft_npu@1F0000000 {
+		compatible = "anlogic,soft_npu";
+		reg = <0x1 0xF0000000 0x0 0x00100000>;
+		interrupt-parent = <&plic0>;
+		interrupts = <98>;
+	};
 };
