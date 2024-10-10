@@ -24,7 +24,7 @@
 
 #include <linux/dma/anlogic_dma.h>
 
-static void anlogic_dma_free_tx_descriptor(struct anlogic_dma_chan *chan,
+static void anlogic_axidma_free_tx_descriptor(struct anlogic_dma_chan *chan,
 			       struct anlogic_dma_tx_descriptor *desc)
 {
 	struct anlogic_axidma_tx_segment *axidma_segment, *axidma_next;
@@ -41,26 +41,26 @@ static void anlogic_dma_free_tx_descriptor(struct anlogic_dma_chan *chan,
 	kfree(desc);
 }
 
-static void anlogic_dma_free_desc_list(struct anlogic_dma_chan *chan,
+static void anlogic_axidma_free_desc_list(struct anlogic_dma_chan *chan,
 					struct list_head *list)
 {
 	struct anlogic_dma_tx_descriptor *desc, *next;
 
 	list_for_each_entry_safe(desc, next, list, node) {
 		list_del(&desc->node);
-		anlogic_dma_free_tx_descriptor(chan, desc);
+		anlogic_axidma_free_tx_descriptor(chan, desc);
 	}
 }
 
-static void anlogic_dma_free_descriptors(struct anlogic_dma_chan *chan)
+static void anlogic_axidma_free_descriptors(struct anlogic_dma_chan *chan)
 {
 	unsigned long flags;
 
 	spin_lock_irqsave(&chan->lock, flags);
 
-	anlogic_dma_free_desc_list(chan, &chan->pending_list);
-	anlogic_dma_free_desc_list(chan, &chan->done_list);
-	anlogic_dma_free_desc_list(chan, &chan->active_list);
+	anlogic_axidma_free_desc_list(chan, &chan->pending_list);
+	anlogic_axidma_free_desc_list(chan, &chan->done_list);
+	anlogic_axidma_free_desc_list(chan, &chan->active_list);
 
 	spin_unlock_irqrestore(&chan->lock, flags);
 }
@@ -72,7 +72,7 @@ static void anlogic_axidma_free_chan_resources(struct dma_chan *dchan)
 
 	dev_dbg(chan->dev, "Free all channel resources.\n");
 
-	anlogic_dma_free_descriptors(chan);
+	anlogic_axidma_free_descriptors(chan);
 
 	if (chan->al_dev->dma_config->dmatype == AL_DMA_TYPE_AXIDMA) {
 		spin_lock_irqsave(&chan->lock, flags);
@@ -91,7 +91,7 @@ static void anlogic_axidma_free_chan_resources(struct dma_chan *dchan)
 
 }
 
-static int anlogic_dma_alloc_chan_resources(struct dma_chan *dchan)
+static int anlogic_axidma_alloc_chan_resources(struct dma_chan *dchan)
 {
 	struct anlogic_dma_chan *chan = to_anlogic_chan(dchan);
 	int i;
@@ -154,7 +154,7 @@ static int anlogic_dma_alloc_chan_resources(struct dma_chan *dchan)
 	return 0;
 }
 
-static int anlogic_dma_terminate_all(struct dma_chan *dchan)
+static int anlogic_axidma_terminate_all(struct dma_chan *dchan)
 {
 	struct anlogic_dma_chan *chan = to_anlogic_chan(dchan);
 	u32 reg;
@@ -173,7 +173,7 @@ static int anlogic_dma_terminate_all(struct dma_chan *dchan)
 	anlogic_dma_chan_reset(chan);
 	/* Remove and free all of the descriptors in the lists */
 	chan->terminating = true;
-	anlogic_dma_free_descriptors(chan);
+	anlogic_axidma_free_descriptors(chan);
 	chan->idle = true;
 
 	if (chan->cyclic) {
@@ -186,14 +186,14 @@ static int anlogic_dma_terminate_all(struct dma_chan *dchan)
 	return 0;
 }
 
-static void anlogic_dma_synchronize(struct dma_chan *dchan)
+static void anlogic_axidma_synchronize(struct dma_chan *dchan)
 {
 	struct anlogic_dma_chan *chan = to_anlogic_chan(dchan);
 
 	tasklet_kill(&chan->tasklet);
 }
 
-static u32 anlogic_dma_get_residue(struct anlogic_dma_chan *chan,
+static u32 anlogic_axidma_get_residue(struct anlogic_dma_chan *chan,
 				  struct anlogic_dma_tx_descriptor *desc)
 {
 	struct anlogic_axidma_tx_segment *axidma_seg;
@@ -214,7 +214,7 @@ static u32 anlogic_dma_get_residue(struct anlogic_dma_chan *chan,
 	return residue;
 }
 
-static enum dma_status anlogic_dma_tx_status(struct dma_chan *dchan,
+static enum dma_status anlogic_axidma_tx_status(struct dma_chan *dchan,
 					dma_cookie_t cookie,
 					struct dma_tx_state *txstate)
 {
@@ -233,7 +233,7 @@ static enum dma_status anlogic_dma_tx_status(struct dma_chan *dchan,
 		desc = list_last_entry(&chan->active_list,
 				       struct anlogic_dma_tx_descriptor, node);
 		if (chan->has_sg)
-			residue = anlogic_dma_get_residue(chan, desc);
+			residue = anlogic_axidma_get_residue(chan, desc);
 	}
 	spin_unlock_irqrestore(&chan->lock, flags);
 
@@ -242,7 +242,7 @@ static enum dma_status anlogic_dma_tx_status(struct dma_chan *dchan,
 	return ret;
 }
 
-static void anlogic_dma_issue_pending(struct dma_chan *dchan)
+static void anlogic_axidma_issue_pending(struct dma_chan *dchan)
 {
 	struct anlogic_dma_chan *chan = to_anlogic_chan(dchan);
 	unsigned long flags;
@@ -252,13 +252,13 @@ static void anlogic_dma_issue_pending(struct dma_chan *dchan)
 	spin_unlock_irqrestore(&chan->lock, flags);
 }
 
-static int anlogic_dma_device_config(struct dma_chan *dchan,
+static int anlogic_axidma_device_config(struct dma_chan *dchan,
 				    struct dma_slave_config *config)
 {
 	return 0;
 }
 
-static struct dma_async_tx_descriptor *anlogic_dma_prep_slave_sg(
+static struct dma_async_tx_descriptor *anlogic_axidma_prep_slave_sg(
 	struct dma_chan *dchan, struct scatterlist *sgl, unsigned int sg_len,
 	enum dma_transfer_direction direction, unsigned long flags,
 	void *context)
@@ -342,11 +342,11 @@ static struct dma_async_tx_descriptor *anlogic_dma_prep_slave_sg(
 	return &desc->async_tx;
 
 error:
-	anlogic_dma_free_tx_descriptor(chan, desc);
+	anlogic_axidma_free_tx_descriptor(chan, desc);
 	return NULL;
 }
 
-static struct dma_async_tx_descriptor *anlogic_dma_prep_dma_cyclic(
+static struct dma_async_tx_descriptor *anlogic_axidma_prep_dma_cyclic(
 	struct dma_chan *dchan, dma_addr_t buf_addr, size_t buf_len,
 	size_t period_len, enum dma_transfer_direction direction,
 	unsigned long flags)
@@ -438,7 +438,7 @@ static struct dma_async_tx_descriptor *anlogic_dma_prep_dma_cyclic(
 	return &desc->async_tx;
 
 error:
-	anlogic_dma_free_tx_descriptor(chan, desc);
+	anlogic_axidma_free_tx_descriptor(chan, desc);
 	return NULL;
 }
 
@@ -446,7 +446,7 @@ error:
  * anlogic_dma_start_transfer - Starts DMA transfer
  * @chan: Driver specific channel struct pointer
  */
-static void anlogic_dma_start_transfer(struct anlogic_dma_chan *chan)
+static void anlogic_axidma_start_transfer(struct anlogic_dma_chan *chan)
 {
 	struct anlogic_dma_tx_descriptor *head_desc, *tail_desc;
 	struct anlogic_axidma_tx_segment *tail_segment;
@@ -516,7 +516,7 @@ static void anlogic_dma_start_transfer(struct anlogic_dma_chan *chan)
 	chan->idle = false;
 }
 
-static int anlogic_dma_stop_transfer(struct anlogic_dma_chan *chan)
+static int anlogic_axidma_stop_transfer(struct anlogic_dma_chan *chan)
 {
 	u32 val;
 
@@ -528,7 +528,7 @@ static int anlogic_dma_stop_transfer(struct anlogic_dma_chan *chan)
 				       ANLOGIC_DMA_LOOP_COUNT);
 }
 
-static void anlogic_dma_complete_descriptor(struct anlogic_dma_chan *chan)
+static void anlogic_axidma_complete_descriptor(struct anlogic_dma_chan *chan)
 {
 	struct anlogic_dma_tx_descriptor *desc, *next;
 
@@ -538,7 +538,7 @@ static void anlogic_dma_complete_descriptor(struct anlogic_dma_chan *chan)
 
 	list_for_each_entry_safe(desc, next, &chan->active_list, node) {
 		if (chan->has_sg)
-			desc->residue = anlogic_dma_get_residue(chan, desc);
+			desc->residue = anlogic_axidma_get_residue(chan, desc);
 		else
 			desc->residue = 0;
 		desc->err = chan->err;
@@ -550,7 +550,7 @@ static void anlogic_dma_complete_descriptor(struct anlogic_dma_chan *chan)
 	}
 }
 
-static void anlogic_append_desc_queue(struct anlogic_dma_chan *chan,
+static void anlogic_axidma_append_desc_queue(struct anlogic_dma_chan *chan,
 			      struct anlogic_dma_tx_descriptor *desc)
 {
 	struct anlogic_dma_tx_descriptor *tail_desc;
@@ -582,26 +582,26 @@ append:
 
 struct anlogic_dma_init axidma_init = {
 	.dma_ops = {
-		.device_alloc_chan_resources = anlogic_dma_alloc_chan_resources,
+		.device_alloc_chan_resources = anlogic_axidma_alloc_chan_resources,
 		.device_free_chan_resources = anlogic_axidma_free_chan_resources,
-		.device_terminate_all = anlogic_dma_terminate_all,
-		.device_synchronize = anlogic_dma_synchronize,
-		.device_tx_status = anlogic_dma_tx_status,
-		.device_issue_pending = anlogic_dma_issue_pending,
-		.device_config = anlogic_dma_device_config,
-		.device_prep_slave_sg = anlogic_dma_prep_slave_sg,
-		.device_prep_dma_cyclic = anlogic_dma_prep_dma_cyclic,
+		.device_terminate_all = anlogic_axidma_terminate_all,
+		.device_synchronize = anlogic_axidma_synchronize,
+		.device_tx_status = anlogic_axidma_tx_status,
+		.device_issue_pending = anlogic_axidma_issue_pending,
+		.device_config = anlogic_axidma_device_config,
+		.device_prep_slave_sg = anlogic_axidma_prep_slave_sg,
+		.device_prep_dma_cyclic = anlogic_axidma_prep_dma_cyclic,
 		.residue_granularity = DMA_RESIDUE_GRANULARITY_SEGMENT,
 	},
 
 	.desc_ops = {
-		.complete_descriptor = anlogic_dma_complete_descriptor,
-		.append_desc_queue = anlogic_append_desc_queue,
-		.dma_free_tx_descriptor = anlogic_dma_free_tx_descriptor,
+		.complete_descriptor = anlogic_axidma_complete_descriptor,
+		.append_desc_queue = anlogic_axidma_append_desc_queue,
+		.dma_free_tx_descriptor = anlogic_axidma_free_tx_descriptor,
 	},
 
-	.start_transfer = anlogic_dma_start_transfer,
-	.stop_transfer  = anlogic_dma_stop_transfer,
+	.start_transfer = anlogic_axidma_start_transfer,
+	.stop_transfer  = anlogic_axidma_stop_transfer,
 };
 
 MODULE_AUTHOR("anlogic, Inc.");
