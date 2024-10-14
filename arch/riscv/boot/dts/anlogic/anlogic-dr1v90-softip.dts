@@ -120,6 +120,30 @@
 		status = "disabled";
 	};
 
+	axi_vdma_0: axivdma@80002000 {
+		compatible = "anlogic,axi-vdma";
+		#dma-cells = <1>;
+		reg = <0x0 0x80002000 0x0 0x10000 >;
+		interrupt-parent = <&plic0>;
+		interrupts = <84>, <83>;
+		anlogic,num-fstores = <0x5>;
+		anlogic,flush-fsync = <0x1>;
+		anlogic,addrwidth = <0x20>;
+		status = "disabled";
+
+		dma-channel@80002000 {
+			compatible = "anlogic,axi-vdma-mm2s-channel";
+			interrupts = <84>;
+			anlogic,datawidth = <0x20>;
+		} ;
+
+		dma-channel@80002030 {
+			compatible = "anlogic,axi-vdma-s2mm-channel";
+			interrupts = <83>;
+			anlogic,datawidth = <0x20>;
+		} ;
+	} ;
+
 	soft_npu: soft_npu@1F0000000 {
 		compatible = "anlogic,soft_npu";
 		reg = <0x1 0xF0000000 0x0 0x00100000>;
