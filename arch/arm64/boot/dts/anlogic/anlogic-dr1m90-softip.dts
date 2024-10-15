@@ -173,6 +173,27 @@
 		interrupts = <GIC_SPI 97 IRQ_TYPE_LEVEL_HIGH>;
 	};
 
+	axi_ethernet_lite0: axi_ethernet_lite@1C0000000 {
+		compatible = "anlogic,axi-ethernet-lite-1.00.a";
+		device_type = "network";
+		interrupt-parent = <&gic>;
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		local-mac-address = [E0 78 A3 01 02 05];
+		phy-handle = <&pl_eth_phy0>;
+		reg = <0x1 0xC0000000 0x0 0x10000>;
+		status = "disabled";
+
+		mdio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+			pl_eth_phy0: phy@1 {
+					device_type = "ethernet-phy";
+					reg = <1>;
+			} ;
+		};
+	};
+
 	axi_qspi0: spi@80000000 {
 		compatible = "anlogic-axi-qspi-controller";
 		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
