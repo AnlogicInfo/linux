@@ -141,9 +141,12 @@
 #define AL_SPI1_MAX_FREQUENCY				8000000
 #endif
 
-#ifndef AL_IIC_RATE
-#define AL_IIC_RATE							400000
+#ifndef AL_I2C0PS_RATE
+#define AL_I2C0PS_RATE						400000
 #endif
 
+#ifndef AL_I2C1PS_RATE
+#define AL_I2C1PS_RATE						400000
+#endif
 
 #endif /* _ANLOGIC_DRM190_PLAT_H_ */
