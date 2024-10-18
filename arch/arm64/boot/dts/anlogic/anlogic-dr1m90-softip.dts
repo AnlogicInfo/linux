@@ -96,9 +96,14 @@
 
 	axi_i2c0: axi_i2c@80030000 {
 		compatible = "anlogic-axi-i2c-controller";
-		interrupts = <GIC_SPI 85 IRQ_TYPE_LEVEL_HIGH>;
-		clock-frequency = <50000000>;
 		reg = <0 0x80030000 0 0x10000>;
+		interrupt-parent = <&gic>;
+		interrupts = <GIC_SPI 85 IRQ_TYPE_LEVEL_HIGH>;
+		input-frequency = <75000000>;
+		clock-frequency = <100000>;
+		i2c-filter-width-time-ns = <50>;
+		i2c-sda-setup-time-ns = <300>;
+		i2c-sda-hold-time-ns = <300>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		status = "disabled";
@@ -106,9 +111,14 @@
 
 	axi_i2c1: axi_i2c@1f1030000 {
 		compatible = "anlogic-axi-i2c-controller";
-		interrupts = <GIC_SPI 93 IRQ_TYPE_LEVEL_HIGH>;
-		clock-frequency = <50000000>;
 		reg = <0x1 0xf1030000 0 0x10000>;
+		interrupt-parent = <&gic>;
+		interrupts = <GIC_SPI 93 IRQ_TYPE_LEVEL_HIGH>;
+		input-frequency = <75000000>;
+		clock-frequency = <100000>;
+		i2c-filter-width-time-ns = <50>;
+		i2c-sda-setup-time-ns = <300>;
+		i2c-sda-hold-time-ns = <300>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		status = "disabled";
