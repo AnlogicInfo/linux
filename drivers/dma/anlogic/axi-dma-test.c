@@ -14,6 +14,7 @@
 #include <linux/platform_device.h>
 #include <linux/of.h>
 #include <linux/io.h>
+#include <linux/delay.h>
 
 #define GP0_Master                                   0x80000000UL
 #define STREAM_DATA_GEN_OFFSET                       0x100000
@@ -61,6 +62,7 @@ static void PrepareDataCheck(struct dma_test_device *dev)
 
 static void DmaTransferCheck(struct dma_test_device *dev)
 {
+	msleep(100);
 	if (ioread32(dev->base_addr + STREAM_DATA_CHECK_OFFSET + 0x08)) {
 		dev_info(dev->dev, "axi dma loopback test fail!\n");
 	} else if (ioread32(dev->base_addr + STREAM_DATA_CHECK_OFFSET + 0x0C) &&
@@ -75,7 +77,6 @@ static void tx_dma_callback(void *param)
 {
 	struct dma_test_device *dev = (struct dma_test_device *)param;
 
-	DmaTransferCheck(dev);
 	complete(&dev->tx_completion);
 }
 
@@ -83,7 +84,6 @@ static void rx_dma_callback(void *param)
 {
 	struct dma_test_device *dev = (struct dma_test_device *)param;
 
-	PrepareDataCheck(dev);
 	complete(&dev->rx_completion);
 }
 
@@ -198,12 +198,14 @@ static int anlogic_axidmatest_probe(struct platform_device *pdev)
 
 	// Wait for s2mm (RX) transfer to complete
 	wait_for_completion(&dev->rx_completion);
+	PrepareDataCheck(dev);
 
 	// Start mm2s (TX) transfer
 	dma_async_issue_pending(dev->tx_chan);
 
 	// Wait for mm2s (TX) transfer to complete
 	wait_for_completion(&dev->tx_completion);
+	DmaTransferCheck(dev);
 
 	return 0;
 
