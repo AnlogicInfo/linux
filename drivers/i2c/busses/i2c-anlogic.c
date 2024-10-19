@@ -84,9 +84,9 @@
 #define CMD_SIZE 3
 
 /***************************** AXI_I2C_SETUP_OFFSET Register *****************************/
-#define T_SUDAT 24
-#define T_SP 21
-#define T_HDDAT 16
+#define T_SUDAT_SHIFT 24
+#define T_SP_SHIFT 21
+#define T_HDDAT_SHIFT 16
 #define T_SCL_RATIO 13
 #define T_SCL_HIGH 4
 #define I2C_MODE 2
@@ -113,16 +113,6 @@ enum {
 	AL_AXI_I2C_CMD_NACK = 0x3,
 	AL_AXI_I2C_CMD_CLR_FIFO = 0x4,
 	AL_AXI_I2C_CMD_RST = 0x5
-};
-
-enum {
-	AL_AXI_I2C_SCL_RATIO_1 = 0,
-	AL_AXI_I2C_SCL_RATIO_2 = 1
-};
-
-enum {
-	AL_AXI_I2C_SLAVE = 0,
-	AL_AXI_I2C_MASTER = 1
 };
 
 enum {
@@ -157,9 +147,11 @@ struct anlogic_i2c_controller {
 	u32 transfer_error;     // Transfer error
 
 	/* I2C bus configuration */
-	struct i2c_timings t;
-	u32 clk_rate_khz;
-	u32 spk_len;
+	u32 clock_frequency;
+	u32 pulse_width_time_ns;
+	u32 sda_setup_time_ns;
+	u32 sda_hold_time_ns;
+	u32 input_frequency;
 };
 
 static inline void anlogic_i2c_modify_int(struct anlogic_i2c_controller *ctlr,
@@ -420,19 +412,55 @@ static void anlogic_deinit(struct anlogic_i2c_controller *ctlr)
 
 static void anlogic_i2c_set_scl(struct anlogic_i2c_controller *ctlr)
 {
-	u32 setup_reg;
-	u32 Tsclh;
+	u64 TPM = 0;
+	u64 setup_reg = 0;
+	u64 SCL_HIGH_period;
+	u64 T_SP, T_SUDAT, T_HDDAT, T_SCLHi;
 
-	/* read the current setup register value */
-	setup_reg = readl(ctlr->iobase + AXI_I2C_SETUP);
+	/* PulseWidth = T_SP * taclk * (TPM + 1)
+	 * T_SP = PulseWidth / taclk / (TPM + 1)
+	 */
+	T_SP = ctlr->pulse_width_time_ns * (u64)ctlr->input_frequency /
+	       (u64)1000000000 / (TPM + 1);
 
-	/* set scl ratio */
-	setup_reg &= ~(AL_AXI_I2C_SCL_RATIO_2 << T_SCL_RATIO);
-	writel(setup_reg, ctlr->iobase + AXI_I2C_SETUP);
+	/* SetupTime = (2 * taclk) + (2 + T_SP + T_SUDAT) * taclk * (TPM + 1);
+	 * T_SUDAT = ((SetupTime - (2 * taclk)) / taclk / (TPM + 1)) - 2 - T_SP
+	 */
+	T_SUDAT = DIV_ROUND_CLOSEST(ctlr->sda_setup_time_ns *
+				   (u64)ctlr->input_frequency,
+				   (u64)1000000000 * (u64)(TPM + 1)) -
+		  DIV_ROUND_CLOSEST(2, (u64)(TPM + 1)) - 2 - T_SP;
 
-	/* set scl high time */
-	Tsclh = (5000 / 20) - 5;
-	setup_reg |= (Tsclh << T_SCL_HIGH);
+	/* HoldTime = (2 * taclk) + (2 + T_SP + T_HDDAT) * taclk * (TPM + 1)
+	 * T_HDDAT = ((HoldTime - (2 * taclk)) / taclk / (TPM + 1)) - 2 - T_SP;
+	 */
+	T_HDDAT = DIV_ROUND_CLOSEST(ctlr->sda_hold_time_ns *
+				   (u64)ctlr->input_frequency,
+				   (u64)1000000000 * (u64)(TPM + 1)) -
+		  DIV_ROUND_CLOSEST(2, (u64)(TPM + 1)) - 2 - T_SP;
+
+	/* SCL_HIGH_period = (2 * taclk) + (2 + T_SP + T_SCLHi) * taclk * (TPM + 1)
+	 * T_SCLHi = ((SCL_HIGH_period - (2 * taclk)) / taclk / (TPM + 1)) - 2 - T_SP;
+	 */
+	if (ctlr->clock_frequency == 1000000)
+		SCL_HIGH_period = 500;
+	else if (ctlr->clock_frequency == 400000)
+		SCL_HIGH_period = 1300;
+	else
+		SCL_HIGH_period = 5000;
+
+	T_SCLHi = DIV_ROUND_CLOSEST(SCL_HIGH_period *
+				   (u64)ctlr->input_frequency,
+				   (u64)1000000000 * (u64)(TPM + 1)) -
+		  DIV_ROUND_CLOSEST(2, (u64)(TPM + 1)) - 2 - T_SP;
+
+	setup_reg |= ((T_SP << T_SP_SHIFT) | (T_SUDAT << T_SUDAT_SHIFT) |
+		      (T_HDDAT << T_HDDAT_SHIFT) | (T_SCLHi << T_SCL_HIGH));
+
+	/* Set the low and high level time of scl to be equal */
+	setup_reg &= ~(1 << T_SCL_RATIO);
+
+	/* write the value to setup register  */
 	writel(setup_reg, ctlr->iobase + AXI_I2C_SETUP);
 }
 
@@ -441,27 +469,32 @@ static void anlogic_i2c_configure_bus(struct anlogic_i2c_controller *ctlr)
 	u32 setup_reg;
 	u32 axi_i2c_controller_id;
 
-	/* 1. reset axi i2c */
+	/* reset axi i2c */
 	writel(AL_AXI_I2C_CMD_RST, ctlr->iobase + AXI_I2C_CFG);
 
-	/* 2. check axi i2c id */
+	/* check axi i2c id */
 	axi_i2c_controller_id = ((readl(ctlr->iobase + AXI_I2C_ID)) & 0xFFFFFF00) >> 8;
 	dev_info(ctlr->dev, "anlogic axi i2c controller id 0x%x\n",
 		 axi_i2c_controller_id);
 
-	/* 3. enable axi i2c and set master/slave mode */
+	/* set axi i2c timing */
+	anlogic_i2c_set_scl(ctlr);
+
+	/* set master/slave mode */
 	setup_reg = readl(ctlr->iobase + AXI_I2C_SETUP);
-	setup_reg |= (1 << I2C_EN) | (AL_AXI_I2C_MASTER << I2C_MODE);
+	setup_reg |= (1 << I2C_MODE);
 	writel(setup_reg, ctlr->iobase + AXI_I2C_SETUP);
 
-	/* 4. set default speed mode: standard */
-	anlogic_i2c_set_scl(ctlr);
+	/* enable i2c ip */
+	setup_reg |= (1 << I2C_EN);
+	writel(setup_reg, ctlr->iobase + AXI_I2C_SETUP);
 }
 
 static int anlogic_i2c_probe(struct platform_device *pdev)
 {
 	struct anlogic_i2c_controller *ctlr;
 	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
 	struct i2c_adapter *adapter;
 	int ret;
 
@@ -479,22 +512,31 @@ static int anlogic_i2c_probe(struct platform_device *pdev)
 
 	ctlr->dev = dev;
 
-	ret = devm_request_irq(dev, ctlr->irq, anlogic_i2c_irq, 0,
-			       "anlogic-axi-i2c", ctlr);
+	ret = devm_request_irq(dev, ctlr->irq, anlogic_i2c_irq, 0, "anlogic-axi-i2c", ctlr);
 	if (ret) {
 		dev_err(dev, "failed to request irq handler, ret = %d\n", ret);
 		return ret;
+	}
+
+	/* Read required properties */
+	if (of_property_read_u32(np, "input-frequency", &ctlr->input_frequency) ||
+	    of_property_read_u32(np, "clock-frequency", &ctlr->clock_frequency) ||
+	    of_property_read_u32(np, "i2c-filter-width-time-ns", &ctlr->pulse_width_time_ns) ||
+	    of_property_read_u32(np, "i2c-sda-setup-time-ns", &ctlr->sda_setup_time_ns) ||
+	    of_property_read_u32(np, "i2c-sda-hold-time-ns", &ctlr->sda_hold_time_ns)) {
+		dev_err(dev, "Failed to read required properties\n");
+		return -EINVAL;
 	}
 
 	anlogic_i2c_configure_bus(ctlr);
 
 	adapter = &ctlr->adapter;
 	snprintf(adapter->name, sizeof(adapter->name),
-		 "anlogic axi i2c controller %s", dev_name(dev));
+		"anlogic axi i2c controller %s", dev_name(dev));
 	adapter->owner = THIS_MODULE;
 	adapter->algo = &anlogic_i2c_algo;
 	adapter->dev.parent = dev;
-	adapter->dev.of_node = pdev->dev.of_node;
+	adapter->dev.of_node = np;
 	adapter->nr = -1;
 
 	i2c_set_adapdata(adapter, ctlr);
@@ -505,8 +547,9 @@ static int anlogic_i2c_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	return 0;
+	return ret;
 }
+
 
 static int anlogic_i2c_remove(struct platform_device *pdev)
 {
