@@ -65,8 +65,8 @@
 #define AL_GPIO_CLOCK						25000000
 #endif
 
-#ifndef AL_TTC_CLOCK
-#define AL_TTC_CLOCK						200000000
+#ifndef AL_TC_CLOCK
+#define AL_TC_CLOCK						200000000
 #endif
 
 #ifndef AL_ADC_CLOCK
