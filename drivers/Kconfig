@@ -241,4 +241,6 @@ source "drivers/hte/Kconfig"
 
 source "drivers/npu/Kconfig"
 
+source "drivers/jpu/Kconfig"
+
 endmenu
