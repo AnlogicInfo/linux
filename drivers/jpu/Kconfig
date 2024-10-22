@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# jpu related drivers
+#
+
+menu "JPEG Processing Unit"
+
+config JPU_ANLOGIC
+    bool "jpu_anlogic"
+    help
+      This option enables the JPEG Processing Unit driver for JPEG Codec.
+      The JPEG Processing Unit is used to accelerate JPEG encoding and decoding operations.
+      Perform the JPEG baseline/extended sequential and M-JPEG encoding and decoding.
+
+endmenu

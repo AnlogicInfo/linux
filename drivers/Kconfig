@@ -238,4 +238,6 @@ source "drivers/most/Kconfig"
 
 source "drivers/npu/Kconfig"
 
+source "drivers/jpu/Kconfig"
+
 endmenu

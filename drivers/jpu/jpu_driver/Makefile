@@ -1,0 +1,1 @@
+obj-$(CONFIG_JPU_ANLOGIC) := jpu.o
