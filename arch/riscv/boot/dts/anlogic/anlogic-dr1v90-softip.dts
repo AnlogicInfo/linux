@@ -188,4 +188,25 @@
 		al-spi-mode = <0>;
 		al-spi-memory = <3>;
 	};
+
+	axi_ethernet_lite0: axi_ethernet_lite@1f0000000 {
+		compatible = "anlogic,axi-ethernet-lite-1.00.a";
+		device_type = "network";
+		interrupt-parent = <&plic0>;
+		interrupts = <83>;
+		local-mac-address = [E0 78 A3 01 02 05];
+		phy-handle = <&pl_eth_phy0>;
+		reg = <0x1 0xf0000000 0x0 0x10000>;
+		status = "disabled";
+
+		mdio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+			pl_eth_phy0: phy@1 {
+					device_type = "ethernet-phy";
+					reg = <1>;
+			} ;
+		};
+	};
 };
