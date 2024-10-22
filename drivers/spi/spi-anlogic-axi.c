@@ -487,6 +487,7 @@ static int al_axi_qspi_transfer_intr(struct al_axi_qspi *axi_qspi, struct spi_de
 	u32 send_data = 0;
 	int ret = 0;
 
+	axi_qspi->is_transfer_done = 0;
 	al_axi_qspi_config_controller(axi_qspi, dev);
 
 	bytes_step = axi_qspi->hw_config.trans_bits >> 3;
@@ -539,7 +540,6 @@ static int al_axi_qspi_transfer_intr(struct al_axi_qspi *axi_qspi, struct spi_de
 	reg_val &= ~(1 << AL_AXI_QSPI_CTL_MASTER_INHIBIT_SHIFT);
 	writel_relaxed(reg_val, axi_qspi->regs + AL_AXI_QSPI_CTL_OFFSET);
 
-	axi_qspi->is_transfer_done = 0;
 	ret = wait_event_interruptible_timeout(axi_qspi->wait,
 		axi_qspi->is_transfer_done, 10 * HZ);
 	if (!ret) {
