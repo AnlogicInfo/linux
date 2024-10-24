@@ -407,7 +407,7 @@ static struct uart_driver pluart_uart_driver = {
 	.nr		= PLUART_NR_UARTS,
 };
 
-static int pluart_assign(struct device *dev, int id, u32 base, int irq,
+static int pluart_assign(struct device *dev, int id, resource_size_t base, int irq,
 			struct uartlite_data *pdata)
 {
 	struct uart_port *port;
