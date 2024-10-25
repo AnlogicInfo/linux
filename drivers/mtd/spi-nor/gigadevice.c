@@ -7,6 +7,11 @@
 #include <linux/mtd/spi-nor.h>
 
 #include "core.h"
+#include "sfdp.h"
+
+#ifdef CONFIG_ANLOGIC_SOC
+#define BFPT_DWORD15_QER_RESERVED		(0x7UL << 20)
+#endif
 
 static int
 gd25q256_post_bfpt(struct spi_nor *nor,
@@ -26,6 +31,15 @@ gd25q256_post_bfpt(struct spi_nor *nor,
 	    bfpt_header->minor == SFDP_JESD216_MINOR) {
 		nor->params->quad_enable = spi_nor_sr1_bit6_quad_enable;
 	}
+
+#ifdef CONFIG_ANLOGIC_SOC
+	if (strcmp(nor->info->name, "gd25lb256e") == 0) {
+		if ((bfpt->dwords[SFDP_DWORD(15)] & BFPT_DWORD15_QER_MASK) ==
+		    BFPT_DWORD15_QER_RESERVED) {
+			nor->params->quad_enable = NULL;
+		}
+	}
+#endif
 
 	return 0;
 }
