@@ -15,13 +15,6 @@
 		reg = <0x0 0x40100000 0x0 0x1000000>;
 	};
 
-	/* Reserved memory for loading remote firmware */
-	rproc_1_reserved: rproc@61000000 {
-		no-map;
-		/* 192KB in OCM */
-		reg = <0x0 0x61000000 0x0 0x30000>;
-	};
-
 	/* Reserved memory for vring0 */
 	vdev0vring0: vdev0vring0@61030000 {
 		no-map;
@@ -47,9 +40,7 @@
 &soc {
 	remoteproc0: remoteproc@0 {
 		compatible = "anlogic,dragon_remoteproc";
-		firmware = "firmware";
-		vring0 = <15>;
-		vring1 = <14>;
 		memory-region = <&rproc_0_reserved>, <&vdev0vring0>, <&vdev0vring1>, <&vdev0buffer>;
+		/*anlogic,no-openamp;*/
 	};
 };
