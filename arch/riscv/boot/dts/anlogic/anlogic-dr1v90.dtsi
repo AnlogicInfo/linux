@@ -442,5 +442,12 @@
 			interrupt-parent = <&plic0>;
 			interrupts = <113>;
 		};
+
+		jpu: jpu@f8460000 {
+			compatible = "anlogic,jpu";
+			reg = <0x0 0xF8460000 0x0 0x00010000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <114>;
+		};
 	};
 };
