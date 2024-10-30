@@ -103,7 +103,7 @@
 		status = "disabled";
 	};
 
-	axi_dma: axidma@80000000 {
+	axi_dma0: axidma@80000000 {
 		#dma-cells = <1>;
 		compatible = "anlogic,axi-dma";
 		interrupt-parent = <&gic>;
@@ -132,7 +132,7 @@
 		};
 	};
 
-	axi_vdma_0: axivdma@80002000 {
+	axi_vdma0: axivdma@80002000 {
 		compatible = "anlogic,axi-vdma";
 		#dma-cells = <1>;
 		reg = <0x0 0x80002000 0x0 0x10000 >;
@@ -156,7 +156,7 @@
 		} ;
 	} ;
 
-	soft_npu: soft_npu@1F0000000 {
+	soft_npu0: soft_npu@1F0000000 {
 		compatible = "anlogic,soft_npu";
 		reg = <0x1 0xF0000000 0x0 0x00100000>;
 		interrupts = <GIC_SPI 97 IRQ_TYPE_LEVEL_HIGH>;
