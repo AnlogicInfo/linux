@@ -130,7 +130,11 @@ static inline u64 __raw_readq(const volatile void __iomem *addr)
  * prior Normal memory write.  The memory barriers here are necessary as RISC-V
  * doesn't define any ordering between the memory space and the I/O space.
  */
+#ifdef CONFIG_ANLOGIC_SOC
+#define __io_br()	({ __asm__ __volatile__ ("fence ow,ir" : : : "memory"); })
+#else
 #define __io_br()	do {} while (0)
+#endif
 #define __io_ar(v)	({ __asm__ __volatile__ ("fence i,ir" : : : "memory"); })
 #define __io_bw()	({ __asm__ __volatile__ ("fence w,o" : : : "memory"); })
 #define __io_aw()	mmiowb_set_pending()
