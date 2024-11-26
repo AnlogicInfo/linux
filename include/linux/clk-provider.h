@@ -665,7 +665,11 @@ struct clk_divider {
 	spinlock_t	*lock;
 };
 
+#ifdef CONFIG_ANLOGIC_SOC
+#define clk_div_mask(width)	((1UL << (width)) - 1)
+#else
 #define clk_div_mask(width)	((1 << (width)) - 1)
+#endif
 #define to_clk_divider(_hw) container_of(_hw, struct clk_divider, hw)
 
 #define CLK_DIVIDER_ONE_BASED		BIT(0)
