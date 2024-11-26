@@ -149,4 +149,8 @@
 #define AL_I2C1PS_RATE						400000
 #endif
 
+#ifndef AL_CRYST_OSC_CLOCK
+#define AL_CRYST_OSC_CLOCK				33333333
+#endif
+
 #endif /* _ANLOGIC_DRM190_PLAT_H_ */

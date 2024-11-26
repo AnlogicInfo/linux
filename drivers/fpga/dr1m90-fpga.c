@@ -13,7 +13,7 @@
 #include <linux/slab.h>
 #include <linux/arm-smccc.h>
 
-#define CRP_CFG_STATE				(0x00000454U)
+#define CRP_CFG_STATE				(0x00000000U)
 #define CRP_CFG_STATE_MSK_PL2PS_INITN		(1 << 0)
 #define CRP_CFG_STATE_MSK_PL2PS_CFG_DONE	(1 << 1)
 #define CRP_CFG_STATE_MSK_PL2PS_CFG_WAKEUP	(1 << 2)
