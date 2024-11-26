@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-2.0-only
+config ANLOGIC_CRP
+	bool "Clock support for Anlogic Socs"
+	depends on ANLOGIC_SOC || COMPILE_TEST
+	select RESET_CONTROLLER
+	default n
+	help
+	  Select this option if you want Anlogic Clock and Reset Supporing.
+
+if ANLOGIC_CRP
+config ANLOGIC_DR1X90_CRP
+	tristate "Support for the Anlogic Dr1x90 crp"
+	default n
+endif
