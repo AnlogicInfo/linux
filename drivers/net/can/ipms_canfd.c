@@ -13,6 +13,7 @@
  */
 #include <linux/bitfield.h>
 #include <linux/clk.h>
+#include <linux/reset.h>
 #include <linux/errno.h>
 #include <linux/ethtool.h>
 #include <linux/init.h>
@@ -238,6 +239,7 @@ struct IPMS_canfd_priv {
 	unsigned long irq_flags;
 	struct clk *bus_clk;
 	struct clk *can_clk;
+	struct reset_control *can_rst;
 	unsigned int tx_mode;
 	unsigned int tbsel; /*tbsel=0 choose PTB,tbsel=1 choose STB*/
 	u8 can_or_canfd;
@@ -1353,6 +1355,25 @@ static int canfd_driver_probe(struct platform_device *pdev)
 		goto err;
 	}
 
+	ret = clk_prepare_enable(priv->can_clk);
+	if (ret) {
+		dev_err(&pdev->dev, "Device clock enable fail.\n");
+		goto err;
+	}
+
+	priv->can_rst = devm_reset_control_get_optional_shared(&pdev->dev, NULL);
+	if (IS_ERR(priv->can_rst)) {
+		dev_err(&pdev->dev, "Device can reset found fail.\n");
+		ret = PTR_ERR(priv->can_rst);
+		goto err_disable_clk;
+	}
+
+	ret = reset_control_deassert(priv->can_rst);
+	if (ret) {
+		dev_err(&pdev->dev, "Device can deassert fail.\n");
+		goto err_disable_clk;
+	}
+
 	priv->can.clock.freq = clk_get_rate(priv->can_clk);
 	/*Get IRQ for the device*/
 	ndev->irq = platform_get_irq(pdev, 0);
@@ -1369,12 +1390,16 @@ static int canfd_driver_probe(struct platform_device *pdev)
 
 	if (ret) {
 		dev_err(&pdev->dev, "fail to register failed (err=%d)\n", ret);
-		goto err;
+		goto err_assert;
 	}
 
 	PDEBUG("reg_base=0x%8p irq=%d clock=%d\n", priv->reg_base, ndev->irq, priv->can.clock.freq);
 
 	return 0;
+err_assert:
+	reset_control_assert(priv->can_rst);
+err_disable_clk:
+	clk_disable_unprepare(priv->can_clk);
 err:
 	free_candev(ndev);
 	PDEBUG("error in probe function\n");
@@ -1384,7 +1409,10 @@ err:
 static int canfd_driver_remove(struct platform_device *pdev)
 {
 	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct IPMS_canfd_priv *priv = netdev_priv(ndev);
 
+	reset_control_assert(priv->can_rst);
+	clk_disable_unprepare(priv->can_clk);
 	unregister_candev(ndev);
 	free_candev(ndev);
 	return 0;
