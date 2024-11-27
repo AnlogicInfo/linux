@@ -3,6 +3,8 @@
 #include "anlogic-dr1v90-plat.h"
 
 /dts-v1/;
+#include <dt-bindings/clock/anl_dr1x90_crp.h>
+#include <dt-bindings/reset/anl_dr1x90_crp.h>
 
 / {
 	#address-cells = <2>;
@@ -27,6 +29,16 @@
 		};
 	};
 
+	crp: crp@f8801000 {
+		compatible = "anlogic,dr1x90-crp";
+		reg = <0x0 0xf8801000 0 0x0400>;
+		clocks = <&cryst_osc>;
+		clock-names = "cryst_osc";
+		#clock-cells = <1>;
+		#reset-cells = <1>;
+		status = "okay";
+	};
+
 	soc: soc {
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -49,6 +61,7 @@
 			interrupts = <71>;
 			reg-shift  = <2>;
 			reg-io-width = <4>;
+			resets = <&crp RST_UART0>;
 		};
 
 		uart1: serial@F8401000 {
@@ -58,11 +71,12 @@
 			interrupts = <72>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
+			resets = <&crp RST_UART1>;
 		};
 
 		fpga_mgr: fpga-mgr@F8082000 {
 			compatible = "anlogic,dr1m90-pcap-fpga";
-			reg = <0x00 0xF8801000 0x00 0x1000>;
+			reg = <0x00 0xF8801454 0x00 0x4>;
 			dma-noncoherent;
 		};
 
@@ -171,6 +185,7 @@
 			reg = <0 0xF8414000 0 0x1000>;
 			#address-cells = <1>;
 			#size-cells = <0>;
+			resets = <&crp RST_I2C0>;
 		};
 
 		i2c1: i2c1@f8415000 {
@@ -180,6 +195,7 @@
 			reg = <0 0xF8415000 0 0x1000>;
 			#address-cells = <1>;
 			#size-cells = <0>;
+			resets = <&crp RST_I2C1>;
 		};
 
 		watchdog0: watchdog@f8410000 {
