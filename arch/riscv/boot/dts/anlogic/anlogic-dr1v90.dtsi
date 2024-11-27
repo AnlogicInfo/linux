@@ -93,6 +93,7 @@
 			reg = <0x0 0xF8408000 0x0 0x1000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <73>;
+			resets = <&crp RST_CAN0>;
 		};
 
 		ipmscan1: can@0xF8409000 {
@@ -100,6 +101,7 @@
 			reg = <0x0 0xF8409000 0x0 0x1000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <74>;
+			resets = <&crp RST_CAN1>;
 		};
 
 		gpio0: gpio@f8411000 {
