@@ -129,6 +129,14 @@
 			fpga-mgr = <&fpga_mgr>;
 		};
 
+		hard_npu: hard_npu@63F00000 {
+			compatible = "anlogic,hard_npu";
+			reg = <0x0 0x63F00000 0x0 0x00100000>,
+				  <0x0 0xF8800000 0x0 0x00000200>;
+			interrupts = <GIC_SPI 112 IRQ_TYPE_LEVEL_HIGH>;
+			resets = <&crp RST_NPU>;
+		};
+
 		i2c0: i2c0@f8414000 {
 			compatible = "snps,designware-i2c";
 			interrupts = <GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>;
