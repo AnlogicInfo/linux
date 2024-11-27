@@ -23,6 +23,7 @@
 #include <linux/uio_driver.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
+#include <linux/reset.h>
 
 #include "hard_npu_module.h"
 
@@ -41,11 +42,11 @@ static struct class *s_dev_class;
 static struct device *s_devp;
 static struct device *hardnpu_devp;
 static struct cdev s_cdev;
+static struct reset_control *npu_rst;
 
 #define CDEV_DEV_NAME "hard_npu"
 
 #define ENABLE_REGISTER_ADDRESS 0x000001B8
-#define SOFT_RESET_REGISTER_ADDRESS 0x00000074
 #define SRAM_ENABLE_REGISTER_ADDRESS 0x00000030
 
 static irqreturn_t my_hard_npu_interrupt(int irq, void *dev_id)
@@ -211,6 +212,8 @@ static struct platform_driver hard_npu_driver = {.probe = drv_hard_npu_probe,
 
 static int drv_hard_npu_probe(struct platform_device *pdev)
 {
+	int ret;
+
 	dev_info(&(pdev->dev), "%s( %p)\n", __func__, pdev);
 	hardnpu_devp = &(pdev->dev);
 
@@ -281,30 +284,18 @@ static int drv_hard_npu_probe(struct platform_device *pdev)
 	iowrite32(tmp_val, sram_register_ptr);
 	iounmap(sram_register_ptr);
 
-	// get crp config mem resource
-	struct resource *crp_mem_src_p = platform_get_resource(pdev, IORESOURCE_MEM, 2);
-
-	if (crp_mem_src_p == NULL) {
-		dev_err(hardnpu_devp, "get crp config mem resource failed in hard_npu device\n");
-		return -EINVAL;
-	}
-
 	// soft reset
-	void __iomem *soft_reset_register_ptr = ioremap((crp_mem_src_p->start +
-			SOFT_RESET_REGISTER_ADDRESS), sizeof(u32));
-
-	if (!soft_reset_register_ptr) {
-		dev_err(hardnpu_devp, "Failed to map soft reset register address for hardnpu\n");
-		return -ENOMEM;
+	npu_rst = devm_reset_control_get_optional_shared(hardnpu_devp, NULL);
+	if (IS_ERR(npu_rst)) {
+		dev_err(hardnpu_devp, "npu reset found fail.\n");
+		return PTR_ERR(npu_rst);
 	}
 
-	tmp_val = ioread32(soft_reset_register_ptr);
-	tmp_val &= 0xFFFFEFFF;
-	iowrite32(tmp_val, soft_reset_register_ptr);
-	tmp_val = ioread32(soft_reset_register_ptr);
-	tmp_val |= 0x00001000;
-	iowrite32(tmp_val, soft_reset_register_ptr);
-	iounmap(soft_reset_register_ptr);
+	ret = reset_control_reset(npu_rst);
+	if (ret) {
+		dev_err(hardnpu_devp, "npu reset fail.\n");
+		return ret;
+	}
 
 	/* initialize the device structure and register the device with the kernel */
 	cdev_init(&s_cdev, &hard_npu_fops);
@@ -358,6 +349,7 @@ static int drv_hard_npu_remove(struct platform_device *pdev)
 	free_irq(hard_npu_irq_num, (void *)NULL);
 	cdev_del(&s_cdev);
 	unregister_chrdev_region(s_major, 1);
+	reset_control_assert(npu_rst);
 
 	if (s_hard_npu_register.virt_addr && 0) // auto release by linux
 		iounmap((void *)s_hard_npu_register.virt_addr);
