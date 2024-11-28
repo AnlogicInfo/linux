@@ -38,12 +38,6 @@
 };
 
 &soc {
-	jpu: jpu@f8460000 {
-		compatible = "anlogic,jpu";
-		reg = <0x0 0xF8460000 0x0 0x00010000>;
-		interrupts = <GIC_SPI 113 IRQ_TYPE_LEVEL_HIGH>;
-	};
-
 	cryst_osc: cryst_osc {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
