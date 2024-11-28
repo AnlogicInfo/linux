@@ -26,6 +26,7 @@
 #define CLK_GPIO_DB	12
 #define CLK_ADCPL	13
 #define CLK_GBE		14
-#define CLK_NUMBER	15
+#define CLK_JPU		15
+#define CLK_NUMBER	16
 
 #endif

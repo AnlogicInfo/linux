@@ -25,6 +25,13 @@ static struct clk_div_table anl_divtbl_6bits[64+1];
 static struct clk_div_table anl_divtbl_7bits[128+1];
 static struct clk_div_table anl_divtbl_12bits[4096+1];
 
+static struct anl_div oscdiv2 = {
+	.clk = {
+		ANL_CLK_INIT("oscdiv2", "cryst_osc", anl_div_ops, 0, 0x030)
+	},
+	ANL_DIV_FIXED_INIT(1, 2, 0),
+};
+
 static struct anl_nm cpupll = {
 	.clk = {
 		ANL_CLK_INIT("cpupll", "cryst_osc", anl_nm_ops, 0, 0x120)
@@ -35,6 +42,98 @@ static struct anl_nm iopll = {
 	.clk = {
 		ANL_CLK_INIT("iopll", "cryst_osc", anl_nm_ops, 0, 0x220)
 	}
+};
+
+static struct anl_nm ddrgpll = {
+	.clk = {
+		ANL_CLK_INIT("ddrgpll", "oscdiv2", anl_nm_ops, 0, 0x120)
+	}
+};
+
+static struct anl_nm ddrgpllphy0 = {
+	.clk = {
+		ANL_CLK_INIT("ddrgpllphy0", "ddrgpll", anl_nmc_ops, 0, 0x148)
+	}
+};
+
+static struct anl_nm ddrgpllctl0 = {
+	.clk = {
+		ANL_CLK_INIT("ddrgpllctl0", "ddrgpll", anl_nmc_ops, 0, 0x14c)
+	}
+};
+
+static struct anl_nm ddrgpllphy1 = {
+	.clk = {
+		ANL_CLK_INIT("ddrgpllphy1", "ddrgpll", anl_nmc_ops, 0, 0x150)
+	}
+};
+
+static struct anl_nm ddrgpllctl1 = {
+	.clk = {
+		ANL_CLK_INIT("ddrgpllctl1", "ddrgpll", anl_nmc_ops, 0, 0x154)
+	}
+};
+
+static const char * const ddroscctlsel_pnames[] = {
+	"ddrgpllctl0", "oscdiv2"
+};
+static struct anl_sel ddroscctlsel = {
+	.clk = {
+		ANL_CLK_INIT_PARENTS("ddroscctlsel", ddroscctlsel_pnames, anl_sel_ro_ops, 0, 0x000)
+	},
+	ANL_SEL_INIT(1, 0, 0, NULL),
+};
+
+static const char * const ddrgpllctlsel_pnames[] = {
+	"ddrgpllctl0", "ddrgpllctl1"
+};
+static struct anl_sel ddrgpllctlsel = {
+	.clk = {
+		ANL_CLK_INIT_PARENTS("ddrgpllctlsel", ddrgpllctlsel_pnames,
+				     anl_sel_ro_ops, 0, 0x7F0)
+	},
+	ANL_SEL_INIT(1, 2, 0, NULL),
+};
+
+static const char * const ddrctl_pnames[] = {
+	"ddrgpllctlsel", "ddroscctlsel"
+};
+static struct anl_sel ddrctl = {
+	.clk = {
+		ANL_CLK_INIT_PARENTS("ddrctl", ddrctl_pnames, anl_sel_ro_ops, 0, 0x7F0)
+	},
+	ANL_SEL_INIT(1, 3, 0, NULL),
+};
+
+static const char * const ddroscphysel_pnames[] = {
+	"ddrgpllphy0", "oscdiv2"
+};
+static struct anl_sel ddroscphysel = {
+	.clk = {
+		ANL_CLK_INIT_PARENTS("ddroscphysel", ddroscphysel_pnames, anl_sel_ro_ops, 0, 0x000)
+	},
+	ANL_SEL_INIT(1, 0, 0, NULL),
+};
+
+static const char * const ddrgpllphysel_pnames[] = {
+	"ddrgpllphy0", "ddrgpllphy1"
+};
+static struct anl_sel ddrgpllphysel = {
+	.clk = {
+		ANL_CLK_INIT_PARENTS("ddrgpllphysel", ddrgpllphysel_pnames,
+				     anl_sel_ro_ops, 0, 0x7F0)
+	},
+	ANL_SEL_INIT(1, 2, 0, NULL),
+};
+
+static const char * const ddrphy_pnames[] = {
+	"ddrgpllphysel", "ddroscphysel"
+};
+static struct anl_sel ddrphy = {
+	.clk = {
+		ANL_CLK_INIT_PARENTS("ddrphy", ddrphy_pnames, anl_sel_ro_ops, 0, 0x7F0)
+	},
+	ANL_SEL_INIT(1, 3, 0, NULL),
 };
 
 static struct anl_nm cpupll6x = {
@@ -269,13 +368,6 @@ static struct anl_div jpu = {
 	ANL_DIV_FIXED_INIT(1, 3, 0),
 };
 
-static struct anl_div oscdiv2 = {
-	.clk = {
-		ANL_CLK_INIT("oscdiv2", "cryst_osc", anl_div_ops, 0, 0x030)
-	},
-	ANL_DIV_FIXED_INIT(1, 2, 0),
-};
-
 static const char * const wdt_pnames[] = {
 	"oscdiv2", "wdtmio"
 };
@@ -409,6 +501,7 @@ static struct clk_hw_onecell_data anl_hw_clks = {
 		[CLK_GPIO_DB] = &gpiodb.clk.hw,
 		[CLK_ADCPL] = &adcpl.clk.hw,
 		[CLK_GBE] = &gbe.clk.hw,
+		[CLK_JPU] = &jpu.clk.hw,
 	},
 	.num	= CLK_NUMBER,
 };
@@ -450,6 +543,28 @@ static struct anl_crp_desc anl_desc = {
 	.num_resets = ARRAY_SIZE(anl_crp_rstbl),
 };
 
+static struct anl_clk *anl_ddr_clks[] = {
+	&ddrgpll.clk,
+	&ddrgpllctl0.clk,
+	&ddrgpllphy0.clk,
+	&ddrgpllctl1.clk,
+	&ddrgpllphy1.clk,
+	&ddroscctlsel.clk,
+	&ddrgpllctlsel.clk,
+	&ddrctl.clk,
+	&ddroscphysel.clk,
+	&ddrgpllphysel.clk,
+	&ddrphy.clk
+};
+
+static struct anl_crp_desc anl_ddr_desc = {
+	.crp_clks = anl_ddr_clks,
+	.num_crp_clks = ARRAY_SIZE(anl_ddr_clks),
+	.hw_clks = NULL,
+	.arstbl = NULL,
+	.num_resets = 0,
+};
+
 static int anl_dr1x90_crp_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -465,6 +580,10 @@ static int anl_dr1x90_crp_probe(struct platform_device *pdev)
 		return PTR_ERR(reg);
 
 	ret = anl_crp_probe(dev, reg, &anl_desc);
+
+	reg = devm_platform_ioremap_resource(pdev, 1);
+	if (!IS_ERR(reg))
+		anl_crp_probe(dev, reg, &anl_ddr_desc);
 
 	return ret;
 }
