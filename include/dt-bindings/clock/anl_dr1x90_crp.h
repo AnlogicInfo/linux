@@ -9,9 +9,9 @@
 #define CLK_CPU1x	0
 #define CLK_APB		0
 #define CLK_GPIO	0
-#define CLK_DMAC_AHB	0
 #define CLK_MMC_CORE	0
 #define CLK_CPU2x	1
+#define CLK_DMAC_AHB	1
 #define CLK_CPU6x4x	2
 #define CLK_UART	3
 #define CLK_I2C		4
