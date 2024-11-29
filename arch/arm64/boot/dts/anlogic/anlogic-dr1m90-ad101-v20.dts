@@ -248,7 +248,3 @@
 &smcc {
 	status = "disabled";
 };
-
-&nfc0 {
-	status = "disabled";
-};
