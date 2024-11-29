@@ -61,6 +61,8 @@
 			interrupts = <71>;
 			reg-shift  = <2>;
 			reg-io-width = <4>;
+			clocks = <&crp CLK_UART>, <&crp CLK_APB>;
+			clock-names = "baudclk", "apb_pclk";
 			resets = <&crp RST_UART0>;
 		};
 
@@ -71,6 +73,8 @@
 			interrupts = <72>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
+			clocks = <&crp CLK_UART>, <&crp CLK_APB>;
+			clock-names = "baudclk", "apb_pclk";
 			resets = <&crp RST_UART1>;
 		};
 
@@ -93,6 +97,8 @@
 			reg = <0x0 0xF8408000 0x0 0x1000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <73>;
+			clocks = <&crp CLK_CAN0>;
+			clock-names = "ipms_can_clk";
 			resets = <&crp RST_CAN0>;
 		};
 
@@ -101,6 +107,8 @@
 			reg = <0x0 0xF8409000 0x0 0x1000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <74>;
+			clocks = <&crp CLK_CAN1>;
+			clock-names = "ipms_can_clk";
 			resets = <&crp RST_CAN1>;
 		};
 
@@ -110,6 +118,9 @@
 			reg = <0x0 0xf8411000 0x0 0x0100>;
 			#address-cells = <1>;
 			#size-cells = <0>;
+			clocks = <&crp CLK_GPIO>, <&crp CLK_GPIO_DB>;
+			clock-names = "bus", "db";
+			resets = <&crp RST_GPIO>;
 
 			porta: gpio-controller@0 {
 				compatible = "snps,dw-apb-gpio-port";
@@ -129,6 +140,9 @@
 			reg = <0x0 0xf8411100 0x0 0x0100>;
 			#address-cells = <1>;
 			#size-cells = <0>;
+			clocks = <&crp CLK_GPIO>, <&crp CLK_GPIO_DB>;
+			clock-names = "bus", "db";
+			resets = <&crp RST_GPIO>;
 
 			portb: gpio-controller@0 {
 				compatible = "snps,dw-apb-gpio-port";
@@ -148,6 +162,9 @@
 			reg = <0x0 0xf8411200 0x0 0x0100>;
 			#address-cells = <1>;
 			#size-cells = <0>;
+			clocks = <&crp CLK_GPIO>, <&crp CLK_GPIO_DB>;
+			clock-names = "bus", "db";
+			resets = <&crp RST_GPIO>;
 
 			portc: gpio-controller@0 {
 				compatible = "snps,dw-apb-gpio-port";
@@ -167,6 +184,9 @@
 			reg = <0x0 0xf8411300 0x0 0x0100>;
 			#address-cells = <1>;
 			#size-cells = <0>;
+			clocks = <&crp CLK_GPIO>, <&crp CLK_GPIO_DB>;
+			clock-names = "bus", "db";
+			resets = <&crp RST_GPIO>;
 
 			portd: gpio-controller@0 {
 				compatible = "snps,dw-apb-gpio-port";
@@ -187,6 +207,8 @@
 			reg = <0 0xF8414000 0 0x1000>;
 			#address-cells = <1>;
 			#size-cells = <0>;
+			clocks = <&crp CLK_I2C>;
+			clock-names = "IIC_CLK";
 			resets = <&crp RST_I2C0>;
 		};
 
@@ -197,6 +219,8 @@
 			reg = <0 0xF8415000 0 0x1000>;
 			#address-cells = <1>;
 			#size-cells = <0>;
+			clocks = <&crp CLK_I2C>;
+			clock-names = "IIC_CLK";
 			resets = <&crp RST_I2C1>;
 		};
 
@@ -208,6 +232,8 @@
 			reg = <0x0 0xf8410000 0x0 0x100 0x0 0Xf8800168 0x0 0x20>;
 			index = <0>;
 			interrupts = <27>;
+			clocks = <&crp CLK_WDT>;
+			resets = <&crp RST_WDT>;
 		};
 
 
@@ -219,6 +245,9 @@
 			interrupt-parent = <&plic0>;
 			interrupts = <49>;
 			num-cs = <1>;
+			clocks = <&crp CLK_QSPI>;
+			resets = <&crp RST_QSPI>;
+			reset-names = "spi";
 		};
 
 		spi0: spi@f8404000 {
@@ -229,6 +258,9 @@
 			interrupt-parent = <&plic0>;
 			interrupts = <67>;
 			num-cs = <1>;
+			clocks = <&crp CLK_SPI>;
+			resets = <&crp RST_SPI0>;
+			reset-names = "spi";
 		};
 
 		spi1: spi@f8405000 {
@@ -239,6 +271,9 @@
 			interrupt-parent = <&plic0>;
 			interrupts = <69>;
 			num-cs = <1>;
+			clocks = <&crp CLK_SPI>;
+			resets = <&crp RST_SPI1>;
+			reset-names = "spi";
 		};
 
 		ttc0: ttc0@f840c000 {
@@ -247,6 +282,7 @@
 			interrupts = <30>, <31>, <32>;
 			reg = <0x0 0xf840c000 0x0 0x1000>;
 			timer-width = <32>;
+			clocks = <&crp CLK_APB>, <&ttc_ext_clk>;
 		};
 
 		ttc1: PWM1@f840d000 {
@@ -256,6 +292,7 @@
 			interrupts = <33>, <34>, <35>;
 			reg = <0x0 0xf840d000 0x0 0x1000>;
 			timer-width = <32>;
+			clocks = <&crp CLK_APB>, <&ttc_ext_clk>;
 		};
 
 		sdhci0: mmc@f8049000 {
@@ -263,6 +300,11 @@
 			reg = <0x0 0xf8049000 0x0 0x1000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <63>;
+			dma-noncoherent;
+			clocks = <&crp CLK_MMC_CORE>, <&crp CLK_MMC_BUS>;
+			clock-names = "core", "bus";
+			sdhci-caps-mask = <0x00FF0000 0x0600FF00>;
+			sdhci-caps = <0x10000 0x3200>;
 		};
 
 		sdhci1: mmc@f804a000 {
@@ -270,6 +312,11 @@
 			reg = <0x0 0xf804a000 0x0 0x1000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <64>;
+			dma-noncoherent;
+			clocks = <&crp CLK_MMC_CORE>, <&crp CLK_MMC_BUS>;
+			clock-names = "core", "bus";
+			sdhci-caps-mask = <0x00FF0000 0x0600FF00>;
+			sdhci-caps = <0x10000 0x3200>;
 		};
 
 		eqos0: ethernet0@F8100000 {
@@ -279,6 +326,8 @@
 			reg = <0x0 0xF8100000 0x0 0x10000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <59>;
+			clocks = <&crp CLK_GBE>,<&PHY_CLK>,<&crp CLK_PTP>;
+			clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
 			/* mac-address = [e0 78 a3 01 02 01]; */
 			tx-fifo-depth = <16384>;
 			rx-fifo-depth = <16384>;
@@ -325,6 +374,8 @@
 			reg = <0x0 0xF8110000 0x0 0x10000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <60>;
+			clocks = <&crp CLK_GBE>,<&PHY_CLK>,<&crp CLK_PTP>;
+			clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
 			/* mac-address = [e0 78 a3 01 02 03]; */
 			tx-fifo-depth = <16384>;
 			rx-fifo-depth = <16384>;
@@ -382,6 +433,7 @@
 			interrupt-parent = <&plic0>;
 			interrupts = <25>;
 			resolution = <12>;
+			clocks = <&crp CLK_APB>, <&crp CLK_ADCPL>;
 			anlogic,channels {
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -417,7 +469,6 @@
 		dmac: dma-controller@F8418000 {
 			compatible = "arm,pl330", "arm,primecell";
 			reg = <0x0 0xF8418000  0x0 0x1000>;
-			clock-names = "apb_pclk";
 			interrupt-parent = <&plic0>;
 			interrupts = <38>,
 						<39>,
@@ -433,6 +484,10 @@
 			#dma-channels = <8>;
 			#dma-requests = <32>;
 			dma-noncoherent;
+			clock-names = "apb_pclk";
+			clocks = <&crp CLK_APB>;
+			resets = <&crp RST_DMAC_AXI>;
+			reset-names = "dma-ocp";
 		};
 
 		smcc: memory-controller@f841a000 {
@@ -442,6 +497,8 @@
 			reg = <0x0 0xf841a000 0x0 0x1000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <48>;
+			clock-names = "memclk", "apb_pclk";
+			clocks = <&crp CLK_SMC>, <&crp CLK_APB>;
 			ranges = <0x0 0x0 0x1 0xA4000000 0x0 0x1000000>; /* Nand CS region */
 
 			nfc0: nand-controller@0 {

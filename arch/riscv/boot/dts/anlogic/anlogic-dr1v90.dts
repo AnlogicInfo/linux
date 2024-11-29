@@ -75,29 +75,7 @@
 	};
 };
 
-&uart0 {
-	clocks = <&crp CLK_UART>, <&crp CLK_APB>;
-	clock-names = "baudclk", "apb_pclk";
-};
-
-&uart1 {
-	clocks = <&crp CLK_UART>, <&crp CLK_APB>;
-	clock-names = "baudclk", "apb_pclk";
-};
-
-&ipmscan0 {
-	clocks = <&crp CLK_CAN0>;
-	clock-names = "ipms_can_clk";
-};
-
-&ipmscan1 {
-	clocks = <&crp CLK_CAN1>;
-	clock-names = "ipms_can_clk";
-};
-
 &i2c0 {
-	clocks = <&crp CLK_I2C>;
-	clock-names = "IIC_CLK";
 	clock-frequency = <AL_I2C0PS_RATE>;
 	i2c-sda-hold-time-ns = <300>;
 	i2c-sda-falling-time-ns = <300>;
@@ -105,64 +83,13 @@
 };
 
 &i2c1 {
-	clocks = <&crp CLK_I2C>;
-	clock-names = "IIC_CLK";
 	clock-frequency = <AL_I2C1PS_RATE>;
 	i2c-sda-hold-time-ns = <300>;
 	i2c-sda-falling-time-ns = <300>;
 	i2c-scl-falling-time-ns = <300>;
 };
 
-&gpio0 {
-	clocks = <&crp CLK_GPIO>, <&crp CLK_GPIO_DB>;
-	clock-names = "bus", "db";
-};
-
-&gpio1 {
-	clocks = <&crp CLK_GPIO>, <&crp CLK_GPIO_DB>;
-	clock-names = "bus", "db";
-};
-
-&gpio2 {
-	clocks = <&crp CLK_GPIO>, <&crp CLK_GPIO_DB>;
-	clock-names = "bus", "db";
-};
-
-&gpio3 {
-	clocks = <&crp CLK_GPIO>, <&crp CLK_GPIO_DB>;
-	clock-names = "bus", "db";
-};
-
-&watchdog0 {
-	clocks = <&crp CLK_WDT>;
-};
-
-&qspi0 {
-	clocks = <&crp CLK_QSPI>;
-};
-
-&spi0 {
-	clocks = <&crp CLK_SPI>;
-};
-
-&spi1 {
-	clocks = <&crp CLK_SPI>;
-};
-
-&ttc0 {
-	clocks = <&crp CLK_APB>, <&ttc_ext_clk>;
-};
-
-&ttc1 {
-	clocks = <&crp CLK_APB>, <&ttc_ext_clk>;
-};
-
 &sdhci0 {
-	dma-noncoherent;
-	clocks = <&crp CLK_MMC_CORE>, <&crp CLK_MMC_BUS>;
-	clock-names = "core", "bus";
-	sdhci-caps-mask = <0x00FF0000 0x0600FF00>;
-	sdhci-caps = <0x10000 0x3200>;
 	max-frequency = <AL_MMC0_PS_MAX_FREQ>;
 	bus-width = <AL_MMC0_PS_BUS_WIDTH>;
 	#if AL_MMC0_PS_CD_ENABLE
@@ -178,11 +105,6 @@
 };
 
 &sdhci1 {
-	dma-noncoherent;
-	clocks = <&crp CLK_MMC_CORE>, <&crp CLK_MMC_BUS>;
-	clock-names = "core", "bus";
-	sdhci-caps-mask = <0x00FF0000 0x0600FF00>;
-	sdhci-caps = <0x10000 0x3200>;
 	max-frequency = <AL_MMC1_PS_MAX_FREQ>;
 	bus-width = <AL_MMC1_PS_BUS_WIDTH>;
 	#if AL_MMC1_PS_CD_ENABLE
@@ -197,34 +119,10 @@
 	sdhci,auto-cmd12;
 };
 
-&eqos0 {
-	clocks = <&crp CLK_GBE>,<&PHY_CLK>,<&crp CLK_PTP>;
-	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
-};
-
-&eqos1 {
-	clocks = <&crp CLK_GBE>,<&PHY_CLK>,<&crp CLK_PTP>;
-	clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
-};
-
 &usb_otg0 {
 	dr_mode = "host";
 	g-np-tx-fifo-size = <32>;
 	g-rx-fifo-size = <768>;
 	g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
 	g-use-dma;
-};
-
-&dmac {
-	clock-names = "apb_pclk";
-	clocks = <&crp CLK_APB>;
-};
-
-&adc {
-	clocks = <&crp CLK_APB>, <&crp CLK_ADCPL>;
-};
-
-&smcc {
-	clock-names = "memclk", "apb_pclk";
-	clocks = <&crp CLK_SMC>, <&crp CLK_APB>;
 };
