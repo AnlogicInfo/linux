@@ -20,6 +20,13 @@ config USB_DWC2
 
 if USB_DWC2
 
+config ANLOGIC_USB_DEVICE_DISABLE_SGDMA
+	bool "Disable DesignWare USB2 Dievice SG DMA"
+	depends on ANLOGIC_SOC
+	default n
+	help
+	  Disable usb device sgdma. usb device sgdma is enabled by default.
+
 choice
 	bool "DWC2 Mode Selection"
 	default USB_DWC2_DUAL_ROLE if (USB && USB_GADGET)
