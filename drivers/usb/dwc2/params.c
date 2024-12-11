@@ -401,7 +401,16 @@ static void dwc2_set_default_params(struct dwc2_hsotg *hsotg)
 	if ((hsotg->dr_mode == USB_DR_MODE_PERIPHERAL) ||
 	    (hsotg->dr_mode == USB_DR_MODE_OTG)) {
 		p->g_dma = dma_capable;
+
+#ifdef CONFIG_ANLOGIC_SOC
+#ifndef CONFIG_ANLOGIC_USB_DEVICE_DISABLE_SGDMA
 		p->g_dma_desc = hw->dma_desc_enable;
+#else
+		p->g_dma_desc = false;
+#endif
+#else
+		p->g_dma_desc = hw->dma_desc_enable;
+#endif
 
 		/*
 		 * The values for g_rx_fifo_size (2048) and
