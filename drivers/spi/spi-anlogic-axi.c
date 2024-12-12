@@ -494,7 +494,7 @@ static int al_axi_qspi_transfer_intr(struct al_axi_qspi *axi_qspi, struct spi_de
 	if (axi_qspi->hw_config.fifo_depth == 0)
 		fill_cnt = 1;
 	else
-		fill_cnt = axi_qspi->hw_config.fifo_depth;
+		fill_cnt = axi_qspi->hw_config.fifo_depth - 4;
 
 	while (fill_cnt--) {
 		if (axi_qspi->trans_info.phase1_cnt == axi_qspi->trans_info.phase1_size &&
