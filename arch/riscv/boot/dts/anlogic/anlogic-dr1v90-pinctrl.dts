@@ -1,0 +1,411 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+#include <dt-bindings/pinctrl/pinctrl-anlogic-dr1x.h>
+
+&soc {
+	pinctrl0: pinctrl@f8803000 {
+		compatible = "anlogic,pinctrl-dr1x";
+		reg = <0x0 0xf8803000 0 0x1000>;
+	};
+};
+
+&pinctrl0 {
+	pinctrl_qspi0_default: qspi0-default {
+		mux {
+			function = "qspi0";
+			groups = "qspi0_0_grp";
+		};
+
+		conf {
+			groups = "qspi0_0_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_10K>;
+			slew-rate = <FAST>;
+		};
+	};
+
+	pinctrl_i2c0_default: i2c0-default {
+		mux {
+			function = "i2c0";
+			groups = "i2c0_10_grp";
+		};
+
+		conf {
+			groups = "i2c0_10_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+			slew-rate = <SLOW>;
+		};
+	};
+
+	pinctrl_i2c1_default: i2c1-default {
+		mux {
+			function = "i2c1";
+			groups = "i2c1_emio_grp";
+		};
+	};
+
+	pinctrl_ipmscan0_default: can0-default {
+		mux {
+			function = "can0";
+			groups = "can0_9_grp";
+		};
+
+		conf {
+			groups = "can0_9_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+			slew-rate = <SLOW>;
+		};
+	};
+
+	pinctrl_ipmscan1_default: can1-default {
+		mux {
+			function = "can1";
+			groups = "can1_emio_grp";
+		};
+	};
+
+	pinctrl_smcc_default: smcc-default {
+		mux {
+			function = "smc0";
+			groups = "smc0_nand8_grp";
+		};
+
+		conf {
+			groups = "smc0_nand8_grp";
+			slew-rate = <FAST>;
+		};
+	};
+
+	pinctrl_uart0_default: uart0-default {
+		mux {
+			function = "uart0";
+			groups = "uart0_emio_grp";
+		};
+	};
+
+	pinctrl_uart1_default: uart1-default {
+		mux {
+			function = "uart1";
+			groups = "uart1_10_grp";
+		};
+
+		conf {
+			groups = "uart1_10_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+			slew-rate = <SLOW>;
+		};
+	};
+
+	pinctrl_gpio_default: gpio0-default {
+		mux {
+			function = "gpio";
+			groups = "gpio_7_grp", "gpio_8_grp", "gpio_9_grp";
+		};
+
+		conf {
+			groups = "gpio_7_grp", "gpio_8_grp", "gpio_9_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+			slew-rate = <SLOW>;
+		};
+	};
+
+	pinctrl_watchdog0_default: swdt0-default {
+		mux {
+			function = "swdt0";
+			groups = "swdt0_emio_grp";
+		};
+	};
+
+	pinctrl_ttc0_default: ttc0-default {
+		mux {
+			function = "ttc0";
+			groups = "ttc0_emio_grp";
+		};
+	};
+
+	pinctrl_ttc1_default: ttc1-default {
+		mux {
+			function = "ttc1";
+			groups = "ttc1_emio_grp";
+		};
+	};
+
+	pinctrl_spi0_default: spi0-default {
+		mux {
+			function = "spi0";
+			groups = "spi0_emio_grp";
+		};
+	};
+
+	pinctrl_spi1_default: spi1-default {
+		mux {
+			function = "spi1";
+			groups = "spi1_emio_grp";
+		};
+	};
+
+	pinctrl_sdhci0_default: sdio0-default {
+		mux {
+			function = "sdio0";
+			groups = "sdio0_2_grp";
+		};
+
+		conf {
+			groups = "sdio0_2_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+			slew-rate = <FAST>;
+		};
+
+		mux-cd {
+			function = "sdio0_cd";
+			groups = "gpio_0_grp";
+		};
+
+		conf-cd {
+			groups = "gpio_0_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+			slew-rate = <FAST>;
+		};
+	};
+
+	pinctrl_sdhci1_default: sdio1-default {
+		mux {
+			function = "sdio1";
+			groups = "sdio1_0_grp";
+		};
+
+		conf {
+			groups = "sdio1_0_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+			slew-rate = <FAST>;
+		};
+	};
+
+	pinctrl_eqos0_default: eth0-default {
+		mux {
+			function = "ethernet0";
+			groups = "ethernet0_0_grp";
+		};
+
+		conf {
+			groups = "ethernet0_0_grp";
+			slew-rate = <FAST>;
+		};
+
+		conf-tx {
+			pins = "MIO16", "MIO17", "MIO18", "MIO19", "MIO20", "MIO21";
+			bias-high-impedance;
+		};
+
+		conf-rx {
+			pins = "MIO22", "MIO23", "MIO24", "MIO25", "MIO26", "MIO27";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+		};
+
+		mux-mdio {
+			function = "mdio0";
+			groups = "mdio0_0_grp";
+		};
+
+		conf-mdio {
+			groups = "mdio0_0_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+			slew-rate = <MEDIUM>;
+		};
+	};
+
+	pinctrl_eqos1_default: eth1-default {
+		mux {
+			function = "ethernet1";
+			groups = "ethernet1_0_grp";
+		};
+
+		conf {
+			groups = "ethernet1_0_grp";
+			slew-rate = <FAST>;
+		};
+
+		conf-tx {
+			pins = "MIO28", "MIO29", "MIO30", "MIO31", "MIO32", "MIO33";
+			bias-high-impedance;
+		};
+
+		conf-rx {
+			pins = "MIO34", "MIO35", "MIO36", "MIO37", "MIO38", "MIO39";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+		};
+
+		mux-mdio {
+			function = "mdio1";
+			groups = "mdio1_0_grp";
+		};
+
+		conf-mdio {
+			groups = "mdio1_0_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+			slew-rate = <MEDIUM>;
+		};
+	};
+
+	pinctrl_usb_otg0_default: usb0-default {
+		mux {
+			function = "usb0";
+			groups = "usb0_0_grp";
+		};
+
+		conf {
+			groups = "usb0_0_grp";
+			pull-ohm = <OHM_10K>;
+			slew-rate = <FAST>;
+		};
+
+		conf-ctrl {
+			pins = "MIO29", "MIO30", "MIO31", "MIO36";
+			bias-pull-up;
+		};
+
+		conf-data {
+			pins = "MIO28", "MIO32", "MIO33", "MIO34",
+			       "MIO35", "MIO37", "MIO38", "MIO39";
+			bias-pull-down;
+		};
+	};
+
+	pinctrl_usb_otg1_default: usb1-default {
+		mux {
+			function = "usb1";
+			groups = "usb1_0_grp";
+		};
+
+		conf {
+			groups = "usb1_0_grp";
+			pull-ohm = <OHM_10K>;
+			slew-rate = <FAST>;
+		};
+
+		conf-ctrl {
+			pins = "MIO41", "MIO42", "MIO43", "MIO48";
+			bias-pull-up;
+		};
+
+		conf-data {
+			pins = "MIO40", "MIO44", "MIO45", "MIO46",
+			       "MIO47", "MIO49", "MIO50", "MIO51";
+			bias-pull-down;
+		};
+	};
+};
+
+&qspi0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_qspi0_default>;
+};
+
+&i2c0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c0_default>;
+};
+
+&i2c1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c1_default>;
+};
+
+&ipmscan0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ipmscan0_default>;
+};
+
+&ipmscan1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ipmscan1_default>;
+};
+
+&smcc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_smcc_default>;
+};
+
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart0_default>;
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart1_default>;
+};
+
+/* gpio0 ~ gpio3 share the same pinctrl, initialization is only required once for gpio0 */
+&gpio0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_gpio_default>;
+};
+
+&watchdog0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_watchdog0_default>;
+};
+
+&ttc0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ttc0_default>;
+};
+
+&ttc1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ttc1_default>;
+};
+
+&spi0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_spi0_default>;
+};
+
+&spi1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_spi1_default>;
+};
+
+&sdhci0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_sdhci0_default>;
+};
+
+&sdhci1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_sdhci1_default>;
+};
+
+&eqos0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_eqos0_default>;
+};
+
+&eqos1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_eqos1_default>;
+};
+
+&usb_otg0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usb_otg0_default>;
+};
+
+/*
+ * &usb_otg1 {
+ *     pinctrl-names = "default";
+ *     pinctrl-0 = <&pinctrl_usb_otg1_default>;
+ * };
+ */
