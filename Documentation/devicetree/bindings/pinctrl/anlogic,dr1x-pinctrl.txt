@@ -1,0 +1,65 @@
+* Anlogic DR1X Pin Controller
+
+Please refer to pinctrl-bindings.txt in this directory for the common binding part and usage.
+
+Required properties:
+- compatible: Must be "anlogic,pinctrl-dr1x".
+- reg: The register address of pin controller device.
+- mux: Defines the multiplexing configuration of each pin or group of pins.
+- conf: Specifies the configuration settings for the pins.
+
+Optional properties:
+- function: A string containing the name of the function. Possible values are:
+  "qspi0", "i2c0", "i2c1", "can0", "can1", "smc0", "uart0", "uart1", "gpio", "swdt0", "ttc0","ttc1",
+  "spi0", "spi1", "sdio0", "sdio1", "ethernet0", "ethernet1", "mdio0", "mdio1", "usb0", "usb1".
+- bias-pull-down: Pull down on pin.
+- bias-pull-up: Pull up on pin.
+- bias-high-impedance: Pull down and Pull up all enabled.
+- pull-ohm: Supported values: 25000 (25KΩ) and 10000 (10KΩ).
+- slew-rate: Slew rate of the pin. Possible values: <FAST>, <MEDIUM>, <SLOW>.
+
+Example:
+pin_controller: pinctrl@f8803000 {
+	compatible = "anlogic,pinctrl-dr1x";
+	reg = <0x0 0xf8803000 0 0x1000>;
+
+	/* QSPI0 Configuration */
+	pinctrl_qspi0_default: qspi0-default {
+		mux {
+			function = "qspi0";
+			groups = "qspi0_0_grp";
+		};
+
+		conf {
+			groups = "qspi0_0_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_10K>;
+			slew-rate = <FAST>;
+		};
+	};
+
+	/* I2C0 Configuration */
+	pinctrl_i2c0_default: i2c0-default {
+		mux {
+			function = "i2c0";
+			groups = "i2c0_10_grp";
+		};
+
+		conf {
+			groups = "i2c0_10_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+			slew-rate = <SLOW>;
+		};
+	};
+};
+
+&qspi0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_qspi0_default>;
+};
+
+&i2c0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c0_default>;
+};
