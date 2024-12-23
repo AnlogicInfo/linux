@@ -324,7 +324,11 @@ static int dw_wdt_restart(struct watchdog_device *wdd,
 	struct dw_wdt *dw_wdt = to_dw_wdt(wdd);
 
 	writel(0, dw_wdt->regs + WDOG_TIMEOUT_RANGE_REG_OFFSET);
+#ifdef CONFIG_ANLOGIC_SOC
+	dw_wdt_update_mode(dw_wdt, dw_wdt->rmod);
+#else
 	dw_wdt_update_mode(dw_wdt, DW_WDT_RMOD_RESET);
+#endif
 	if (dw_wdt_is_enabled(dw_wdt))
 		writel(WDOG_COUNTER_RESTART_KICK_VALUE,
 		       dw_wdt->regs + WDOG_COUNTER_RESTART_REG_OFFSET);
@@ -392,6 +396,10 @@ static irqreturn_t dw_wdt_irq(int irq, void *devid)
 		return IRQ_NONE;
 
 	watchdog_notify_pretimeout(&dw_wdt->wdd);
+
+#ifdef CONFIG_ANLOGIC_SOC
+	dw_wdt_pause(dw_wdt, 1);
+#endif
 
 	return IRQ_HANDLED;
 }
@@ -589,8 +597,21 @@ static int dw_wdt_drv_probe(struct platform_device *pdev)
 		return PTR_ERR(dw_wdt->wdt_ctrl);
 
 	ret = of_property_read_u32(dev->of_node, "index", &dw_wdt->idx);
-	if (ret)
+	if (ret) {
+		dev_err(dev, "Failed to read 'index' property\n");
 		return ret;
+	}
+
+	ret = of_property_read_u32(dev->of_node, "rmod", &dw_wdt->rmod);
+	if (ret) {
+		dw_wdt->rmod = DW_WDT_RMOD_RESET;
+		dev_info(dev, "Use default reset mode\n");
+	}
+
+	if (dw_wdt->rmod != DW_WDT_RMOD_RESET && dw_wdt->rmod != DW_WDT_RMOD_IRQ) {
+		dev_err(dev, "Invalid 'rmod' value: %u\n", dw_wdt->rmod);
+		return -EINVAL;
+	}
 #endif
 
 	/*
@@ -640,7 +661,11 @@ static int dw_wdt_drv_probe(struct platform_device *pdev)
 	}
 
 	/* Enable normal reset without pre-timeout by default. */
+#ifdef CONFIG_ANLOGIC_SOC
+	dw_wdt_update_mode(dw_wdt, dw_wdt->rmod);
+#else
 	dw_wdt_update_mode(dw_wdt, DW_WDT_RMOD_RESET);
+#endif
 
 	/*
 	 * Pre-timeout IRQ is optional, since some hardware may lack support
