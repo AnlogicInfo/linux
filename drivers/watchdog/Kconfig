@@ -530,6 +530,14 @@ config DW_WATCHDOG
 	  To compile this driver as a module, choose M here: the
 	  module will be called dw_wdt.
 
+config ANLOGIC_SOFT_REBOOT
+	bool "Anlogic software mode reboot"
+	default n
+	depends on DW_WATCHDOG &&  ANLOGIC_SOC
+	help
+	  Say Y here if to support software mode reboot, and do not reset
+	  whole chip.
+
 config ANLOGIC_WATCHDOG
 	tristate "Anlogic watchdog"
 	depends on HAS_IOMEM
