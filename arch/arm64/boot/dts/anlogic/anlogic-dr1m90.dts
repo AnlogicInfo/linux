@@ -159,3 +159,11 @@
 	g-tx-fifo-size = <768 512 512 32 16 16 16 16 16 16>;
 	g-use-dma;
 };
+
+&serial0 {
+	clock-frequency = <AL_UART_CLOCK>;
+};
+
+&serial1 {
+	clock-frequency = <AL_UART_CLOCK>;
+};

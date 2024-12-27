@@ -105,8 +105,8 @@
 			interrupts = <GIC_SPI 70 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
-			clocks = <&crp CLK_UART>, <&crp CLK_APB>;
-			clock-names = "baudclk", "apb_pclk";
+			//clocks = <&crp CLK_UART>, <&crp CLK_APB>;
+			//clock-names = "baudclk", "apb_pclk";
 			resets = <&crp RST_UART0>;
 		};
 
@@ -116,8 +116,8 @@
 			interrupts = <GIC_SPI 71 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
-			clocks = <&crp CLK_UART>, <&crp CLK_APB>;
-			clock-names = "baudclk", "apb_pclk";
+			//clocks = <&crp CLK_UART>, <&crp CLK_APB>;
+			//clock-names = "baudclk", "apb_pclk";
 			resets = <&crp RST_UART1>;
 		};
 
