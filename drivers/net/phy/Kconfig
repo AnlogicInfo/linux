@@ -266,6 +266,11 @@ config ROCKCHIP_PHY
 	help
 	  Currently supports the integrated Ethernet PHY.
 
+config SCCK9007_PHY
+	tristate "SCCK9007 PHYs"
+	help
+	  Supports the SCCK9007 PHYs.
+
 config SMSC_PHY
 	tristate "SMSC PHYs"
 	help
