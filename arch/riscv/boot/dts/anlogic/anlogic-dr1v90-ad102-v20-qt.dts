@@ -18,9 +18,9 @@
 		clock-output-names = "axi_hdmi_clk";
 	};
 
-	soft_adi_dma: dma@80400000 {
+	soft_adi_dma: dma@80220000 {
 		compatible = "adi,axi-dmac-1.00.a";
-		reg = <0x0 0x80400000 0x0 0x10000>;
+		reg = <0x0 0x80220000 0x0 0x10000>;
 		interrupt-parent = <&plic0>;
 		interrupts = <84>;
 		clocks = <&axi_dma_clk>;
@@ -41,10 +41,10 @@
 		};
 	};
 
-	soft_adi_hdmi: axi_hdmi@80500000 {
+	soft_adi_hdmi: axi_hdmi@80230000 {
 		dma-noncoherent;
 		compatible = "adi,axi-hdmi-tx-1.00.a";
-		reg = <0x0 0x80500000 0x0 0x10000>;
+		reg = <0x0 0x80230000 0x0 0x10000>;
 		dmas = <&soft_adi_dma 0>;
 		dma-names = "video";
 		clocks = <&axi_hdmi_clk>, <&axi_hdmi_clk>;
