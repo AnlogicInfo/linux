@@ -3,7 +3,7 @@
 /dts-v1/;
 #include "anlogic-dr1m90.dts"
 #include "anlogic-dr1m90-softip.dts"
-#include "anlogic-dr1m90-pinctrl.dts"
+// #include "anlogic-dr1m90-pinctrl.dts"
 
 &cma {
 	alloc-ranges = <0x0 0x00000000 0x0 0xffffffff>;
