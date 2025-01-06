@@ -668,7 +668,7 @@ static int anlogic_dma_probe(struct platform_device *pdev)
 		}
 	}
 
-	if (al_dev->dma_config->dmatype == AL_DMA_TYPE_AXIDMA) {
+	if (al_dev->dma_config->dmatype == AL_DMA_TYPE_VDMA) {
 		for (i = 0; i < al_dev->dma_config->max_channels; i++)
 			if (al_dev->chan[i])
 				al_dev->chan[i]->num_frms = num_frames;
