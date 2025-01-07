@@ -81,12 +81,7 @@ int can_calc_bittiming(const struct net_device *dev, struct can_bittiming *bt,
 	if (bt->sample_point) {
 		sample_point_nominal = bt->sample_point;
 	} else {
-		if (bt->bitrate > 800 * KILO /* BPS */)
-			sample_point_nominal = 750;
-		else if (bt->bitrate > 500 * KILO /* BPS */)
 			sample_point_nominal = 800;
-		else
-			sample_point_nominal = 875;
 	}
 
 	/* tseg even = round down, odd = round up */
