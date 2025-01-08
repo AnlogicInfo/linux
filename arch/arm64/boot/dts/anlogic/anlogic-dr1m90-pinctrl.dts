@@ -38,6 +38,21 @@
 		};
 	};
 
+	pinctrl_i2c0_gpio: i2c0-gpio {
+		mux {
+			groups = "gpio_50_grp", "gpio_51_grp";
+			function = "gpio";
+		};
+
+		conf {
+			groups = "gpio_50_grp", "gpio_51_grp";
+			bias-pull-up;
+			pull-ohm = <OHM_25K>;
+			slew-rate = <SLOW>;
+		};
+
+	};
+
 	pinctrl_i2c1_default: i2c1-default {
 		mux {
 			function = "i2c1";
@@ -313,8 +328,11 @@
 };
 
 &i2c0 {
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c0_default>;
+	pinctrl-1 = <&pinctrl_i2c0_gpio>;
+	scl-gpios = <&portb 18 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&portb 19 GPIO_ACTIVE_HIGH>;
 };
 
 &i2c1 {
