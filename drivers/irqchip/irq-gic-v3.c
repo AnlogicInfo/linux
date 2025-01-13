@@ -53,6 +53,9 @@ struct gic_chip_data {
 	struct irq_domain	*domain;
 	u64			redist_stride;
 	u32			nr_redist_regions;
+#ifdef CONFIG_ANLOGIC_SOC
+	u32			igrpr;
+#endif
 	u64			flags;
 	bool			has_rss;
 	unsigned int		ppi_nr;
@@ -775,6 +778,13 @@ static void __init gic_dist_init(void)
 	void __iomem *base = gic_data.dist_base;
 	u32 val;
 
+#ifdef CONFIG_ANLOGIC_SOC
+	if (readl(base + GICD_CTLR) & GICD_CTLR_ENABLE_GRP1S)
+		gic_data.igrpr = 0;
+	else
+		gic_data.igrpr = ~0;
+#endif
+
 	/* Disable the distributor */
 	writel_relaxed(0, base + GICD_CTLR);
 	gic_dist_wait_for_rwp();
@@ -785,8 +795,14 @@ static void __init gic_dist_init(void)
 	 * do the right thing if the kernel is running in secure mode,
 	 * but that's not the intended use case anyway.
 	 */
-	for (i = 32; i < GIC_LINE_NR; i += 32)
+	for (i = 32; i < GIC_LINE_NR; i += 32) {
+#ifdef CONFIG_ANLOGIC_SOC
+		writel_relaxed(gic_data.igrpr, base + GICD_IGROUPR + i / 8);
+		writel_relaxed(~0, base + GICD_IGRPMODR + i / 8);
+#else
 		writel_relaxed(~0, base + GICD_IGROUPR + i / 8);
+#endif
+	}
 
 	/* Extended SPI range, not handled by the GICv2/GICv3 common code */
 	for (i = 0; i < GIC_ESPI_NR; i += 32) {
@@ -794,8 +810,14 @@ static void __init gic_dist_init(void)
 		writel_relaxed(~0U, base + GICD_ICACTIVERnE + i / 8);
 	}
 
-	for (i = 0; i < GIC_ESPI_NR; i += 32)
+	for (i = 0; i < GIC_ESPI_NR; i += 32) {
+#ifdef CONFIG_ANLOGIC_SOC
+		writel_relaxed(gic_data.igrpr, base + GICD_IGROUPRnE + i / 8);
+		writel_relaxed(~0, base + GICD_IGRPMODRnE + i / 8);
+#else
 		writel_relaxed(~0U, base + GICD_IGROUPRnE + i / 8);
+#endif
+	}
 
 	for (i = 0; i < GIC_ESPI_NR; i += 16)
 		writel_relaxed(0, base + GICD_ICFGRnE + i / 4);
@@ -807,6 +829,9 @@ static void __init gic_dist_init(void)
 	gic_dist_config(base, GIC_LINE_NR, gic_dist_wait_for_rwp);
 
 	val = GICD_CTLR_ARE_NS | GICD_CTLR_ENABLE_G1A | GICD_CTLR_ENABLE_G1;
+#ifdef CONFIG_ANLOGIC_SOC
+	val |= GICD_CTLR_ENABLE_GRP1S;
+#endif
 	if (gic_data.rdists.gicd_typer2 & GICD_TYPER2_nASSGIcap) {
 		pr_info("Enabling SGIs without active state\n");
 		val |= GICD_CTLR_nASSGIreq;
@@ -1126,8 +1151,14 @@ static void gic_cpu_init(void)
 	rbase = gic_data_rdist_sgi_base();
 
 	/* Configure SGIs/PPIs as non-secure Group-1 */
-	for (i = 0; i < gic_data.ppi_nr + 16; i += 32)
+	for (i = 0; i < gic_data.ppi_nr + 16; i += 32) {
+#ifdef CONFIG_ANLOGIC_SOC
+		writel_relaxed(gic_data.igrpr, rbase + GICR_IGROUPR0 + i / 8);
+		writel_relaxed(~0, rbase + GICR_IGRPMODR0 + i / 8);
+#else
 		writel_relaxed(~0, rbase + GICR_IGROUPR0 + i / 8);
+#endif
+	}
 
 	gic_cpu_config(rbase, gic_data.ppi_nr + 16, gic_redist_wait_for_rwp);
 
