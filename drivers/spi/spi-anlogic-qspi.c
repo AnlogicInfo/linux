@@ -743,13 +743,25 @@ static void al_qspi_handle_err(struct spi_master *master,
 
 static void al_qspi_hardware_init(struct al_qspi *qspi, struct device *dev)
 {
+	u32 rx_sample_dly_ns;
+
 	qspi_reset_chip(qspi);
 	qspi_enable_chip(qspi, 0);
-	/* Get default rx sample delay */
-	device_property_read_u32(dev, "rx-sample-delay-ns", &qspi->def_rx_sample_dly_ns);
+
+	/* Get specific / default rx-sample-delay */
+	if (device_property_read_u32(dev,
+				     "rx-sample-delay-ns",
+				     &rx_sample_dly_ns) != 0)
+		/* Use default controller value */
+		rx_sample_dly_ns = qspi->def_rx_sample_dly_ns;
+
+	qspi->cur_rx_sample_dly = DIV_ROUND_CLOSEST(rx_sample_dly_ns,
+						    NSEC_PER_SEC /
+						    qspi->max_freq);
+
 	al_reg32_set_bits(qspi, AL_QSPI_RX_SAMPLE_DELAY_OFFSET,
 			 QSPI_RX_SAMPLE_DELAY_RSD_SHIFT,
-			 QSPI_RX_SAMPLE_DELAY_RSD_SIZE, qspi->def_rx_sample_dly_ns);
+			 QSPI_RX_SAMPLE_DELAY_RSD_SIZE, qspi->cur_rx_sample_dly);
 	al_reg32_set_bit(qspi, AL_QSPI_SPI_CTRLR0_OFFSET,
 			 QSPI_SPI_CTRLR0_CLK_STRETCH_EN_SHIFT, 1);
 	al_reg32_set_bit(qspi, AL_QSPI_CTRLR0_OFFSET,
@@ -831,6 +843,7 @@ static int al_qspi_probe(struct platform_device *pdev)
 	if (err)
 		goto out;
 
+	qspi->def_rx_sample_dly_ns = 5;
 	qspi->max_freq = clk_get_rate(qspi->clk);
 	qspi->fifo_len = 128;
 	al_qspi_init_mem_ops(qspi);
