@@ -2,5 +2,6 @@
 obj-$(CONFIG_ANLOGIC_DMA) += anlogic_dma.o
 obj-$(CONFIG_AXI_DMA) += axi-dma.o
 obj-$(CONFIG_AXI_DMA_TEST) += axi-dma-test.o
+obj-$(CONFIG_AXI_DMA_LOOPBACK_TEST) += axi-dma-loopback-test.o
 obj-$(CONFIG_AXI_VDMA) += axi-vdma.o
 obj-$(CONFIG_AXI_VDMA_TEST) += axi-vdma-test.o
