@@ -773,6 +773,12 @@ config AXI_DMA_TEST
 	help
 	  Enable support for the AXI DMA test driver.
 
+config AXI_DMA_LOOPBACK_TEST
+	tristate "AXI DMA LoopBack Test Driver"
+	depends on ANLOGIC_DMA
+	help
+	  Enable support for the AXI DMA LoopBack test driver.
+
 config AXI_VDMA
 	tristate "AXI VDMA support"
 	depends on ANLOGIC_DMA
