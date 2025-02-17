@@ -170,6 +170,9 @@ struct net_local {
 	struct mii_bus *mii_bus;
 
 	int last_link;
+
+	u32 axi_clk;               /* axi4 clock frequency */
+	u32 mdio_clk;              /* mdio clock frequency */
 };
 
 /*************************/
@@ -1039,6 +1042,7 @@ static int anlogic_axi_ethlite_of_probe(struct platform_device *ofdev)
 	struct net_local *lp = NULL;
 	struct device *dev = &ofdev->dev;
 	u32 temp_reg;
+	u32 mdio_div;
 	int rc = 0;
 
 	/* Create an ethernet device instance */
@@ -1091,6 +1095,26 @@ static int anlogic_axi_ethlite_of_probe(struct platform_device *ofdev)
 		   (CONFIG_100MB_SPEED << ESET0_SPEEDCFG_SHIFT);
 
 	anlogic_axi_ethlite_writel(temp_reg, lp->base_addr + ELITE_ESET0_OFFSET);
+
+	/* Read required properties */
+	if (of_property_read_u32(ofdev->dev.of_node, "input-frequency", &lp->axi_clk) ||
+	    of_property_read_u32(ofdev->dev.of_node, "clock-frequency", &lp->mdio_clk)) {
+		dev_err(dev, "Failed to read required properties\n");
+		goto error;
+	}
+	if (!lp->axi_clk || !lp->mdio_clk) {
+		dev_err(dev, "Invalid clock frequencies: axi_clk=%u, mdio_clk=%u\n",
+			lp->axi_clk, lp->mdio_clk);
+		goto error;
+	}
+	mdio_div = (lp->axi_clk / lp->mdio_clk / 2) - 1;
+	if (mdio_div < 0 || mdio_div > 0x3f) {
+		dev_err(dev, "Invalid MDIO divisor value: %d\n", mdio_div);
+		goto error;
+	}
+	temp_reg = anlogic_axi_ethlite_readl(lp->base_addr + ELITE_MDIOCCF_OFFSET) & ~0x3f;
+	anlogic_axi_ethlite_writel((mdio_div & 0x3f) | temp_reg,
+				   lp->base_addr + ELITE_MDIOCCF_OFFSET);
 
 	lp->phy_node = of_parse_phandle(ofdev->dev.of_node, "phy-handle", 0);
 	anlogic_axi_ethlite_mdio_setup(lp, &ofdev->dev);
