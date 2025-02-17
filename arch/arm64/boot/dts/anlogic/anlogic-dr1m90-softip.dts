@@ -186,6 +186,8 @@
 		local-mac-address = [E0 78 A3 01 02 05];
 		phy-handle = <&pl_eth_phy0>;
 		reg = <0x1 0xC0000000 0x0 0x10000>;
+		input-frequency = <100000000>;
+		clock-frequency = <2500000>;
 		status = "disabled";
 
 		mdio {
