@@ -917,6 +917,76 @@ err_free_master:
 }
 EXPORT_SYMBOL_GPL(dw_spi_add_host);
 
+#ifdef CONFIG_ANLOGIC_SOC
+int dw_spi_add_slave(struct device *dev, struct dw_spi *dws)
+{
+	struct spi_controller *master;
+	int ret;
+
+	if (!dws)
+		return -EINVAL;
+
+	master = spi_alloc_slave(dev, 0);
+	if (!master)
+		return -ENOMEM;
+
+	master->slave = 1;
+
+	device_set_node(&master->dev, dev_fwnode(dev));
+
+	dws->master = master;
+	dws->dma_addr = (dma_addr_t)(dws->paddr + DW_SPI_DR);
+
+	spi_controller_set_devdata(master, dws);
+
+	/* Basic HW init */
+	spi_hw_init(dev, dws);
+
+	ret = request_irq(dws->irq, dw_spi_irq, IRQF_SHARED, dev_name(dev),
+			  master);
+	if (ret < 0 && ret != -ENOTCONN) {
+		dev_err(dev, "can not get IRQ\n");
+		goto err_free_master;
+	}
+
+	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_LOOP | SPI_NO_CS;
+	master->bits_per_word_mask = SPI_BPW_RANGE_MASK(4, 16);
+	master->bus_num = dws->bus_num;
+	master->setup = dw_spi_setup;
+	master->cleanup = dw_spi_cleanup;
+	if (dws->set_cs)
+		master->set_cs = dws->set_cs;
+	else
+		master->set_cs = dw_spi_set_cs;
+	master->transfer_one = dw_spi_transfer_one;
+	master->handle_err = dw_spi_handle_err;
+	master->max_speed_hz = dws->max_freq;
+	master->auto_runtime_pm = true;
+
+	/* Get default rx sample delay */
+	device_property_read_u32(dev, "rx-sample-delay-ns",
+				 &dws->def_rx_sample_dly_ns);
+
+	ret = spi_register_controller(master);
+	if (ret) {
+		dev_err_probe(dev, ret, "problem registering spi master\n");
+		goto err_dma_exit;
+	}
+
+	dw_spi_debugfs_init(dws);
+	return 0;
+
+err_dma_exit:
+	if (dws->dma_ops && dws->dma_ops->dma_exit)
+		dws->dma_ops->dma_exit(dws);
+	spi_enable_chip(dws, 0);
+err_free_master:
+	spi_controller_put(master);
+	return ret;
+}
+EXPORT_SYMBOL_NS_GPL(dw_spi_add_slave, SPI_DW_CORE);
+#endif
+
 void dw_spi_remove_host(struct dw_spi *dws)
 {
 	dw_spi_debugfs_remove(dws);
