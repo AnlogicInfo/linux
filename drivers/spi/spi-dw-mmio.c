@@ -268,6 +268,11 @@ static int dw_spi_mmio_probe(struct platform_device *pdev)
 	u32 qspi_ocm_buf;
 	struct device *dev = &pdev->dev;
 	struct device_node *np = dev->of_node;
+	bool slave_mode;
+	int spi_id;
+	u32 top_value;
+
+	slave_mode = of_property_read_bool(np, "spi-slave");
 #endif
 
 	dwsmmio = devm_kzalloc(&pdev->dev, sizeof(struct dw_spi_mmio),
@@ -283,12 +288,32 @@ static int dw_spi_mmio_probe(struct platform_device *pdev)
 		return PTR_ERR(dws->regs);
 
 #ifdef CONFIG_ANLOGIC_SOC
+	dws->top_regs = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(dws->top_regs))
+		return PTR_ERR(dws->top_regs);
+
+	if (of_property_read_u32(np, "spi-controller-id", &spi_id)) {
+		pr_err("Failed to read spi-controller-id property\n");
+		return -EINVAL;
+	}
+	if (slave_mode == 1) {
+		top_value = ioread32(dws->top_regs);
+		top_value |= (1 << spi_id * 8);
+		iowrite32(top_value, dws->top_regs);
+	} else {
+		top_value = ioread32(dws->top_regs);
+		top_value &= ~(1 << spi_id * 8);
+		iowrite32(top_value, dws->top_regs);
+	}
+#endif
+
+#ifdef CONFIG_ANLOGIC_SOC
 	dws->use_ocm = 0;
 	ret = of_property_read_u32(np, "#qspi-ocm-buf", &qspi_ocm_buf);
 	if (ret != -EINVAL)
 		dws->use_ocm = 1;
 
-	if(dws->use_ocm == 1) {
+	if (dws->use_ocm == 1) {
 		dws->spi_rx_buf = devm_platform_ioremap_resource(pdev, 1);
 		if (IS_ERR(dws->spi_rx_buf))
 			return PTR_ERR(dws->spi_rx_buf);
@@ -353,9 +378,21 @@ static int dw_spi_mmio_probe(struct platform_device *pdev)
 
 	pm_runtime_enable(&pdev->dev);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	if (slave_mode) {
+		ret = dw_spi_add_slave(&pdev->dev, dws);
+		if (ret)
+			goto out;
+	} else {
+		ret = dw_spi_add_host(&pdev->dev, dws);
+		if (ret)
+			goto out;
+	}
+#else
 	ret = dw_spi_add_host(&pdev->dev, dws);
 	if (ret)
 		goto out;
+#endif
 
 	platform_set_drvdata(pdev, dwsmmio);
 	return 0;

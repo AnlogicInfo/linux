@@ -184,8 +184,16 @@
 	status = "okay";
 };
 
+&spi0_slave {
+	status = "disabled";
+};
+
 &spi1 {
 	status = "okay";
+};
+
+&spi1_slave {
+	status = "disabled";
 };
 
 &ttc0 {

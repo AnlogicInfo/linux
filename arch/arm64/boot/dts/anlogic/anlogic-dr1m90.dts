@@ -133,11 +133,27 @@
 	};
 };
 
+&spi0_slave {
+	slave@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <AL_SPI0_MAX_FREQUENCY>;
+	};
+};
+
 &spi1 {
 	dmas = <&ahb_dma 6 0 0 (1 << 2)>,
 			<&ahb_dma 7 0 0 (1 << 3)>;
 	dma-names = "tx", "rx";
 	spidev@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <AL_SPI1_MAX_FREQUENCY>;
+	};
+};
+
+&spi1_slave {
+	slave@0 {
 		compatible = "rohm,dh2228fv";
 		reg = <0>;
 		spi-max-frequency = <AL_SPI1_MAX_FREQUENCY>;
