@@ -178,12 +178,30 @@
 	};
 };
 
+&spi0_slave {
+	status = "disabled";
+	slave@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <AL_SPI0_MAX_FREQUENCY>;
+	};
+};
+
 &spi1 {
 	status = "okay";
 	spidev@0 {
 		compatible = "rohm,dh2228fv";
 		reg = <0>;
 		spi-max-frequency = <8000000>;
+	};
+};
+
+&spi1_slave {
+	status = "disabled";
+	slave@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <AL_SPI1_MAX_FREQUENCY>;
 	};
 };
 

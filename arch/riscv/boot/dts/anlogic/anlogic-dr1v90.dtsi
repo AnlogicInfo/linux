@@ -254,26 +254,56 @@
 			compatible = "snps,dw-apb-ssi";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			reg = <0x0 0xf8404000 0x0 0x1000>;
+			reg = <0x0 0xf8404000 0x0 0x1000 0x0 0Xf8800160 0x0 0x20>;
 			interrupt-parent = <&plic0>;
 			interrupts = <67>;
 			num-cs = <1>;
+			spi-controller-id = <0>;
 			clocks = <&crp CLK_SPI>;
 			resets = <&crp RST_SPI0>;
 			reset-names = "spi";
+		};
+
+		spi0_slave: spi@f8404100 {
+			compatible = "snps,dw-apb-ssi";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			reg = <0x0 0xf8404100 0x0 0x1000 0x0 0Xf8800160 0x0 0x20>;
+			interrupt-parent = <&plic0>;
+			interrupts = <68>;
+			spi-controller-id = <0>;
+			clocks = <&crp CLK_SPI>;
+			resets = <&crp RST_SPI0>;
+			reset-names = "spi";
+			spi-slave;
 		};
 
 		spi1: spi@f8405000 {
 			compatible = "snps,dw-apb-ssi";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			reg = <0x0 0xf8405000 0x0 0x1000>;
+			reg = <0x0 0xf8405000 0x0 0x1000 0x0 0Xf8800160 0x0 0x20>;
 			interrupt-parent = <&plic0>;
 			interrupts = <69>;
 			num-cs = <1>;
+			spi-controller-id = <1>;
 			clocks = <&crp CLK_SPI>;
 			resets = <&crp RST_SPI1>;
 			reset-names = "spi";
+		};
+
+		spi1_slave: spi@f8405100 {
+			compatible = "snps,dw-apb-ssi";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			reg = <0x0 0xf8405100 0x0 0x1000 0x0 0Xf8800160 0x0 0x20>;
+			interrupt-parent = <&plic0>;
+			interrupts = <70>;
+			spi-controller-id = <1>;
+			clocks = <&crp CLK_SPI>;
+			resets = <&crp RST_SPI1>;
+			reset-names = "spi";
+			spi-slave;
 		};
 
 		ttc0: ttc0@f840c000 {

@@ -538,9 +538,8 @@ static void* dw_spi_memcpy(void* dest, const void* src, size_t len)
 	unsigned char* dst_ptr = (unsigned char*) dest;
 	const unsigned char* src_ptr = (const unsigned char*) src;
 
-	for (i = 0; i < len; i++) {
+	for (i = 0; i < len; i++)
 		dst_ptr[i] = src_ptr[i];
-	}
 	return dest;
 }
 #endif
@@ -558,7 +557,7 @@ static int dw_spi_init_mem_buf(struct dw_spi *dws, const struct spi_mem_op *op)
 	if (op->data.dir == SPI_MEM_DATA_OUT)
 		len += op->data.nbytes;
 #ifdef CONFIG_ANLOGIC_SOC
-	if(dws->use_ocm != 1) {
+	if (dws->use_ocm != 1) {
 #endif
 		if (len <= DW_SPI_BUF_SIZE) {
 			out = dws->buf;
@@ -598,7 +597,7 @@ static int dw_spi_init_mem_buf(struct dw_spi *dws, const struct spi_mem_op *op)
 	if (op->data.dir == SPI_MEM_DATA_OUT)
 #ifdef CONFIG_ANLOGIC_SOC
 	{
-		if(dws->use_ocm == 1)
+		if (dws->use_ocm == 1)
 			dw_spi_memcpy(&out[i], op->data.buf.out, op->data.nbytes);
 		else
 #endif
@@ -611,12 +610,11 @@ static int dw_spi_init_mem_buf(struct dw_spi *dws, const struct spi_mem_op *op)
 	dws->tx_len = len;
 	if (op->data.dir == SPI_MEM_DATA_IN) {
 #ifdef CONFIG_ANLOGIC_SOC
-		if(dws->use_ocm == 1) {
-			if (dws->master->can_dma && (op->data.nbytes > (dws->fifo_len - 10))) {
+		if (dws->use_ocm == 1) {
+			if (dws->master->can_dma && (op->data.nbytes > (dws->fifo_len - 10)))
 				dws->rx = dws->spi_rx_buf;
-			} else {
+			else
 				dws->rx = op->data.buf.in;
-			}
 		} else
 #endif
 			dws->rx = op->data.buf.in;
@@ -754,6 +752,7 @@ static int dw_spi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
 #ifdef CONFIG_ANLOGIC_SOC
 	struct spi_transfer transfer;
 	struct spi_message m;
+
 	dws->dma_mapped = 0;
 #endif
 
@@ -787,8 +786,8 @@ static int dw_spi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
 		spi_message_init_with_transfers(&m, &transfer, 1);
 		dws->master->cur_msg = &m;
 
-		if (0 != dws->tx_len) {
-			if(dws->use_ocm == 1)
+		if (dws->tx_len != 0) {
+			if (dws->use_ocm == 1)
 				ret = dw_spi_map_buf(&transfer.tx_sg, dws->spi_tx_phys, dws->tx_len);
 			else
 				ret = spi_map_buf(dws->master, dws->master->dma_tx->device->dev, &transfer.tx_sg,
@@ -798,15 +797,15 @@ static int dw_spi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
 				goto spi_err;
 		}
 
-		if (0 != dws->rx_len) {
-			if(dws->use_ocm == 1)
+		if (dws->rx_len != 0) {
+			if (dws->use_ocm == 1)
 				ret = dw_spi_map_buf(&transfer.rx_sg, dws->spi_rx_phys, dws->rx_len);
 			else
 				ret = spi_map_buf(dws->master, dws->master->dma_rx->device->dev, &transfer.rx_sg,
 									dws->rx, dws->rx_len, DMA_FROM_DEVICE);
 
 			if (ret) {
-				if (0 != dws->tx_len) {
+				if (dws->tx_len != 0) {
 					if(dws->use_ocm == 1)
 						dw_spi_unmap_buf(&transfer.tx_sg);
 					else
@@ -847,7 +846,7 @@ static int dw_spi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
 		if (ret)
 			goto dma_maped_all_err;
 		if (op->data.dir == SPI_MEM_DATA_IN)
-			if(dws->use_ocm == 1)
+			if (dws->use_ocm == 1)
 				dw_spi_memcpy(op->data.buf.in, dws->rx, dws->rx_len);
 	} else {
 #endif
@@ -904,16 +903,16 @@ static int dw_spi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
 	}
 dma_maped_all_err:
 	if (dws->dma_mapped) {
-		if(dws->use_ocm == 1) {
-			if (0 != dws->tx_len)
+		if (dws->use_ocm == 1) {
+			if (dws->tx_len != 0)
 				dw_spi_unmap_buf(&transfer.tx_sg);
-			if (0 != dws->rx_len)
+			if (dws->rx_len != 0)
 				dw_spi_unmap_buf(&transfer.rx_sg);
 		} else {
-			if (0 != dws->rx_len)
+			if (dws->rx_len != 0)
 				spi_unmap_buf(dws->master, dws->master->dma_rx->device->dev,
 						&transfer.rx_sg, DMA_FROM_DEVICE);
-			if (0 != dws->tx_len)
+			if (dws->tx_len != 0)
 				spi_unmap_buf(dws->master, dws->master->dma_tx->device->dev,
 						&transfer.tx_sg, DMA_TO_DEVICE);
 		}
@@ -923,7 +922,7 @@ spi_err:
 	dw_spi_stop_mem_op(dws, mem->spi);
 
 #ifdef CONFIG_ANLOGIC_SOC
-	if((dws->use_ocm != 1) || ((dws->use_ocm == 1) && (dws->dma_mapped != 1)))
+	if ((dws->use_ocm != 1) || ((dws->use_ocm == 1) && (dws->dma_mapped != 1)))
 #endif
 	dw_spi_free_mem_buf(dws);
 
@@ -1150,6 +1149,79 @@ err_free_master:
 	return ret;
 }
 EXPORT_SYMBOL_NS_GPL(dw_spi_add_host, SPI_DW_CORE);
+
+#ifdef CONFIG_ANLOGIC_SOC
+int dw_spi_add_slave(struct device *dev, struct dw_spi *dws)
+{
+	struct spi_controller *master;
+	int ret;
+
+	if (!dws)
+		return -EINVAL;
+
+	master = spi_alloc_slave(dev, 0);
+	if (!master)
+		return -ENOMEM;
+
+	master->slave = 1;
+
+	device_set_node(&master->dev, dev_fwnode(dev));
+
+	dws->master = master;
+	dws->dma_addr = (dma_addr_t)(dws->paddr + DW_SPI_DR);
+
+	spi_controller_set_devdata(master, dws);
+
+	/* Basic HW init */
+	dw_spi_hw_init(dev, dws);
+
+	ret = request_irq(dws->irq, dw_spi_irq, IRQF_SHARED, dev_name(dev),
+			  master);
+	if (ret < 0 && ret != -ENOTCONN) {
+		dev_err(dev, "can not get IRQ\n");
+		goto err_free_master;
+	}
+
+	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_LOOP | SPI_NO_CS;
+	if (dws->caps & DW_SPI_CAP_DFS32)
+		master->bits_per_word_mask = SPI_BPW_RANGE_MASK(4, 32);
+	else
+		master->bits_per_word_mask = SPI_BPW_RANGE_MASK(4, 16);
+	master->bus_num = dws->bus_num;
+	master->setup = dw_spi_setup;
+	master->cleanup = dw_spi_cleanup;
+	if (dws->set_cs)
+		master->set_cs = dws->set_cs;
+	else
+		master->set_cs = dw_spi_set_cs;
+	master->transfer_one = dw_spi_transfer_one;
+	master->handle_err = dw_spi_handle_err;
+	master->max_speed_hz = dws->max_freq;
+	master->auto_runtime_pm = true;
+
+	/* Get default rx sample delay */
+	device_property_read_u32(dev, "rx-sample-delay-ns",
+				 &dws->def_rx_sample_dly_ns);
+
+	ret = spi_register_controller(master);
+	if (ret) {
+		dev_err_probe(dev, ret, "problem registering spi master\n");
+		goto err_dma_exit;
+	}
+
+	dw_spi_debugfs_init(dws);
+	return 0;
+
+err_dma_exit:
+	if (dws->dma_ops && dws->dma_ops->dma_exit)
+		dws->dma_ops->dma_exit(dws);
+	dw_spi_enable_chip(dws, 0);
+err_free_master:
+	spi_controller_put(master);
+	return ret;
+}
+EXPORT_SYMBOL_NS_GPL(dw_spi_add_slave, SPI_DW_CORE);
+#endif
 
 void dw_spi_remove_host(struct dw_spi *dws)
 {

@@ -161,6 +161,9 @@ struct dw_spi {
 	u32			caps;		/* DW SPI capabilities */
 
 	void __iomem		*regs;
+#ifdef CONFIG_ANLOGIC_SOC
+	void __iomem		*top_regs;
+#endif
 	unsigned long		paddr;
 	int			irq;
 	u32			fifo_len;	/* depth of the FIFO buffer */
@@ -301,6 +304,9 @@ extern void dw_spi_update_config(struct dw_spi *dws, struct spi_device *spi,
 				 struct dw_spi_cfg *cfg);
 extern int dw_spi_check_status(struct dw_spi *dws, bool raw);
 extern int dw_spi_add_host(struct device *dev, struct dw_spi *dws);
+#ifdef CONFIG_ANLOGIC_SOC
+extern int dw_spi_add_slave(struct device *dev, struct dw_spi *dws);
+#endif
 extern void dw_spi_remove_host(struct dw_spi *dws);
 extern int dw_spi_suspend_host(struct dw_spi *dws);
 extern int dw_spi_resume_host(struct dw_spi *dws);
