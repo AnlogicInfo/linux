@@ -162,7 +162,7 @@ static int can_calc_bittiming(struct net_device *dev, struct can_bittiming *bt,
 
 		can_update_sample_point(btc, sample_point_nominal, tseg / 2,
 					&tseg1, &tseg2, &sample_point_error);
-		if (sample_point_error > best_sample_point_error)
+		if (sample_point_error >= best_sample_point_error)
 			continue;
 
 		best_sample_point_error = sample_point_error;
@@ -280,13 +280,10 @@ can_validate_bitrate(struct net_device *dev, struct can_bittiming *bt,
 
 	for (i = 0; i < bitrate_const_cnt; i++) {
 		if (bt->bitrate == bitrate_const[i])
-			break;
+			return 0;
 	}
 
-	if (i >= priv->bitrate_const_cnt)
-		return -EINVAL;
-
-	return 0;
+	return -EINVAL;
 }
 
 static int can_get_bittiming(struct net_device *dev, struct can_bittiming *bt,
