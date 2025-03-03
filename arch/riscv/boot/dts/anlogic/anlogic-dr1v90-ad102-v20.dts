@@ -182,7 +182,6 @@
 	status = "disabled";
 	slave@0 {
 		compatible = "rohm,dh2228fv";
-		reg = <0>;
 		spi-max-frequency = <AL_SPI0_MAX_FREQUENCY>;
 	};
 };
@@ -200,7 +199,6 @@
 	status = "disabled";
 	slave@0 {
 		compatible = "rohm,dh2228fv";
-		reg = <0>;
 		spi-max-frequency = <AL_SPI1_MAX_FREQUENCY>;
 	};
 };
