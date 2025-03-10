@@ -449,7 +449,6 @@ static int dw8250_probe(struct platform_device *pdev)
 	int err;
 	u32 val;
 
-        pr_info("begin addr 0x%x, end addr 0x%x, name %s\n", pdev->resource->start, pdev->resource->end, pdev->resource->name);	
 	if (!regs) {
 		dev_err(dev, "no registers defined\n");
 		return -EINVAL;

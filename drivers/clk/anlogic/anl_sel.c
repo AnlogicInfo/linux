@@ -20,14 +20,14 @@ static u8 anl_sel_get_parent(struct clk_hw *hw)
 	val = (readl(clk->base + clk->reg) >> sel->shift);
 	val &= sel->mask;
 
-	return clk_mux_val_to_index(hw, sel->table, sel->flags, val);
+	return clk_mux_val_to_index(hw, (u32 *)sel->table, sel->flags, val);
 }
 
 static int anl_sel_set_parent(struct clk_hw *hw, u8 index)
 {
 	struct anl_clk *clk = hw_to_anl_clk(hw);
 	struct anl_sel *sel = (struct anl_sel *)clk;
-	u32 val = clk_mux_index_to_val(sel->table, sel->flags, index);
+	u32 val = clk_mux_index_to_val((u32 *)sel->table, sel->flags, index);
 	unsigned long flags = 0;
 	u32 reg;
 
