@@ -1,0 +1,16 @@
+Anlogic top config
+===============================
+
+Anlogic top config is used to access top registers of Anlogic SoCs.
+
+Required properties:
+- compatible: Shall contain one of the following :
+			"anlogic,dr1x90-topcfg" for dr1x90 SoCs
+- reg: base address and size of the top register space.
+
+Example:
+	topcfg: topcfg@f8800000 {
+		compatible = "anlogic,dr1x90-topcfg";
+		reg = <0x0 0xf8800000 0 0x1000>;
+		status = "okay";
+	};
