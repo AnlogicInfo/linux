@@ -29,7 +29,8 @@
 #include <linux/reset.h>
 #include <linux/watchdog.h>
 #include <linux/panic_notifier.h>
-#if defined(CONFIG_ANLOGIC_SOC) && defined(CONFIG_ANLOGIC_SOFT_REBOOT)
+#ifdef CONFIG_ANLOGIC_SOC
+#include <soc/anlogic/anl_top.h>
 #include <linux/stop_machine.h>
 #ifdef CONFIG_ARM64
 #include <linux/arm-smccc.h>
@@ -90,7 +91,6 @@ struct dw_wdt_timeout {
 struct dw_wdt {
 	void __iomem		*regs;
 #ifdef CONFIG_ANLOGIC_SOC
-	void __iomem		*wdt_ctrl;
 #if defined(CONFIG_ANLOGIC_SOFT_REBOOT)
 	u64			raddr;
 	struct notifier_block	panic_nb;
@@ -273,19 +273,6 @@ static int dw_wdt_set_pretimeout(struct watchdog_device *wdd, unsigned int req)
 	return 0;
 }
 
-#ifdef CONFIG_ANLOGIC_SOC
-static inline void dw_wdt_pause(struct dw_wdt *dw_wdt, int pause)
-{
-	u32 val;
-	val = readl(dw_wdt->wdt_ctrl);
-	if (pause) {
-		writel(val|(1<<dw_wdt->idx), dw_wdt->wdt_ctrl);
-	} else {
-		writel(val&~(1<<dw_wdt->idx), dw_wdt->wdt_ctrl);
-	}
-}
-#endif
-
 static void dw_wdt_arm_system_reset(struct dw_wdt *dw_wdt)
 {
 	u32 val = readl(dw_wdt->regs + WDOG_CONTROL_REG_OFFSET);
@@ -299,7 +286,7 @@ static void dw_wdt_arm_system_reset(struct dw_wdt *dw_wdt)
 	val |= WDOG_CONTROL_REG_WDT_EN_MASK;
 	writel(val, dw_wdt->regs + WDOG_CONTROL_REG_OFFSET);
 #ifdef CONFIG_ANLOGIC_SOC
-	dw_wdt_pause(dw_wdt, 0);
+	anl_wdt_pause(dw_wdt->idx, 0);
 #endif
 }
 
@@ -514,7 +501,7 @@ static int al_wdt_panic_notifier(struct notifier_block *nb,
 {
 	struct dw_wdt *dw_wdt = container_of(nb, struct dw_wdt, panic_nb);
 
-	dw_wdt_pause(dw_wdt, 1);
+	anl_wdt_pause(dw_wdt->idx, 1);
 	al_system_reload(dw_wdt->raddr);
 
 	return NOTIFY_DONE;
@@ -535,7 +522,7 @@ static irqreturn_t dw_wdt_irq(int irq, void *devid)
 		return IRQ_NONE;
 
 #if defined(CONFIG_ANLOGIC_SOC) && defined(CONFIG_ANLOGIC_SOFT_REBOOT)
-	dw_wdt_pause(dw_wdt, 1);
+	anl_wdt_pause(dw_wdt->idx, 1);
 	al_system_reload(dw_wdt->raddr);
 #endif
 
@@ -730,10 +717,6 @@ static int dw_wdt_drv_probe(struct platform_device *pdev)
 		return PTR_ERR(dw_wdt->regs);
 
 #ifdef CONFIG_ANLOGIC_SOC
-	dw_wdt->wdt_ctrl = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(dw_wdt->wdt_ctrl))
-		return PTR_ERR(dw_wdt->wdt_ctrl);
-
 	ret = of_property_read_u32(dev->of_node, "index", &dw_wdt->idx);
 	if (ret) {
 		dev_err(dev, "Failed to read 'index' property\n");
@@ -902,7 +885,7 @@ static int dw_wdt_drv_remove(struct platform_device *pdev)
 	struct dw_wdt *dw_wdt = platform_get_drvdata(pdev);
 
 #ifdef CONFIG_ANLOGIC_SOC
-	dw_wdt_pause(dw_wdt, 1);
+	anl_wdt_pause(dw_wdt->idx, 1);
 #if defined(CONFIG_ANLOGIC_SOFT_REBOOT)
 	atomic_notifier_chain_unregister(&panic_notifier_list,
 					 &dw_wdt->panic_nb);
