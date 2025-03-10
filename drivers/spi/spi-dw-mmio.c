@@ -20,6 +20,9 @@
 #include <linux/property.h>
 #include <linux/regmap.h>
 #include <linux/reset.h>
+#ifdef CONFIG_ANLOGIC_SOC
+#include <soc/anlogic/anl_top.h>
+#endif
 
 #include "spi-dw.h"
 
@@ -236,7 +239,6 @@ static int dw_spi_mmio_probe(struct platform_device *pdev)
 	struct device_node *np = dev->of_node;
 	bool slave_mode;
 	int spi_id;
-	u32 top_value;
 
 	slave_mode = of_property_read_bool(np, "spi-slave");
 #endif
@@ -256,23 +258,12 @@ static int dw_spi_mmio_probe(struct platform_device *pdev)
 	dws->paddr = mem->start;
 
 #ifdef CONFIG_ANLOGIC_SOC
-	dws->top_regs = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(dws->top_regs))
-		return PTR_ERR(dws->top_regs);
-
 	if (of_property_read_u32(np, "spi-controller-id", &spi_id)) {
 		pr_err("Failed to read spi-controller-id property\n");
 		return -EINVAL;
 	}
-	if (slave_mode == 1) {
-		top_value = ioread32(dws->top_regs);
-		top_value |= (1 << spi_id * 8);
-		iowrite32(top_value, dws->top_regs);
-	} else {
-		top_value = ioread32(dws->top_regs);
-		top_value &= ~(1 << spi_id * 8);
-		iowrite32(top_value, dws->top_regs);
-	}
+
+	anl_spi_set_slave(spi_id, slave_mode);
 #endif
 
 	dws->irq = platform_get_irq(pdev, 0);

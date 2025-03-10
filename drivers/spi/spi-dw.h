@@ -145,9 +145,6 @@ struct dw_spi {
 	struct spi_controller	*master;
 
 	void __iomem		*regs;
-#ifdef CONFIG_ANLOGIC_SOC
-	void __iomem		*top_regs;
-#endif
 	unsigned long		paddr;
 	int			irq;
 	u32			fifo_len;	/* depth of the FIFO buffer */

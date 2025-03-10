@@ -92,6 +92,12 @@
 		status = "okay";
 	};
 
+	topcfg: topcfg@f8800000 {
+		compatible = "anlogic,dr1x90-topcfg";
+		reg = <0x0 0xf8800000 0 0x1000>;
+		status = "okay";
+	};
+
 	soc: soc {
 		compatible = "simple-bus";
 		#address-cells = <2>;
@@ -290,7 +296,7 @@
 			compatible = "snps,dw-wdt";
 			#address-cells = <2>;
 			#size-cells = <2>;
-			reg = <0x0 0xf8410000 0x0 0x100 0x0 0Xf8800168 0x0 0x4>;
+			reg = <0x0 0xf8410000 0x0 0x100>;
 			index = <0>;
 			interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&crp CLK_WDT>;
@@ -376,7 +382,7 @@
 			compatible = "snps,dw-apb-ssi";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			reg = <0x0 0xf8404000 0x0 0x100 0x0 0Xf8800160 0x0 0x4>;
+			reg = <0x0 0xf8404000 0x0 0x100>;
 			interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
 			spi-controller-id = <0>;
 			clocks = <&crp CLK_SPI>;
@@ -389,7 +395,7 @@
 			compatible = "snps,dw-apb-ssi";
 			#address-cells = <0>;
 			#size-cells = <0>;
-			reg = <0x0 0xf8404100 0x0 0x100 0x0 0Xf8800160 0x0 0x4>;
+			reg = <0x0 0xf8404100 0x0 0x100>;
 			interrupts = <GIC_SPI 67 IRQ_TYPE_LEVEL_HIGH>;
 			spi-controller-id = <1>;
 			clocks = <&crp CLK_SPI>;
@@ -398,12 +404,12 @@
 			spi-slave;
 		};
 
-	/* SPI1 master and SPI1 slave cannot be used simultaneously */
+		/* SPI1 master and SPI1 slave cannot be used simultaneously */
 		spi1: spi@f8405000 {
 			compatible = "snps,dw-apb-ssi";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			reg = <0x0 0xf8405000 0x0 0x100 0x0 0Xf8800160 0x0 0x4>;
+			reg = <0x0 0xf8405000 0x0 0x100>;
 			interrupts = <GIC_SPI 68 IRQ_TYPE_LEVEL_HIGH>;
 			spi-controller-id = <1>;
 			clocks = <&crp CLK_SPI>;
@@ -416,7 +422,7 @@
 			compatible = "snps,dw-apb-ssi";
 			#address-cells = <0>;
 			#size-cells = <0>;
-			reg = <0x0 0xf8405100 0x0 0x100 0x0 0Xf8800160 0x0 0x4>;
+			reg = <0x0 0xf8405100 0x0 0x100>;
 			interrupts = <GIC_SPI 69 IRQ_TYPE_LEVEL_HIGH>;
 			spi-controller-id = <1>;
 			clocks = <&crp CLK_SPI>;
