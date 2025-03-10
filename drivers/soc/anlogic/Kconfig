@@ -7,4 +7,11 @@ config ANLOGIC_SOC
 	help
 	  Say yes if need codes for Anlogic SoCs.
 
+config ANLOGIC_TOP_CFG
+	bool "Anlogic SoC Top Control"
+	default y
+	depends on ANLOGIC_SOC
+	help
+	  Say yes to enable Anlogic SoC Top control.
+
 endmenu
