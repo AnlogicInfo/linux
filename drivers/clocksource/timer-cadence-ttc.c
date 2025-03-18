@@ -14,6 +14,7 @@
 #include <linux/clocksource.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
+#include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/sched_clock.h>
 #include <linux/module.h>
@@ -486,6 +487,13 @@ static int __init ttc_timer_probe(struct platform_device *pdev)
 	int clksel, ret;
 	u32 timer_width = 16;
 	struct device_node *timer = pdev->dev.of_node;
+
+	/*
+	 * If pwm-cells property is present in TTC node,
+	 * it would be treated as PWM device.
+	 */
+	if (of_property_read_bool(timer, "#pwm-cells"))
+		return -ENODEV;
 
 	if (initialized)
 		return 0;
