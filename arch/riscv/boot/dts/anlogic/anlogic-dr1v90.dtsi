@@ -317,7 +317,7 @@
 			interrupt-parent = <&plic0>;
 			interrupts = <30>, <31>, <32>;
 			reg = <0x0 0xf840c000 0x0 0x1000>;
-			timer-width = <32>;
+			timer-width = <16>;
 			clocks = <&crp CLK_APB>, <&ttc_ext_clk>;
 		};
 
@@ -327,7 +327,7 @@
 			interrupt-parent = <&plic0>;
 			interrupts = <33>, <34>, <35>;
 			reg = <0x0 0xf840d000 0x0 0x1000>;
-			timer-width = <32>;
+			timer-width = <16>;
 			clocks = <&crp CLK_APB>, <&ttc_ext_clk>;
 		};
 
