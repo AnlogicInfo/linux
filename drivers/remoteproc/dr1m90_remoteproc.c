@@ -34,14 +34,8 @@
 #include <linux/slab.h>
 #include <linux/cpu.h>
 #include <linux/genalloc.h>
-#include <linux/psci.h>
+#include <soc/anlogic/anl_top.h>
 #include "remoteproc_internal.h"
-#include "linux/arm-smccc.h"
-
-/* Function ID passed during SiP SVC call. */
-#define FN_RPROC_BASE	(0xFF000000)
-#define FN_RPROC_OFF	(FN_RPROC_BASE + 21)
-#define FN_RPROC_ON	(FN_RPROC_BASE + 22)
 
 #define MAX_NUM_VRINGS 2
 #define NOTIFYID_ANY (-1)
@@ -238,15 +232,12 @@ static void dragon_rproc_do_start(struct work_struct *work)
 	struct dragon_rproc_pdata *local = container_of(work, struct dragon_rproc_pdata, work);
 	struct rproc *rproc = local->rproc;
 	struct device *dev = rproc->dev.parent;
-	struct arm_smccc_res res;
 
 	if (local->start) {
 		if (local->openamp)
 			dragon_enable_irq(local, 1);
 
-		/* Wake up CPU1 by sending SMC call to EL3 */
-		arm_smccc_smc(FN_RPROC_ON, rproc->bootaddr, local->slave_id, 0, 0, 0, 0, 0, &res);
-		if (res.a0) {
+		if (anl_rproc_start_slave(rproc->bootaddr, local->slave_id)) {
 			dev_err(dev, "failed to boot remote core(%d)\n", -EINVAL);
 			goto err_disable_irq;
 		}
@@ -254,9 +245,7 @@ static void dragon_rproc_do_start(struct work_struct *work)
 		return;
 	}
 
-	/* Stop CPU1 by sending SMC call to EL3 */
-	arm_smccc_smc(FN_RPROC_OFF, local->slave_id, 0, 0, 0, 0, 0, 0, &res);
-	if (res.a0)
+	if (anl_rproc_stop_slave(local->slave_id))
 		dev_err(dev, "failed to stop remote core(%d)\n", -EINVAL);
 
 err_disable_irq:
