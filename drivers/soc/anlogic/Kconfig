@@ -15,4 +15,12 @@ config ANLOGIC_TOP_CFG
 	help
 	  Say yes to enable Anlogic SoC Top control.
 
+config ANLOGIC_TOP_USER_SACCESS
+	bool "Anlogic SoC User Secure Access"
+	default y
+	depends on ANLOGIC_SOC && ANLOGIC_TOP_CFG && ARM64
+	help
+	  Say yes to enable accessing Anlogic SoC Top secure registers
+	  from user space.
+
 endmenu

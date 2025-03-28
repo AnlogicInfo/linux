@@ -11,11 +11,7 @@
 #include <linux/of_address.h>
 #include <linux/string.h>
 #include <linux/slab.h>
-#if IS_ENABLED(CONFIG_ARCH_RV64I)
-#include <asm/sbi.h>
-#else
-#include <linux/arm-smccc.h>
-#endif
+#include <soc/anlogic/anl_top.h>
 
 #define CRP_CFG_STATE				(0x00000000U)
 #define CRP_CFG_STATE_MSK_PL2PS_INITN		(1 << 0)
@@ -23,17 +19,6 @@
 #define CRP_CFG_STATE_MSK_PL2PS_CFG_WAKEUP	(1 << 2)
 
 #define DR1M90_FLAG_BIG_ENDIAN			0x01
-
-#if IS_ENABLED(CONFIG_ARCH_RV64I)
-#define ALSIP_FPGA_PROG				(SBI_EXT_VENDOR_START + 0)
-#else
-#define ALSIP_FPGA_PROG				(0xFF000000 + 23)
-#endif
-#define ALSIP_FPGA_PROG_START			0
-#define ALSIP_FPGA_PROG_LOAD			1
-#define ALSIP_FPGA_PROG_DONE			2
-#define ALSIP_FPGA_PLCLK_RST			3
-#define ALSIP_FPGA_PROG_INIT			4
 
 struct dr1m90_fpga_priv {
 	struct device *dev;
@@ -84,32 +69,12 @@ static int dr1m90_fpga_le32(struct fpga_manager *mgr,
 	return 0;
 }
 
-static unsigned long invoke_fpga_prog_fn(unsigned long function_id,
-			unsigned long arg0, unsigned long arg1,
-			unsigned long arg2, unsigned long arg3)
-{
-#if IS_ENABLED(CONFIG_ARCH_RV64I)
-	struct sbiret ret = {0};
-
-	ret = sbi_ecall((int)function_id, (int)arg0, arg1, arg2, arg3, 0, 0, 0);
-	if (!ret.error)
-		return ret.value;
-	else
-		return ret.error;
-#else
-	struct arm_smccc_res res;
-
-	arm_smccc_smc(function_id, arg0, arg1, arg2, arg3, 0, 0, 0, &res);
-	return res.a0;
-#endif
-}
-
 static int dr1m90_fpga_prog_init(struct fpga_manager *mgr, phys_addr_t addr,
 			uint32_t len)
 {
 	unsigned long ret;
 
-	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PROG_INIT, addr, len, 0);
+	ret = anl_fpga_prog_init(addr, len);
 	return (int)ret;
 }
 
@@ -117,7 +82,7 @@ static int dr1m90_fpga_prog_start(struct fpga_manager *mgr)
 {
 	unsigned long ret;
 
-	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PROG_START, 0, 0, 0);
+	ret = anl_fpga_prog_start();
 	return (int)ret;
 }
 
@@ -126,7 +91,7 @@ static int dr1m90_fpga_prog_load(struct fpga_manager *mgr, phys_addr_t addr,
 {
 	unsigned long ret;
 
-	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PROG_LOAD, addr, len, 0);
+	ret = anl_fpga_prog_load(addr, len);
 	return (int)ret;
 }
 
@@ -134,7 +99,7 @@ static int dr1m90_fpga_prog_done(struct fpga_manager *mgr, u32 done)
 {
 	unsigned long ret;
 
-	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PROG_DONE, done, 0, 0);
+	ret = anl_fpga_prog_done(done);
 	return (int)ret;
 }
 
@@ -142,7 +107,7 @@ static int dr1m90_fpga_plclk_reset(struct fpga_manager *mgr, u32 reset)
 {
 	unsigned long ret;
 
-	ret = invoke_fpga_prog_fn(ALSIP_FPGA_PROG, ALSIP_FPGA_PLCLK_RST, reset, 0, 0);
+	ret = anl_fpga_plclk_reset(reset);
 	return (int)ret;
 }
 

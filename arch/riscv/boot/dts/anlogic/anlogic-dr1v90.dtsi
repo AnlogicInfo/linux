@@ -41,7 +41,7 @@
 
 	topcfg: topcfg@f8800000 {
 		compatible = "anlogic,dr1x90-topcfg";
-		reg = <0x0 0xf8800000 0 0x1000>;
+		reg = <0x0 0xf8800000 0 0x1000 0x0 0xf8806000 0 0x1000>;
 		status = "okay";
 	};
 
