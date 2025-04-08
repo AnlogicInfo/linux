@@ -21,32 +21,52 @@
 #define AL_PROCESSOR_CORE1_COUNTER_CLOCK	33333333
 #endif
 
-#ifndef AL_ETH_CLOCK
-#define AL_ETH_CLOCK						25000000
+#ifndef AL_ETH0_CLOCK
+#define AL_ETH0_CLOCK						25000000
+#endif
+
+#ifndef AL_ETH0_PHY_CLOCK
+#define AL_ETH0_PHY_CLOCK					25000000
+#endif
+
+#ifndef AL_ETH0_PTP_CLOCK
+#define AL_ETH0_PTP_CLOCK					100000000
 #endif
 
 #ifndef AL_ETH0_PHY_MODE
 #define AL_ETH0_PHY_MODE					"rgmii"
 #endif
 
+#ifndef AL_ETH0_TX_CLOCK
+#define AL_ETH0_TX_CLOCK					25000000
+#endif
+
+#ifndef AL_ETH0_RX_CLOCK
+#define AL_ETH0_RX_CLK						25000000
+#endif
+
+#ifndef AL_ETH1_CLOCK
+#define AL_ETH1_CLOCK						25000000
+#endif
+
+#ifndef AL_ETH1_PHY_CLOCK
+#define AL_ETH1_PHY_CLOCK					25000000
+#endif
+
+#ifndef AL_ETH1_PTP_CLOCK
+#define AL_ETH1_PTP_CLOCK					100000000
+#endif
+
 #ifndef AL_ETH1_PHY_MODE
 #define AL_ETH1_PHY_MODE					"rgmii"
 #endif
 
-#ifndef AL_ETH_PHY_CLOCK
-#define AL_ETH_PHY_CLOCK					25000000
+#ifndef AL_ETH1_TX_CLOCK
+#define AL_ETH1_TX_CLOCK						25000000
 #endif
 
-#ifndef AL_ETH_PTP_CLOCK
-#define AL_ETH_PTP_CLOCK					100000000
-#endif
-
-#ifndef AL_ETH_TX_CLOCK
-#define AL_ETH_TX_CLOCK						25000000
-#endif
-
-#ifndef AL_ETH_RX_CLOCK
-#define AL_ETH_RX_CLK						25000000
+#ifndef AL_ETH1_RX_CLOCK
+#define AL_ETH1_RX_CLK						25000000
 #endif
 
 #ifndef AL_AXI_DMAC_CLOCK

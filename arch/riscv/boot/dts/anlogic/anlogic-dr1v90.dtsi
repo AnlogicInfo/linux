@@ -362,7 +362,7 @@
 			reg = <0x0 0xF8100000 0x0 0x10000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <59>;
-			clocks = <&crp CLK_GBE>,<&PHY_CLK>,<&crp CLK_PTP>;
+			clocks = <&crp CLK_GBE>,<&eth0_phy_clk>,<&crp CLK_PTP>;
 			clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
 			/* mac-address = [e0 78 a3 01 02 01]; */
 			tx-fifo-depth = <16384>;
@@ -410,7 +410,7 @@
 			reg = <0x0 0xF8110000 0x0 0x10000>;
 			interrupt-parent = <&plic0>;
 			interrupts = <60>;
-			clocks = <&crp CLK_GBE>,<&PHY_CLK>,<&crp CLK_PTP>;
+			clocks = <&crp CLK_GBE>,<&eth1_phy_clk>,<&crp CLK_PTP>;
 			clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
 			/* mac-address = [e0 78 a3 01 02 03]; */
 			tx-fifo-depth = <16384>;
@@ -470,6 +470,7 @@
 			interrupts = <25>;
 			resolution = <12>;
 			clocks = <&crp CLK_APB>, <&crp CLK_ADCPL>;
+			clock-names = "apb_pclk", "adc_ps_pl_clk";
 			anlogic,channels {
 				#address-cells = <1>;
 				#size-cells = <0>;
