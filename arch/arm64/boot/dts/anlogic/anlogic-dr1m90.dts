@@ -52,11 +52,18 @@
 		clock-output-names = "ttc_ext_clk";
 	};
 
-	PHY_CLK: PHY_CLK {
+	eth0_phy_clk: eth0_phy_clk {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
-		clock-frequency = <AL_ETH_PHY_CLOCK>;
-		clock-output-names = "PHY_CLK";
+		clock-frequency = <AL_ETH0_PHY_CLOCK>;
+		clock-output-names = "phy_clk0";
+	};
+
+	eth1_phy_clk: eth1_phy_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <AL_ETH1_PHY_CLOCK>;
+		clock-output-names = "phy_clk1";
 	};
 };
 
