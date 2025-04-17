@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2023 Anlogic, Inc.
- *
-*/
+ */
+
 #ifndef __IIO_ANLOGIC_ADC__
 #define __IIO_ANLOGIC_ADC__
 
@@ -23,7 +23,8 @@ enum adc_external_mux_mode {
 struct adc {
 	void __iomem *base;
 	void __iomem *gp_base;
-	struct clk *clk;
+	struct clk *apb_pclk;
+	struct clk *adc_ps_pl_clk;
 
 	const struct adc_ops *ops;
 
