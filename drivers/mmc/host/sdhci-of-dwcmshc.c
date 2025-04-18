@@ -345,7 +345,9 @@ static const struct sdhci_ops sdhci_dwcmshc_rk35xx_ops = {
 
 static const struct sdhci_pltfm_data sdhci_dwcmshc_pdata = {
 	.ops = &sdhci_dwcmshc_ops,
+#ifndef CONFIG_ANLOGIC_SOC
 	.quirks = SDHCI_QUIRK_CAP_CLOCK_BASE_BROKEN,
+#endif
 	.quirks2 = SDHCI_QUIRK2_PRESET_VALUE_BROKEN,
 };
 
