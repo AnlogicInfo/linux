@@ -24,4 +24,7 @@ ssize_t secreg_read(struct file *file, char __user *data,
 ssize_t secreg_write(struct file *file, const char __user *data,
 		     size_t len, loff_t *ppos);
 loff_t secreg_llseek(struct file *file, loff_t off, int whence);
+void al_misc_reboot(unsigned long entry);
+void al_misc_cpu_die(int id);
+int anl_wdt_softboot_enable(ulong wdtidx, ulong entry_point);
 #endif

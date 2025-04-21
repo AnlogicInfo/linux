@@ -13,6 +13,7 @@
 #include <asm/sbi.h>
 #else
 #include <linux/arm-smccc.h>
+#include <asm/cpu_ops.h>
 #endif
 #include <uapi/linux/anl_top.h>
 #include "anl_top_reg.h"
@@ -39,6 +40,7 @@
 #define ALSM_REBOOT				0
 #define ALSM_SECRNG_QUERY			1
 #define ALSM_SECRNG_ACC				2
+#define ALSM_WDT_SOFT_REBOOT_EN			3
 
 enum anl_soc_id {
 	ANL_SOC_DR1X90,
@@ -473,6 +475,56 @@ int secreg_release(struct inode *inode, struct file *file)
 	return 0;
 }
 EXPORT_SYMBOL(secreg_release);
+#endif
+
+#if IS_ENABLED(CONFIG_ANLOGIC_SOFT_REBOOT)
+void al_misc_reboot(unsigned long entry)
+{
+#if IS_ENABLED(CONFIG_ARCH_RV64I)
+	// not implemented
+	pr_err("al_reboot not implemented\n");
+#else
+	struct arm_smccc_res res;
+
+	arm_smccc_smc(ALSIP_SYS_MISC, ALSM_REBOOT, entry, 0, 0, 0, 0, 0, &res);
+	if (res.a0)
+		pr_err("al_reboot fail\n");
+#endif
+}
+EXPORT_SYMBOL(al_misc_reboot);
+
+void al_misc_cpu_die(int id)
+{
+#if IS_ENABLED(CONFIG_ARCH_RV64I)
+	// not implemented
+	pr_err("al_cpu_die not implemented\n");
+#else
+	const struct cpu_operations *ops;
+
+	ops = get_cpu_ops(id);
+	if (ops && ops->cpu_die)
+		ops->cpu_die(id);
+
+	pr_err("al_cpu_die fail\n");
+#endif
+}
+EXPORT_SYMBOL(al_misc_cpu_die);
+
+int anl_wdt_softboot_enable(ulong wdtidx, ulong entry_point)
+{
+#if IS_ENABLED(CONFIG_ARCH_RV64I)
+	return -1;
+#else
+	struct arm_smccc_res res;
+
+	arm_smccc_smc(ALSIP_SYS_MISC, ALSM_WDT_SOFT_REBOOT_EN, wdtidx,
+		      entry_point, 0, 0, 0, 0, &res);
+	if (res.a0)
+		return -1;
+	return 0;
+#endif
+}
+EXPORT_SYMBOL(anl_wdt_softboot_enable);
 #endif
 
 static int anl_top_probe(struct platform_device *pdev)
