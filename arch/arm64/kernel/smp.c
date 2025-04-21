@@ -824,17 +824,7 @@ static void local_cpu_stop(void)
 
 	local_daif_mask();
 	sdei_mask_local_cpu();
-#if defined(CONFIG_ANLOGIC_SOC) && defined(CONFIG_ANLOGIC_SOFT_REBOOT)
-	{
-		int id = smp_processor_id();
-
-		extern void al_misc_cpu_die(int id);
-
-		al_misc_cpu_die(id);
-	}
-#else
 	cpu_park_loop();
-#endif
 }
 
 /*

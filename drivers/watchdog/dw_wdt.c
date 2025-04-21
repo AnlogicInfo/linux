@@ -32,10 +32,6 @@
 #ifdef CONFIG_ANLOGIC_SOC
 #include <soc/anlogic/anl_top.h>
 #include <linux/stop_machine.h>
-#ifdef CONFIG_ARM64
-#include <linux/arm-smccc.h>
-#include <asm/cpu_ops.h>
-#endif
 #endif
 
 #define WDOG_CONTROL_REG_OFFSET		    0x00
@@ -381,128 +377,13 @@ static const struct watchdog_ops dw_wdt_ops = {
 };
 
 #if defined(CONFIG_ANLOGIC_SOC) && defined(CONFIG_ANLOGIC_SOFT_REBOOT)
-
-#ifdef CONFIG_ARM64
-
-#define ALSIP_SYS_MISC	(0xFF000000 + 24)
-#define ALSM_REBOOT	0
-void al_misc_reboot(unsigned long entry)
-{
-	struct arm_smccc_res res;
-
-	arm_smccc_smc(ALSIP_SYS_MISC, ALSM_REBOOT, entry, 0, 0, 0, 0, 0, &res);
-	if (res.a0)
-		pr_err("al_reboot fail\n");
-	BUG();
-}
-EXPORT_SYMBOL(al_misc_reboot);
-
-void al_misc_cpu_die(int id)
-{
-	const struct cpu_operations *ops;
-
-	ops = get_cpu_ops(id);
-	if (ops && ops->cpu_die)
-		ops->cpu_die(id);
-	BUG();
-}
-EXPORT_SYMBOL(al_misc_cpu_die);
-
-#else
-
-void al_misc_reboot(unsigned long entry)
-{
-	// not implemented
-	BUG();
-}
-EXPORT_SYMBOL(al_misc_reboot);
-
-void al_misc_cpu_die(int id)
-{
-	// not implemented
-	BUG();
-}
-EXPORT_SYMBOL(al_misc_cpu_die);
-
-#endif
-
-static atomic_t real_cleaner, done_cnt;
-static unsigned int num_cpus, reporter, best_cleaner;
-static DEFINE_PER_CPU(struct cpu_stop_work, al_stop_work);
-static int al_cpu_stop(void *data)
-{
-	int id, cleaner, cnt;
-	unsigned long entry = (unsigned long)data;
-
-	local_irq_disable();
-	id = smp_processor_id();
-
-	if (id != reporter && id != best_cleaner) {
-pwr_down:
-		pr_info("al_reboot[%d]: power down\n", id);
-		atomic_inc(&done_cnt);
-		al_misc_cpu_die(id);
-	}
-
-	if (id != best_cleaner)
-		mdelay(500);
-
-	cleaner = atomic_cmpxchg(&real_cleaner, -1, id);
-
-	if (cleaner != -1 && id != cleaner)
-		goto pwr_down;
-
-	if (num_cpus <= 1)
-		goto wait_done;
-
-	for (cnt = 6; cnt >= 0; cnt--) {
-		if (atomic_read(&done_cnt) >= (num_cpus - 1))
-			goto wait_done;
-		mdelay(100);
-	}
-	WARN(1, "al_reboot[%d]: busy\n", id);
-wait_done:
-	pr_info("al_reboot[%d]: reboot to %lx\n", id, entry);
-	al_misc_reboot(entry);
-
-	return 0;
-}
-void al_system_reload(unsigned long entry)
-{
-	int tmp;
-
-	local_irq_disable();
-	reporter = smp_processor_id();
-	num_cpus = num_online_cpus();
-	atomic_set(&real_cleaner, -1);
-	atomic_set(&done_cnt, 0);
-
-	best_cleaner = nr_cpu_ids;
-	if (!reporter && num_cpus > 1)
-		best_cleaner = cpumask_next(reporter, cpu_online_mask);
-
-	if (best_cleaner >= nr_cpu_ids)
-		best_cleaner = reporter;
-
-	smp_mb();
-	pr_info("al_reboot[%d]: begin reboot system\n", reporter);
-	for_each_online_cpu(tmp) {
-		if (tmp == reporter)
-			continue;
-		stop_one_cpu_nowait(tmp, al_cpu_stop, (void *)entry,
-				    per_cpu_ptr(&al_stop_work, tmp));
-	}
-	al_cpu_stop((void *)entry);
-}
-EXPORT_SYMBOL(al_system_reload);
-
 static int al_wdt_panic_notifier(struct notifier_block *nb,
 				 unsigned long code, void *unused)
 {
 	struct dw_wdt *dw_wdt = container_of(nb, struct dw_wdt, panic_nb);
 
 	anl_wdt_pause(dw_wdt->idx, 1);
-	al_system_reload(dw_wdt->raddr);
+	al_misc_reboot(dw_wdt->raddr);
 
 	return NOTIFY_DONE;
 }
@@ -523,7 +404,7 @@ static irqreturn_t dw_wdt_irq(int irq, void *devid)
 
 #if defined(CONFIG_ANLOGIC_SOC) && defined(CONFIG_ANLOGIC_SOFT_REBOOT)
 	anl_wdt_pause(dw_wdt->idx, 1);
-	al_system_reload(dw_wdt->raddr);
+	al_misc_reboot(dw_wdt->raddr);
 #endif
 
 	watchdog_notify_pretimeout(&dw_wdt->wdd);
@@ -866,6 +747,12 @@ static int dw_wdt_drv_probe(struct platform_device *pdev)
 		goto out_assert_rst;
 
 	dw_wdt_dbgfs_init(dw_wdt);
+
+#if defined(CONFIG_ANLOGIC_SOFT_REBOOT)
+	ret = anl_wdt_softboot_enable(dw_wdt->idx, dw_wdt->raddr);
+	if (ret)
+		pr_info("wdt enable soft reboot failed %d\n", ret);
+#endif
 
 	return 0;
 
