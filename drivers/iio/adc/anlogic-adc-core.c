@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2023 Anlogic, Inc.
- *
-*/
+ */
 
 #include <linux/clk.h>
 #include <linux/device.h>
@@ -274,12 +273,12 @@ static int adc_fpsoc_setup(struct platform_device *pdev,
 
 	adc->fpsoc_intmask = 0xbff;
 
-	pcap_rate = clk_get_rate(adc->clk);
+	pcap_rate = clk_get_rate(adc->apb_clk);
 	if (!pcap_rate)
 		return -EINVAL;
 
 	if (pcap_rate > ADC_FPSOC_PCAP_RATE_MAX) {
-		ret = clk_set_rate(adc->clk,
+		ret = clk_set_rate(adc->apb_clk,
 				   (unsigned long)ADC_FPSOC_PCAP_RATE_MAX);
 		if (ret)
 			return ret;
@@ -314,7 +313,7 @@ static int adc_fpsoc_setup(struct platform_device *pdev,
 	adc_write_reg(adc, ADC_FPSOC_REG_CFG, tmp);
 
 	if (pcap_rate > ADC_FPSOC_PCAP_RATE_MAX) {
-		ret = clk_set_rate(adc->clk, pcap_rate);
+		ret = clk_set_rate(adc->apb_clk, pcap_rate);
 		if (ret)
 			return ret;
 	}
@@ -324,27 +323,7 @@ static int adc_fpsoc_setup(struct platform_device *pdev,
 
 static unsigned long adc_fpsoc_get_dclk_rate(struct adc *adc)
 {
-	unsigned int div;
-	uint32_t val;
-
-	adc_read_reg(adc, ADC_FPSOC_REG_CFG, &val);
-
-	switch (val & ADC_FPSOC_CFG_TCKRATE_MASK) {
-	case ADC_FPSOC_CFG_TCKRATE_DIV4:
-		div = 4;
-		break;
-	case ADC_FPSOC_CFG_TCKRATE_DIV8:
-		div = 8;
-		break;
-	case ADC_FPSOC_CFG_TCKRATE_DIV16:
-		div = 16;
-		break;
-	default:
-		div = 32;
-		break;
-	}
-
-	return clk_get_rate(adc->clk) / div;
+	return clk_get_rate(adc->adc->adc_ps_pl_clk);
 }
 
 static const struct adc_ops adc_fpsoc_ops = {
@@ -444,7 +423,7 @@ static irqreturn_t adc_axi_interrupt_handler(int irq, void *devid)
 
 static unsigned long adc_axi_get_dclk(struct adc *adc)
 {
-	return clk_get_rate(adc->clk);
+	return clk_get_rate(adc->adc_ps_pl_clk);
 }
 
 static const struct adc_ops adc_axi_ops = {
@@ -591,11 +570,11 @@ static int adc_postdisable(struct iio_dev *indio_dev)
 
 static int adc_preenable(struct iio_dev *indio_dev)
 {
- 	struct adc *adc = iio_priv(indio_dev);
- 	int ret;
+	struct adc *adc = iio_priv(indio_dev);
+	int ret;
 
- 	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_MODE_SEL_MASK,
- 		ADC_CONFIG3_CONV_MODE_CONTINUOUS);
+	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_MODE_SEL_MASK,
+		ADC_CONFIG3_CONV_MODE_CONTINUOUS);
 
 	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_REG_ADC_SOC_MASK,
 		 1 << ADC_CONFIG3_REG_SOC_SHIFT);
@@ -605,8 +584,8 @@ static int adc_preenable(struct iio_dev *indio_dev)
 
 	return 0;
  err:
- 	adc_postdisable(indio_dev);
- 	return ret;
+	adc_postdisable(indio_dev);
+	return ret;
 }
 
 static const struct iio_buffer_setup_ops adc_buffer_ops = {
@@ -1009,25 +988,34 @@ static int adc_probe(struct platform_device *pdev)
 		}
 	}
 
-	adc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(adc->clk)) {
-		ret = PTR_ERR(adc->clk);
+	adc->apb_pclk = devm_clk_get(&pdev->dev, "apb_pclk");
+	if (IS_ERR(adc->apb_pclk)) {
+		ret = PTR_ERR(adc->apb_pclk);
 		goto err_free_convst_trigger;
 	}
 
-	ret = clk_prepare_enable(adc->clk);
+	adc->adc_ps_pl_clk = devm_clk_get(&pdev->dev, "adc_ps_pl_clk");
+	if (IS_ERR(adc->adc_ps_pl_clk)) {
+		ret = PTR_ERR(adc->adc_ps_pl_clk);
+		goto err_free_convst_trigger;
+	}
+
+	ret = clk_prepare_enable(adc->apb_pclk);
 	if (ret)
 		goto err_free_convst_trigger;
+
+	ret = clk_prepare_enable(adc->adc_ps_pl_clk);
+	if (ret)
+		goto err_apb_clk_disable_unprepare;
 
 	ret = request_irq(adc->irq, adc->ops->interrupt_handler, 0,
 			dev_name(&pdev->dev), indio_dev);
 	if (ret)
-		goto err_clk_disable_unprepare;
+		goto err_adc_ps_pl_clk_disable_unprepare;
 
 	ret = adc->ops->setup(pdev, indio_dev, adc->irq);
 	if (ret)
 		goto err_free_irq;
-
 
 	/* Reset PL-ADC*/
 	adc_write_adc_reg(adc, ADC_REG_CONFIG0, 1);
@@ -1056,11 +1044,10 @@ static int adc_probe(struct platform_device *pdev)
 
 	/* Set the iomux of channel 0 to 7 */
 	for (i = 0; i < indio_dev->num_channels; i++) {
-		if (i % 2 == 0) {
+		if (i % 2 == 0)
 			adc_update_adc_reg(adc, ADC_CHAN_SEL(i), ADC_CHANNEL_0_1_CHAN0_MASK, iomux[i]);
-		} else {
+		else
 			adc_update_adc_reg(adc, ADC_CHAN_SEL(i), ADC_CHANNEL_0_1_CHAN1_MASK, iomux[i] << 8);
-		}
 	}
 
 	/* Set the conversion channel */
@@ -1085,8 +1072,10 @@ static int adc_probe(struct platform_device *pdev)
 err_free_irq:
 	free_irq(adc->irq, indio_dev);
 	cancel_delayed_work_sync(&adc->fpsoc_unmask_work);
-err_clk_disable_unprepare:
-	clk_disable_unprepare(adc->clk);
+err_adc_ps_pl_clk_disable_unprepare:
+	clk_disable_unprepare(adc->adc_ps_pl_clk);
+err_apb_clk_disable_unprepare:
+	clk_disable_unprepare(adc->apb_pclk);
 err_free_convst_trigger:
 	if (adc->ops->flags & ADC_FLAGS_BUFFERED)
 		iio_trigger_free(adc->convst_trigger);
@@ -1110,7 +1099,8 @@ static int adc_remove(struct platform_device *pdev)
 	}
 	free_irq(adc->irq, indio_dev);
 	cancel_delayed_work_sync(&adc->fpsoc_unmask_work);
-	clk_disable_unprepare(adc->clk);
+	clk_disable_unprepare(adc->apb_pclk);
+	clk_disable_unprepare(adc->adc_ps_pl_clk);
 	kfree(adc->data);
 
 	return 0;
