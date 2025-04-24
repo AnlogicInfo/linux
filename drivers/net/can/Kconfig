@@ -198,6 +198,12 @@ config CAN_XILINXCAN
 	  Xilinx CAN driver. This driver supports both soft AXI CAN IP and
 	  Zynq CANPS IP.
 
+config CAN_ANLOGIC_AXI
+	tristate "Anlogic axi CAN"
+	depends on ARM64 || RISCV || COMPILE_TEST
+	help
+	    Anlogic axi CAN driver.
+
 config PCH_CAN
 	tristate "Intel EG20T PCH CAN controller"
 	depends on PCI && (X86_32 || COMPILE_TEST)

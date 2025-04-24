@@ -206,4 +206,37 @@
 		reg = <0x1 0xF0000000 0x0 0x00100000>;
 		interrupts = <GIC_SPI 97 IRQ_TYPE_LEVEL_HIGH>;
 	};
+
+	axi_canfd_clk: AXI_CANFD_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <30000000>;
+		clock-output-names = "AXI_CANFD_CLK";
+	};
+
+	axi_canfd_bus_clk: AXI_CANFD_BUS_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <132000000>;
+		clock-output-names = "AXI_CANFD_BUS_CLK";
+	};
+
+	axi_canfd0: canfd@80000000 {
+		compatible = "anlogic,axi-canfd";
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		reg = <0x0 0x80000000 0 0x10000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disable";
+
+		clocks = <&axi_canfd_clk>, <&axi_canfd_bus_clk>;
+		clock-names = "can_clk", "bus_clk";
+		bus-type = <0x0>;
+		tx-buffer-num = <0x20>;
+		rx-mode = <0x0>;
+		rx-enable-fifo_1 = <0x1>;
+		rx-fifo-0-depth = <0x40>;
+		rx-fifo-1-depth = <0x40>;
+		rx-buffer-num = <0x30>;
+	};
 };
