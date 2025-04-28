@@ -304,7 +304,7 @@ static void dwapb_irq_unmask(struct irq_data *d)
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 
 #ifdef CONFIG_ANLOGIC_SOC
-	val = dwapb_read(gpio, GPIO_INTMASK) & BIT(irqd_to_hwirq(d));
+	val = BIT(irqd_to_hwirq(d));
 	dwapb_write(gpio, GPIO_INTMASK_CLR_OFFSET, val);
 #else
 	val = dwapb_read(gpio, GPIO_INTMASK) & ~BIT(irqd_to_hwirq(d));
@@ -324,6 +324,9 @@ static void dwapb_irq_enable(struct irq_data *d)
 	val = dwapb_read(gpio, GPIO_INTEN);
 	val |= BIT(irqd_to_hwirq(d));
 	dwapb_write(gpio, GPIO_INTEN, val);
+#ifdef CONFIG_ANLOGIC_SOC
+	dwapb_write(gpio, GPIO_INTMASK_CLR_OFFSET, BIT(irqd_to_hwirq(d)));
+#endif
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
 }
 
@@ -337,7 +340,7 @@ static void dwapb_irq_disable(struct irq_data *d)
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 
 #ifdef CONFIG_ANLOGIC_SOC
-	val = dwapb_read(gpio, GPIO_INTEN) & BIT(irqd_to_hwirq(d));
+	val = BIT(irqd_to_hwirq(d));
 	dwapb_write(gpio, GPIO_INTEN_CLR_OFFSET, val);
 #else
 	val = dwapb_read(gpio, GPIO_INTEN);
