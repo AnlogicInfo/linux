@@ -1,0 +1,49 @@
+Anlogic axi-canfd  bindings
+
+Required properties:
+- compatible: should be "anlogic,axi-canfd"
+- reg: physical base address of the controller and length of memory mapped region.
+- interrupts: Interrupt specifier for the controllers interrupt.
+- clocks: frequency for logic of controller and frequency for canfd IO
+- bus-type: 0: AXI-lite, 1: APB
+- tx-buffer-num: numbers of tx mailboxs
+- rx-mode: 0 for sequential, 1 for mailbox
+- rx-enable-fifo_1: 0: rx fifo-1 is disabled, 1: enabled
+- rx-fifo-0-depth: depth of rx fifo-0
+- rx-fifo-1-depth: depth of rx fifo-1
+- rx-buffer-num: numbers of rx mailboxs
+
+Example:
+
+	axi_canfd_clk: AXI_CANFD_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <30000000>;
+		clock-output-names = "AXI_CANFD_CLK";
+	};
+
+	axi_canfd_bus_clk: AXI_CANFD_BUS_CLK {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <132000000>;
+		clock-output-names = "AXI_CANFD_BUS_CLK";
+	};
+
+	axi_canfd0: canfd@80000000 {
+		compatible = "anlogic,axi-canfd";
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		reg = <0x0 0x80000000 0 0x10000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "okay";
+
+		clocks = <&axi_canfd_clk>, <&axi_canfd_bus_clk>;
+		clock-names = "can_clk", "bus_clk";
+		bus-type = <0x0>;
+		tx-buffer-num = <0x20>;
+		rx-mode = <0x0>;
+		rx-enable-fifo_1 = <0x1>;
+		rx-fifo-0-depth = <0x40>;
+		rx-fifo-1-depth = <0x40>;
+		rx-buffer-num = <0x30>;
+	};
