@@ -174,6 +174,13 @@ config CAN_IPMS_CANFD
 	  IPMS CANFD driver. This driver is for Anlogic dr1x90 series FPSOC and
 	  supports both CAN2.0B and CANFD.
 
+config CAN_ANLOGIC_AXI
+	tristate "Anlogic axi CAN"
+	depends on ARM64 || RISCV || COMPILE_TEST
+	help
+	  Anlogic axi CAN driver.
+
+
 source "drivers/net/can/c_can/Kconfig"
 source "drivers/net/can/cc770/Kconfig"
 source "drivers/net/can/ifi_canfd/Kconfig"

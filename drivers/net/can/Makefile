@@ -28,6 +28,7 @@ obj-$(CONFIG_CAN_SJA1000)	+= sja1000/
 obj-$(CONFIG_CAN_SUN4I)		+= sun4i_can.o
 obj-$(CONFIG_CAN_TI_HECC)	+= ti_hecc.o
 obj-$(CONFIG_CAN_XILINXCAN)	+= xilinx_can.o
+obj-$(CONFIG_CAN_ANLOGIC_AXI)	+= anlogic_axi_canfd.o
 obj-$(CONFIG_PCH_CAN)		+= pch_can.o
 obj-$(CONFIG_CAN_IPMS_CANFD)+= ipms_canfd.o
 
