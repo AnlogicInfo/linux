@@ -1,0 +1,1 @@
+#define ANLOGIC_REL_VER		"SDK_2025_01"
