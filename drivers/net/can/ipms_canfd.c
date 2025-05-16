@@ -862,6 +862,8 @@ static enum can_state get_of_chip_status(struct net_device *ndev)
 		return CAN_STATE_ERROR_WARNING;
 	if (~(eir & CAN_FD_SET_EPASS_MASK))
 		return CAN_STATE_ERROR_ACTIVE;
+
+	return CAN_STATE_MAX;
 }
 
 /*Error Interrupt Routine*/
