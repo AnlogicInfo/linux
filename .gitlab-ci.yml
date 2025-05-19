@@ -20,7 +20,7 @@ variables:
 stages:          # List of stages for jobs, and their order of execution
   - checkpatch
   - build
-
+  - codecheck
 
 checkpatch_ci:
   stage: checkpatch
@@ -31,8 +31,8 @@ checkpatch_ci:
   script:
     - |
       errors=1;
-      scripts/checkpatch.pl --git $CI_MERGE_REQUEST_DIFF_BASE_SHA...HEAD || let errors++
-      for i in $(git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA...HEAD | grep -ie ".*\.dtsi\?\|.*\.[hc]"); do scripts/checkpatch.pl -f $i || let errors++; done;
+      scripts/checkpatch.pl --git $CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD || let errors++
+      for i in $(git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD | grep -ie ".*\.dtsi\?\|.*\.[hc]"); do scripts/checkpatch.pl -f $i || let errors++; done;
       [ $errors -eq 1 ]
   allow_failure: true
 
@@ -42,6 +42,47 @@ build_ci:
     - checkpatch
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  artifacts:
+    paths:
+      - build_aarch64/
+      - build_riscv64/
+    expire_in: 1 hour
   script:
-    - ./make_apu.sh
-    - ./make_rpu.sh
+    - |
+      export PATH=${toolchain_path}:$PATH
+      builddir=build_aarch64
+      mkdir -p ${builddir}
+      mkcmd="make ARCH=arm64 LLVM=1 LLVM_IAS=1 CROSS_COMPILE=aarch64-linux-gnu- O=`pwd`/${builddir}"
+      ${mkcmd} anlogic_dr1m90_defconfig
+      ${mkcmd} dtbs
+      ${mkcmd} -j8 Image
+    - |
+      export PATH=${toolchain_path}:$PATH
+      builddir=build_riscv64
+      mkdir -p ${builddir}
+      mkcmd="make ARCH=riscv LLVM=1 LLVM_IAS=1 O=`pwd`/${builddir}"
+      ${mkcmd} anlogic_dr1v90_defconfig
+      ${mkcmd} dtbs
+      ${mkcmd} -j8 Image
+
+codecheck_ci:
+  stage: codecheck
+  tags:
+    - checkpatch
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  script:
+    - |
+      export PATH=${toolchain_path}:$PATH
+      builddir=build_aarch64
+      chkargs=
+      for i in ${ct_extra_args}; do chkargs+=" --extra-arg=$i"; done
+      mkcmd="make ARCH=arm64 LLVM=1 LLVM_IAS=1 CROSS_COMPILE=aarch64-linux-gnu- O=`pwd`/${builddir}"
+      ${mkcmd} anlogic_dr1m90_defconfig
+      ${mkcmd} -j8 clang-tidy
+      for i in $(git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD | grep -ie ".*\.c"); do clang-tidy -p ${builddir}/ --quiet ${chkargs} --checks=linuxkernel-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling $i || echo $i check1 fail; ${mkcmd} C=2 CHECK=`pwd`/scripts/coccicheck ${i/%\.c/\.o} |& grep "${i}:" || echo $i check2 fail; done;
+      builddir=build_riscv64
+      mkcmd="make ARCH=riscv LLVM=1 LLVM_IAS=1 O=`pwd`/${builddir}"
+      ${mkcmd} anlogic_dr1v90_defconfig
+      ${mkcmd} -j8 clang-tidy
+      for i in $(git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD | grep -ie ".*\.c"); do clang-tidy -p ${builddir}/ --quiet ${chkargs} --checks=linuxkernel-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling $i || echo $i check1 fail; ${mkcmd} C=2 CHECK=`pwd`/scripts/coccicheck ${i/%\.c/\.o} |& grep "${i}:" || echo $i check2 fail; done;
