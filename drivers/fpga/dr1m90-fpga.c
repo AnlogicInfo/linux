@@ -121,7 +121,7 @@ static ssize_t plclk_reset_show(struct device *dev,
 	if (ret < 0)
 		return -EPERM;
 
-	return snprintf(buf, 64, "%d\n", ret);
+	return scnprintf(buf, 64, "%d\n", ret);
 }
 
 static ssize_t plclk_reset_store(struct device *dev,
