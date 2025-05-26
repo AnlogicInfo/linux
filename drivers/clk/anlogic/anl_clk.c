@@ -55,6 +55,9 @@ int anl_crp_probe(struct device *dev, void __iomem *reg,
 	int i = 0;
 	int ret;
 
+	if (!dev)
+		return -EINVAL;
+
 	crp = devres_alloc(anl_crp_release, sizeof(*crp), GFP_KERNEL);
 	if (!crp)
 		return -ENOMEM;

@@ -127,7 +127,7 @@ static void dragon_rproc_kick(struct rproc *rproc, int vqid)
 		rpirq = &local->rpirq[i];
 
 		/*Send swirq to firmware*/
-		if (rpirq->notifyid == vqid)
+		if ((int)rpirq->notifyid == vqid)
 			ipi_send_single(rpirq->irq[REMOTE_SGI], local->slave_id & SLVID_MASK);
 	}
 }

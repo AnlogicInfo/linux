@@ -381,7 +381,7 @@ ssize_t secreg_read(struct file *file, char __user *data,
 {
 	int err = 0;
 	int op;
-	uint64_t val64;
+	uint64_t val64 = 0;
 
 	mutex_lock(&top_mtx);
 
@@ -453,8 +453,8 @@ loff_t secreg_llseek(struct file *file, loff_t off, int whence)
 	}
 
 	mutex_lock(&top_mtx);
-	if (newpos < top_sec_reg_base ||
-	    newpos >= (top_sec_reg_base + top_sec_len))
+	if ((ulong)newpos < top_sec_reg_base ||
+	    (ulong)newpos >= (top_sec_reg_base + top_sec_len))
 		newpos = -EINVAL;
 	else
 		file->f_pos = newpos;
