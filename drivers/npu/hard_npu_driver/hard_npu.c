@@ -200,13 +200,13 @@ static int drv_hard_npu_probe(struct platform_device *pdev);
 static int drv_hard_npu_remove(struct platform_device *pdev);
 static const struct of_device_id hard_npu_match_table[] = {
 	{.compatible = "anlogic,hard_npu"},
+	{},
 };
 
 static struct platform_driver hard_npu_driver = {.probe = drv_hard_npu_probe,
 						 .remove = drv_hard_npu_remove,
 						 .driver = {
 							 .name = "hard_npu",
-							 .owner = THIS_MODULE,
 							 .of_match_table = hard_npu_match_table,
 						 }};
 
@@ -219,10 +219,8 @@ static int drv_hard_npu_probe(struct platform_device *pdev)
 
 	hard_npu_irq_num = platform_get_irq(pdev, 0);
 
-	if (hard_npu_irq_num < 0) {
-		dev_err(hardnpu_devp, "get irq resource failed in hard_npu device\n");
+	if (hard_npu_irq_num < 0)
 		return -EINVAL;
-	}
 
 	dev_info(hardnpu_devp, "find irq num: %d\n", hard_npu_irq_num);
 
@@ -239,7 +237,7 @@ static int drv_hard_npu_probe(struct platform_device *pdev)
 	s_hard_npu_register.phys_addr = mem_src_p->start;
 	dev_info(hardnpu_devp, "mem start addr: %lx\n", s_hard_npu_register.phys_addr);
 
-	s_hard_npu_register.size = (mem_src_p->end - mem_src_p->start + 1);
+	s_hard_npu_register.size = resource_size(mem_src_p);
 	dev_info(hardnpu_devp, "mem size: %d\n", s_hard_npu_register.size);
 
 	/* get the major number of the character device */
