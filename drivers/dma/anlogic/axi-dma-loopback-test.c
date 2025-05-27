@@ -92,7 +92,7 @@ static unsigned long long dmatest_persec(s64 runtime, unsigned int val)
 	}
 
 	per_sec *= val;
-	do_div(per_sec, runtime);
+	div64_s64(per_sec, runtime);
 	return per_sec;
 }
 
@@ -591,6 +591,7 @@ static int dmatest_add_slave_channels(struct dma_chan *tx_chan,
 	if (!rx_dtc) {
 		pr_warn("dmatest: No memory for rx %s\n",
 			dma_chan_name(rx_chan));
+		kfree(tx_dtc);
 		return -ENOMEM;
 	}
 

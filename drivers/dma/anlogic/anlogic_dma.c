@@ -392,7 +392,12 @@ static int anlogic_dma_chan_probe(struct anlogic_dma_device *al_dev,
 		dev_err(al_dev->dev, "missing anlogic,datawidth property\n");
 		return err;
 	}
+
 	width = value >> 3; /* Convert bits to bytes */
+	if (width > 128) {
+		dev_err(al_dev->dev, "unsupported datawidth, max is 1024 bits\n");
+		return err;
+	}
 
 	/* If data width is greater than 8 bytes, DRE is not in hw */
 	if (width > 8)
@@ -507,6 +512,10 @@ static int anlogic_dma_child_probe(struct anlogic_dma_device *al_dev,
 	u32 nr_channels = 1;
 
 	ret = of_property_read_u32(node, "dma-channels", &nr_channels);
+	if (ret < 0) {
+		dev_err(al_dev->dev, "missing dma-channels property\n");
+		return ret;
+	}
 
 	for (i = 0; i < nr_channels; i++) {
 		ret = anlogic_dma_chan_probe(al_dev, node);
@@ -581,7 +590,7 @@ static int anlogic_dma_probe(struct platform_device *pdev)
 		return err;
 	}
 	/* Retrieve the DMA engine properties from the device tree */
-	al_dev->max_buffer_len = GENMASK(ANLOGIC_DMA_MAX_TRANS_LEN_MAX - 1, 0);
+	al_dev->max_buffer_len = GENMASK(ANLOGIC_DMA_V2_MAX_TRANS_LEN_MAX - 1, 0);
 	al_dev->s2mm_chan_id = al_dev->dma_config->max_channels / 2;
 
 	if (al_dev->dma_config->dmatype == AL_DMA_TYPE_AXIDMA) {
