@@ -171,7 +171,7 @@ struct cma_buffer_pool_list_node_t {
 static int cma_mem_open(struct inode *inode, struct file *filp)
 {
 	spin_lock(&s_cma_lock);
-	struct cma_buffer_pool_list_node_t *list_node = (struct cma_buffer_pool_list_node_t *)
+	struct cma_buffer_pool_list_node_t *list_node =
 			kzalloc(sizeof(struct cma_buffer_pool_list_node_t), GFP_KERNEL);
 	list_node->filp = filp;
 	filp->private_data = list_node;
@@ -336,6 +336,7 @@ static long cma_ioctl(struct file *filp, u_int cmd, u_long arg)
 				_dev_err(cma_dev, "Phy_addr[0x%llx] be Managed Twice",
 						bf_node->buffer.phys_addr);
 				up(&s_cma_sem);
+				spin_unlock(&s_cma_lock);
 				return -EFAULT;
 			}
 			list_node->mem_sum += bf_node->buffer.size;

@@ -254,13 +254,13 @@ static int drv_soft_npu_probe(struct platform_device *pdev);
 static int drv_soft_npu_remove(struct platform_device *pdev);
 static const struct of_device_id soft_npu_match_table[] = {
 	{.compatible = "anlogic,soft_npu"},
+	{},
 };
 
 static struct platform_driver soft_npu_driver = {.probe = drv_soft_npu_probe,
 						 .remove = drv_soft_npu_remove,
 						 .driver = {
 							 .name = "soft_npu",
-							 .owner = THIS_MODULE,
 							 .of_match_table = soft_npu_match_table,
 						 }};
 
@@ -272,10 +272,8 @@ static int drv_soft_npu_probe(struct platform_device *pdev)
 
 	soft_nn_irq_num = platform_get_irq(pdev, 0);
 
-	if (soft_nn_irq_num < 0) {
-		dev_err(softnpu_devp, "get irq resource failed in soft_npu device\n");
+	if (soft_nn_irq_num < 0)
 		return -EINVAL;
-	}
 
 	dev_info(softnpu_devp, "find irq num: %d\n", soft_nn_irq_num);
 
@@ -294,7 +292,7 @@ static int drv_soft_npu_probe(struct platform_device *pdev)
 	s_soft_npu_register.phys_addr = mem_src_p->start;
 	dev_info(softnpu_devp, "mem start addr: %lx\n", s_soft_npu_register.phys_addr);
 
-	s_soft_npu_register.size = (mem_src_p->end - mem_src_p->start + 1);
+	s_soft_npu_register.size = resource_size(mem_src_p);
 	dev_info(softnpu_devp, "mem size: %u\n", s_soft_npu_register.size);
 
 	int err = 0;
