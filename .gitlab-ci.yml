@@ -71,4 +71,4 @@ codecheck_ci:
       mkcmd="make ARCH=arm64 LLVM=1 LLVM_IAS=1 CROSS_COMPILE=aarch64-linux-gnu- O=`pwd`/${builddir}"
       ${mkcmd} anlogic_dr1m90_defconfig
       ${mkcmd} -j8 clang-tidy
-      for i in $(git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD | grep -ie ".*\.c"); do clang-tidy -p ${builddir}/ --quiet ${chkargs} --checks=linuxkernel-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling $i || echo $i check1 fail; ${mkcmd} C=2 CHECK=`pwd`/scripts/coccicheck ${i/%\.c/\.o} |& grep "${i}:" || echo $i check2 fail; done;
+      for i in $(git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD | grep -ie ".*\.c"); do clang-tidy -p ${builddir}/ --quiet ${chkargs} --checks=linuxkernel-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling $i || echo $i check1 fail; { echo "${i}: begin checking"; ${mkcmd} C=2 CHECK=`pwd`/scripts/coccicheck ${i/%\.c/\.o} || echo "${i}: check2 success"; } |& grep "${i}:"; done;
