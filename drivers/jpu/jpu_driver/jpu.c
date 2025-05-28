@@ -818,7 +818,7 @@ static int jpu_probe(struct platform_device *pdev)
 			(unsigned long)devm_ioremap_resource(&pdev->dev, res);
 		s_jpu_register_need_release = 0;
 		// s_jpu_register.virt_addr = 0;
-		s_jpu_register.size = res->end - res->start;
+		s_jpu_register.size = resource_size(res);
 		DPRINTK("jpu base address get from platform driver\n");
 		DPRINTK("\tphysical base addr=0x%lx, virtual base=0x%lx\n",
 			s_jpu_register.phys_addr, s_jpu_register.virt_addr);
@@ -1005,11 +1005,11 @@ static int jpu_resume(struct platform_device *pdev)
 #ifdef JPU_SUPPORT_PLATFORM_DRIVER_REGISTER
 static const struct of_device_id jpu_match_table[] = {
 	{ .compatible = "anlogic,jpu" },
+	{},
 };
 static struct platform_driver jpu_driver = {
 	.driver = {
 			.name = JPU_PLATFORM_DEVICE_NAME,
-			.owner = THIS_MODULE,
 			.of_match_table = jpu_match_table,
 		},
 	.probe = jpu_probe,
