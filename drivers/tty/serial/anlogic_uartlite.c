@@ -353,7 +353,7 @@ static int pluart_request_port(struct uart_port *port)
 	}
 
 	pdata->reg_ops = &uartlite_be;
-	ret = uart_in32(PLUART_CONTROL, port);
+	uart_in32(PLUART_CONTROL, port);
 	uart_out32(PLUART_CONTROL_RST_TX, PLUART_CONTROL, port);
 	ret = uart_in32(PLUART_STATUS, port);
 
