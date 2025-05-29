@@ -414,7 +414,6 @@ static int al_qspi_exec_mem_op(struct spi_mem *mem,
 	int ret;
 	u16 clk_div;
 	u32 speed_hz;
-	unsigned int len;
 
 	/*
 	 * Anlogic SPI EEPROM-read mode is required only for the SPI memory Data-IN
@@ -458,6 +457,9 @@ static int al_qspi_exec_mem_op(struct spi_mem *mem,
 			  QSPI_CTRLR0_DFS_SIZE, qspi->info.dfs - 1);
 
 	qspi->info.freq = clamp(mem->spi->max_speed_hz, 0U, qspi->max_mem_freq);
+
+	if (qspi->info.freq == 0)
+		return -EINVAL;
 	clk_div = (DIV_ROUND_UP(qspi->max_freq, qspi->info.freq) + 1) & 0xfffe;
 	speed_hz = qspi->max_freq / clk_div;
 
@@ -479,10 +481,6 @@ static int al_qspi_exec_mem_op(struct spi_mem *mem,
 	}
 	al_reg32_set_bits(qspi, AL_QSPI_CTRLR0_OFFSET, QSPI_CTRLR0_TMOD_SHIFT,
 			  QSPI_CTRLR0_TMOD_SIZE, qspi->info.tmod);
-	if (al_qspi_modes[mode].config_frame_format == SPI_STANDARD_FORMAT)
-		len = min(qspi->fifo_len / 2, op->data.nbytes + op->cmd.nbytes + op->addr.nbytes);
-	else
-		len = min(qspi->fifo_len / 2, op->data.nbytes * 8 / qspi->info.dfs + 2);
 
 	al_reg32_set_bits(qspi, AL_QSPI_TXFTLR_OFFSET, QSPI_TXFTLR_TXFTHR_SHIFT,
 			  QSPI_TXFTLR_TXFTHR_SIZE, 0);
@@ -545,7 +543,7 @@ static int al_qspi_exec_mem_op(struct spi_mem *mem,
 	}
 
 	al_qspi_stop_mem_op(qspi, mem->spi);
-	return 0;
+	return ret;
 }
 
 static irqreturn_t al_qspi_transfer_handler(struct al_qspi *qspi)

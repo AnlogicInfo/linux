@@ -520,7 +520,7 @@ static int dw_spi_dma_transfer_one(struct dw_spi *dws,
 	struct scatterlist *tx_sg = NULL, *rx_sg = NULL, tx_tmp, rx_tmp;
 	unsigned int tx_len = 0, rx_len = 0;
 	unsigned int base, len;
-	int ret;
+	int ret = 0;
 
 	sg_init_table(&tx_tmp, 1);
 	sg_init_table(&rx_tmp, 1);
