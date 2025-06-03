@@ -244,7 +244,7 @@ static int anlogic_vdmatest_slave_func(void *data)
 	unsigned int failed_tests = 0, total_tests = 0;
 	dma_cookie_t tx_cookie = 0, rx_cookie = 0;
 	enum dma_status status;
-	enum dma_ctrl_flags flags;
+	unsigned long flags;
 	int ret = -ENOMEM, i;
 	struct anlogic_vdma_config config;
 
@@ -521,8 +521,7 @@ static int anlogic_vdmatest_add_slave_threads(struct anlogic_vdmatest_chan *tx_d
 	thread = kzalloc(sizeof(struct anlogic_vdmatest_slave_thread),
 			GFP_KERNEL);
 	if (!thread)
-		pr_warn("anlogic_vdmatest: No memory for slave thread %s-%s\n",
-			   dma_chan_name(tx_chan), dma_chan_name(rx_chan));
+		return -ENOMEM;
 
 	thread->tx_chan = tx_chan;
 	thread->rx_chan = rx_chan;
@@ -535,10 +534,12 @@ static int anlogic_vdmatest_add_slave_threads(struct anlogic_vdmatest_chan *tx_d
 	thread->task = kthread_run(anlogic_vdmatest_slave_func, thread, "%s-%s",
 		dma_chan_name(tx_chan), dma_chan_name(rx_chan));
 	if (IS_ERR(thread->task)) {
+		int err = PTR_ERR(thread->task);
+
 		pr_warn("anlogic_vdmatest: Failed to run thread %s-%s\n",
 				dma_chan_name(tx_chan), dma_chan_name(rx_chan));
 		kfree(thread);
-		return PTR_ERR(thread->task);
+		return err;
 	}
 
 	get_task_struct(thread->task);
@@ -559,8 +560,10 @@ static int anlogic_vdmatest_add_slave_channels(struct dma_chan *tx_chan,
 		return -ENOMEM;
 
 	rx_dtc = kmalloc(sizeof(struct anlogic_vdmatest_chan), GFP_KERNEL);
-	if (!rx_dtc)
+	if (!rx_dtc) {
+		kfree(tx_dtc);
 		return -ENOMEM;
+	}
 
 	tx_dtc->chan = tx_chan;
 	rx_dtc->chan = rx_chan;

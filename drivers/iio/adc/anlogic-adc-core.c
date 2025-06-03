@@ -555,6 +555,8 @@ static int adc_postdisable(struct iio_dev *indio_dev)
 
 	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_REG_ADC_SOC_MASK,
 		 0 << ADC_CONFIG3_REG_SOC_SHIFT);
+	if (ret)
+		return ret;
 
 	ret = adc_update_adc_reg(adc, ADC_REG_CONFIG3, ADC_CONFIG3_MODE_SEL_MASK,
 		ADC_CONFIG3_CONV_MODE_SINGELE_PASS);
@@ -724,8 +726,14 @@ static int adc_write_raw(struct iio_dev *indio_dev,
 }
 
 static const struct of_device_id adc_of_match_table[] = {
-	{ .compatible = "anlogic,fpsoc-adc-1.00.a", (void *)&adc_fpsoc_ops },
-	/*{ .compatible = "anlogic,axi-adc-1.00.a", (void *)&adc_axi_ops },*/
+	{
+		.compatible = "anlogic,fpsoc-adc-1.00.a",
+		.data = (void *)&adc_fpsoc_ops
+	}, {
+		.compatible = "anlogic,axi-adc-1.00.a",
+		.data = (void *)&adc_axi_ops
+	},
+	{ },
 };
 MODULE_DEVICE_TABLE(of, adc_of_match_table);
 
@@ -890,8 +898,11 @@ static int adc_parse_dt_chan(struct iio_dev *indio_dev, struct device_node *np,
 			chan->address = ADC_REG_VAUX(reg);
 
 			ret = of_property_read_u32(child, "iomux", iomux);
-			if (ret < 0)
+			if (ret < 0) {
+				of_node_put(child);
+				of_node_put(chan_node);
 				return ret;
+			}
 
 			num_channels++;
 			chan++;
@@ -1038,8 +1049,12 @@ static int adc_probe(struct platform_device *pdev)
 	}
 
 	ret = adc_write_adc_reg(adc, ADC_REG_CONFIG0, config0);
+	if (ret)
+		return ret;
 
 	ret = adc_write_adc_reg(adc, ADC_REG_CONFIG1, 0xf0f);
+	if (ret)
+		return ret;
 
 	/* Set the iomux of channel 0 to 7 */
 	for (i = 0; i < indio_dev->num_channels; i++) {

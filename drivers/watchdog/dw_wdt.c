@@ -473,7 +473,7 @@ static void dw_wdt_handle_tops(struct dw_wdt *dw_wdt, const u32 *tops)
 		tout.top_val = val;
 		tout.sec = tops[val] / dw_wdt->rate;
 		msec = (u64)tops[val] * MSEC_PER_SEC;
-		do_div(msec, dw_wdt->rate);
+		div64_ul(msec, dw_wdt->rate);
 		tout.msec = msec - ((u64)tout.sec * MSEC_PER_SEC);
 
 		/*
