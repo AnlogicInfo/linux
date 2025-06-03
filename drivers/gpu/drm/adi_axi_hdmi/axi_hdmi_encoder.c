@@ -42,8 +42,8 @@
 #define AXI_HDMI_REG_STATUS		0x05c
 #define AXI_HDMI_REG_VDMA_STATUS	0x060
 #define AXI_HDMI_REG_TPM_STATUS		0x064
-#define AXI_HDMI_REG_CLIPP_MAX  	0x068
-#define AXI_HDMI_REG_CLIPP_MIN  	0x06c
+#define AXI_HDMI_REG_CLIPP_MAX		0x068
+#define AXI_HDMI_REG_CLIPP_MIN		0x06c
 #define AXI_HDMI_REG_HTIMING1		0x400
 #define AXI_HDMI_REG_HTIMING2		0x404
 #define AXI_HDMI_REG_HTIMING3		0x408
@@ -101,6 +101,7 @@ static inline struct axi_hdmi_encoder *to_axi_hdmi_encoder(struct drm_encoder *e
 static inline struct drm_encoder *connector_to_encoder(struct drm_connector *connector)
 {
 	struct axi_hdmi_encoder *enc = container_of(connector, struct axi_hdmi_encoder, connector);
+
 	return &enc->encoder.base;
 }
 
@@ -116,6 +117,7 @@ static void axi_hdmi_set_color_range(struct axi_hdmi_private *private,
 static int axi_hdmi_debugfs_cp_get(void *data, u64 *val)
 {
 	struct axi_hdmi_private *private = data;
+
 	*val = readl(private->base + AXI_HDMI_REG_COLORPATTERN);
 	return 0;
 }
@@ -146,7 +148,7 @@ static ssize_t axi_hdmi_read_mode(struct file *file, char __user *userbuf,
 	const char *fmt;
 	size_t len = 0;
 	char buf[50];
-	int i;
+	u32 i;
 
 	src = readl(private->base + AXI_HDMI_REG_SOURCE_SEL);
 
@@ -221,7 +223,8 @@ static void axi_hdmi_debugfs_init(struct axi_hdmi_encoder *encoder)
 	encoder->regset.regs = axi_hdmi_encoder_debugfs_regs;
 	encoder->regset.nregs = ARRAY_SIZE(axi_hdmi_encoder_debugfs_regs);
 
-	debugfs_create_regset32(dev_name(encoder->encoder.base.dev->dev), S_IRUGO, NULL, &encoder->regset);
+	debugfs_create_regset32(dev_name(encoder->encoder.base.dev->dev), 0444,
+				NULL, &encoder->regset);
 	debugfs_create_file("color_pattern", 0600, NULL, priv, &axi_hdmi_cp_fops);
 	debugfs_create_file("mode", 0600, NULL, priv, &axi_hdmi_mode_fops);
 }
@@ -336,8 +339,8 @@ struct drm_encoder *axi_hdmi_encoder_create(struct drm_device *dev)
 		 */
 		ret = drm_bridge_attach(encoder, bridge, NULL, 0);
 		if (ret) {
-		    drm_encoder_cleanup(encoder);
-		    return NULL;
+			drm_encoder_cleanup(encoder);
+			return NULL;
 		}
 	}
 

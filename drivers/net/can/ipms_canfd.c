@@ -39,26 +39,14 @@ MODULE_DESCRIPTION("IPMS can controller driver");
 
 #define DRIVER_NAME "ipms_canfd"
 
-// enable debug output
-static int debug_on_off;
-module_param(debug_on_off, int, 0644);
-MODULE_VERSION("1.1");
-
 /*ipms canfd debug information*/
-#define DEV_PRINT(fmt, args...) printk(KERN_DEBUG "IPMS_CANFD:CAN DEVICE is %s " fmt, ndev->name,  ## args);
+#define DEV_PRINT(fmt, args...) netdev_dbg(ndev, "IPMS_CANFD: " fmt, ## args)
 
 #undef PDEBUG
 #define IPMS_CANFD_DEBUG
 #ifdef IPMS_CANFD_DEBUG
-#ifdef	__KERNEL__
-#define PDEBUG(fmt, args...)	do { \
-					if (debug_on_off) \
-						printk(KERN_DEBUG "IPMS_CANFD:" \
-							fmt, ## args); \
-				} while (0)
-#else
-#define PDEBUG(fmt, args...)	fprintf(stderr, fmt, ## args)
-#endif
+#define PDEBUG(fmt, args...) \
+	pr_debug("IPMS_CANFD: " fmt, ##args)
 #else
 #define PDEBUG(fmt, args...)
 #endif
@@ -74,6 +62,7 @@ enum canfd_device_reg {
 	CANFD_RUBF_ID_OFFSET		=	0x00,
 	CANFD_RBUF_CTL_OFFSET		=	0x04,
 	CANFD_RBUF_DATA_OFFSET		=	0x08,
+	CANFD_RBUF_DATA1_OFFSET		=	0x0C,
 	/*Transmit Buffer Registers 0x50-0x97(not finished)*/
 	CANFD_TBUF_OFFSET		=	0x50,
 	CANFD_TBUF_ID_OFFSET		=	0x50,
@@ -452,11 +441,11 @@ static int can_rx(struct net_device *ndev)
 		dlc = canfd_ioread8(priv->reg_base + CANFD_RBUF_CTL_OFFSET) & CAN_FD_SET_DLC_MASK;
 
 		skb	= alloc_can_skb(ndev, (struct can_frame **)&cf);
-
 		if (!skb) {
 			stats->rx_dropped++;
 			return 0;
 		}
+
 		/*read  CAN data length*/
 		cf->len = can_cc_dlc2len(dlc);
 		PDEBUG("DLC in %s is %02x", __func__, dlc);
@@ -480,7 +469,7 @@ static int can_rx(struct net_device *ndev)
 		/* Data*/
 		if (!(control & CAN_FD_SET_RTR_MASK)) {
 			*((u32 *)(cf->data + 0)) = priv->read_reg(priv, CANFD_RBUF_DATA_OFFSET);
-			*((u32 *)(cf->data + 4)) = priv->read_reg(priv, CANFD_RBUF_DATA_OFFSET + 4);
+			*((u32 *)(cf->data + 4)) = priv->read_reg(priv, CANFD_RBUF_DATA1_OFFSET);
 		}
 
 		/*point to next packet and will save to buffer*/
@@ -614,15 +603,14 @@ static int canfd_rx_poll(struct napi_struct *napi, int quota)
 	/*clear receive interrupt and deal with all the received frames*/
 	PDEBUG("CANFD RX POLL");
 	while ((rx_status & CAN_FD_RSTAT_NOT_EMPTY_MASK) && (work_done < quota)) {
-		(control & CAN_FD_SET_EDL_MASK) ? (work_done += canfd_rx(ndev)) :
-		(work_done += can_rx(ndev));
+		work_done += (control & CAN_FD_SET_EDL_MASK) ? canfd_rx(ndev) : can_rx(ndev);
 		rx_status = canfd_ioread8(priv->reg_base + CANFD_RCTRL_OFFSET);
 		PDEBUG("rx-status is 0x%02x\n", rx_status);
 		PDEBUG("rx-status is 0x%08x\n", ioread32(priv->reg_base + CANFD_CFG_STAT_OFFSET));
 	}
 
 	napi_complete(napi);
-	canfd_reigister_set_bit(priv, CANFD_RTIE_OFFSET,	CAN_FD_SET_RIE_MASK);
+	canfd_reigister_set_bit(priv, CANFD_RTIE_OFFSET, CAN_FD_SET_RIE_MASK);
 
 	return work_done;
 }
@@ -755,8 +743,8 @@ static int canfd_driver_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 
 				PDEBUG("TCMD is 0x%02x after writing data into resiger\n",
 				       canfd_ioread8(priv->reg_base + CANFD_TCMD_OFFSET));
-				PDEBUG("Interrupt flag register is 0x%02x \
-				       after writing data into resiger\n",
+				PDEBUG("Interrupt flag register is 0x%02x " \
+				       "after writing data into resiger\n",
 				       canfd_ioread8(priv->reg_base + CANFD_RTIF_OFFSET));
 			} else {
 				/* Transmit can 2.0 frame under canfd mode*/
@@ -780,21 +768,21 @@ static int canfd_driver_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 				} else {
 					ctl &= CAN_FD_OFF_RTR_MASK;
 					addr_off = CANFD_TBUF_DATA_OFFSET;
-					PDEBUG("CAN original DATA 0x%08x\n", \
+					PDEBUG("CAN original DATA 0x%08x\n",
 					       priv->read_reg(priv, addr_off));
 					priv->write_reg(priv, addr_off, *((u32 *)(cf->data + 0)));
-					PDEBUG("CAN updated DATA 0x%08x\n", \
+					PDEBUG("CAN updated DATA 0x%08x\n",
 					       priv->read_reg(priv, addr_off));
-					PDEBUG("CAN original DATA 0x%08x\n", \
+					PDEBUG("CAN original DATA 0x%08x\n",
 					       priv->read_reg(priv, addr_off + 4));
 					priv->write_reg(priv, addr_off + 4,
 							*((u32 *)(cf->data + 4)));
-					PDEBUG("CAN updated DATA 0x%08x\n", \
+					PDEBUG("CAN updated DATA 0x%08x\n",
 					       priv->read_reg(priv, addr_off + 4));
-					PDEBUG("TCMD is 0x%02x after writing data into resiger\n", \
+					PDEBUG("TCMD is 0x%02x after writing data into resiger\n",
 					       canfd_ioread8(priv->reg_base + CANFD_TCMD_OFFSET));
-					PDEBUG("Interrupt flag register is 0x%02x \
-					       after writing data into resiger\n", \
+					PDEBUG("Interrupt flag register is 0x%02x " \
+					       "after writing data into resiger\n",
 					       canfd_ioread8(priv->reg_base + CANFD_RTIF_OFFSET));
 				}
 			}
@@ -805,7 +793,7 @@ static int canfd_driver_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 			PDEBUG("Control 0x%08x\n", priv->read_reg(priv, CANFD_TBUF_CTL_OFFSET));
 
 			addr_off = CANFD_TBUF_DATA_OFFSET;
-			PDEBUG("TCMD is 0x%02x before set TPE=1\n", \
+			PDEBUG("TCMD is 0x%02x before set TPE=1\n",
 			       canfd_ioread8(priv->reg_base + CANFD_TCMD_OFFSET));
 
 		} else {
@@ -838,25 +826,25 @@ static int canfd_driver_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 				priv->write_reg(priv, CANFD_TBUF_CTL_OFFSET, ctl);
 
 				PDEBUG("ID 0x%08x\n", priv->read_reg(priv, CANFD_TBUF_ID_OFFSET));
-				PDEBUG("Control 0x%08x\n", \
+				PDEBUG("Control 0x%08x\n",
 				       priv->read_reg(priv, CANFD_TBUF_CTL_OFFSET));
 
 				addr_off = CANFD_TBUF_DATA_OFFSET;
-				PDEBUG("CAN original DATA 0x%08x\n", \
+				PDEBUG("CAN original DATA 0x%08x\n",
 				       priv->read_reg(priv, addr_off));
 				priv->write_reg(priv, addr_off, *((u32 *)(cf->data + 0)));
-				PDEBUG("CAN updated DATA 0x%08x\n", \
+				PDEBUG("CAN updated DATA 0x%08x\n",
 				       priv->read_reg(priv, addr_off));
-				PDEBUG("CAN original DATA 0x%08x\n", \
+				PDEBUG("CAN original DATA 0x%08x\n",
 				       priv->read_reg(priv, addr_off + 4));
 				priv->write_reg(priv, addr_off + 4, *((u32 *)(cf->data + 4)));
-				PDEBUG("CAN updated DATA 0x%08x\n", \
+				PDEBUG("CAN updated DATA 0x%08x\n",
 				       priv->read_reg(priv, addr_off + 4));
 
-				PDEBUG("TCMD is 0x%02x after writing data into resiger\n", \
+				PDEBUG("TCMD is 0x%02x after writing data into resiger\n",
 				       canfd_ioread8(priv->reg_base + CANFD_TCMD_OFFSET));
-				PDEBUG("Interrupt flag register is 0x%02x \
-				       after writing data into resiger\n",
+				PDEBUG("Interrupt flag register is 0x%02x " \
+				       "after writing data into resiger\n",
 				       canfd_ioread8(priv->reg_base + CANFD_RTIF_OFFSET));
 			}
 		}
@@ -1206,12 +1194,12 @@ static int canfd_driver_open(struct net_device *ndev)
 	struct can_bittiming *bt = &priv->can.bittiming;
 	struct can_bittiming *dbt = &priv->can.data_bittiming;
 
-	PDEBUG("slow bit rate setting is phase_seg1 0x%08x phase_seg2 0x%08x \
-			sjw 0x%08x prescaler 0x%02x prop_seg is 0x%02x\n",
-			bt->phase_seg1, bt->phase_seg2, bt->sjw, bt->brp, bt->prop_seg);
-	PDEBUG("fast bit rate setting is phase_seg1 0x%08x phase_seg2 0x%08x \
-			sjw 0x%08x prescaler 0x%02x prop_seg is 0x%02x\n",
-			dbt->phase_seg1, dbt->phase_seg2, dbt->sjw, dbt->brp, dbt->prop_seg);
+	PDEBUG("slow bit rate setting is phase_seg1 0x%08x phase_seg2 0x%08x " \
+	       "sjw 0x%08x prescaler 0x%02x prop_seg is 0x%02x\n",
+	       bt->phase_seg1, bt->phase_seg2, bt->sjw, bt->brp, bt->prop_seg);
+	PDEBUG("fast bit rate setting is phase_seg1 0x%08x phase_seg2 0x%08x " \
+	       "sjw 0x%08x prescaler 0x%02x prop_seg is 0x%02x\n",
+	       dbt->phase_seg1, dbt->phase_seg2, dbt->sjw, dbt->brp, dbt->prop_seg);
 
 	/*request irq*/
 	ret = request_irq(ndev->irq, canfd_interrupt, priv->irq_flags, ndev->name, ndev);
@@ -1305,10 +1293,8 @@ static int canfd_driver_probe(struct platform_device *pdev)
 	 * value is the virtual address in mem.
 	 */
 	addr =	devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(addr)) {
-		ret = PTR_ERR(addr);
-		goto err;
-	}
+	if (IS_ERR(addr))
+		return PTR_ERR(addr);
 
 	/* Create a CAN device instance */
 	tx_max = TX_MAX;

@@ -80,8 +80,8 @@ static int axi_hdmi_init(struct drm_driver *ddrv, struct device *dev)
 
 	encoder = axi_hdmi_encoder_create(ddev);
 	if (IS_ERR(encoder)) {
-	    ret = PTR_ERR(encoder);
-	    goto err_crtc;
+		ret = PTR_ERR(encoder);
+		goto err_crtc;
 	}
 
 	drm_mode_config_reset(ddev);
@@ -146,7 +146,6 @@ MODULE_DEVICE_TABLE(of, adv7511_encoder_of_match);
 
 static int axi_hdmi_platform_probe(struct platform_device *pdev)
 {
-	const struct of_device_id *id;
 	struct device_node *np = pdev->dev.of_node;
 	struct axi_hdmi_private *private;
 	struct device_node *slave_node, *ep_node;
@@ -164,9 +163,8 @@ static int axi_hdmi_platform_probe(struct platform_device *pdev)
 		return PTR_ERR(private->base);
 
 	private->hdmi_clock = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(private->hdmi_clock)) {
+	if (IS_ERR(private->hdmi_clock))
 		return -EPROBE_DEFER;
-	}
 
 	ep_node = of_graph_get_next_endpoint(np, NULL);
 	if (ep_node) {
@@ -189,8 +187,6 @@ static int axi_hdmi_platform_probe(struct platform_device *pdev)
 		return -EINVAL;
 
 	private->is_rgb = of_property_read_bool(np, "adi,is-rgb");
-
-	id = of_match_node(adv7511_encoder_of_match, np);
 
 	private->encoder_slave = of_find_i2c_device_by_node(slave_node);
 	of_node_put(slave_node);

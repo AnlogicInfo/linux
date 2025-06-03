@@ -57,7 +57,7 @@ static int gtp_init_ext_watchdog(struct i2c_client *client);
 /*
  * return: 2 - ok, < 0 - i2c transfer error
  */
-int gtp_i2c_read(struct i2c_client *client, u8 *buf, int len)
+int gtp_i2c_read(struct i2c_client *client, u8 *buf, u32 len)
 {
 	unsigned int transfer_length = 0;
 	unsigned int pos = 0, address = (buf[0] << 8) + buf[1];
@@ -433,7 +433,7 @@ exit_get_point:
 static void gtp_type_a_report(struct goodix_ts_data *ts, u8 touch_num,
 			      struct goodix_point_t *points)
 {
-	int i;
+	u32 i;
 	u16 cur_touch = 0;
 	static u16 pre_touch;
 	static u8 pre_pen_id;
@@ -640,6 +640,7 @@ static enum hrtimer_restart gtp_timer_handler(struct hrtimer *timer)
 static irqreturn_t gtp_irq_handler(int irq, void *dev_id)
 {
 	struct goodix_ts_data *ts = dev_id;
+
 	gtp_work_func(ts);
 	return IRQ_HANDLED;
 }
@@ -652,23 +653,23 @@ void gtp_int_output(struct goodix_ts_data *ts, int level)
 	if (level == 0) {
 		if (ts->pinctrl.pinctrl) {
 			// pinctrl_select_state(ts->pinctrl.pinctrl,
-					    //  ts->pinctrl.int_out_low);
-		}
-		else if (gpio_is_valid(ts->pdata->irq_gpio))
+			//  ts->pinctrl.int_out_low);
+		} else if (gpio_is_valid(ts->pdata->irq_gpio)) {
 			gpio_direction_output(ts->pdata->irq_gpio, 0);
-		else
+		} else {
 			dev_err(&ts->client->dev,
 				"Failed set int pin output low\n");
+		}
 	} else {
 		if (ts->pinctrl.pinctrl) {
 			// pinctrl_select_state(ts->pinctrl.pinctrl,
 					    //  ts->pinctrl.int_out_high);
-		}
-		else if (gpio_is_valid(ts->pdata->irq_gpio))
+		} else if (gpio_is_valid(ts->pdata->irq_gpio)) {
 			gpio_direction_output(ts->pdata->irq_gpio, 1);
-		else
+		} else {
 			dev_err(&ts->client->dev,
 				"Failed set int pin output high\n");
+		}
 	}
 }
 
@@ -681,7 +682,7 @@ void gtp_int_sync(struct goodix_ts_data *ts, s32 ms)
 		gtp_int_output(ts, 0);
 		msleep(ms);
 		// pinctrl_select_state(ts->pinctrl.pinctrl,
-		// 		     ts->pinctrl.int_input);
+		//			ts->pinctrl.int_input);
 	} else if (gpio_is_valid(ts->pdata->irq_gpio)) {
 		gpio_direction_output(ts->pdata->irq_gpio, 0);
 		msleep(ms);
@@ -865,8 +866,8 @@ static int gtp_find_valid_cfg_data(struct goodix_ts_data *ts)
 
 	/* read sensor id */
 	ret = gtp_i2c_read_dbl_check(ts->client, GTP_REG_SENSOR_ID,
-				     &sensor_id, 1);
-	if (SUCCESS != ret || sensor_id >= 0x06) {
+					&sensor_id, 1);
+	if (ret != SUCCESS || sensor_id >= 0x06) {
 		dev_err(&ts->client->dev,
 			"Failed get valid sensor_id(0x%02X), No Config Sent\n",
 			sensor_id);
@@ -950,7 +951,7 @@ static s32 gtp_init_panel(struct goodix_ts_data *ts)
 
 	/* check firmware */
 	ret = gtp_i2c_read_dbl_check(ts->client, 0x41E4, opr_buf, 1);
-	if (SUCCESS == ret) {
+	if (ret == SUCCESS) {
 		if (opr_buf[0] != 0xBE) {
 			set_bit(FW_ERROR, &ts->flags);
 			dev_err(&ts->client->dev,
@@ -1879,16 +1880,16 @@ static int gtp_power_init(struct goodix_ts_data *ts)
 
 	ts->vdd_ana = regulator_get(&ts->client->dev, "vdd_ana");
 	if (IS_ERR(ts->vdd_ana)) {
-		ts->vdd_ana = NULL;
 		ret = PTR_ERR(ts->vdd_ana);
+		ts->vdd_ana = NULL;
 		dev_info(&ts->client->dev,
 			 "Regulator get failed vdd ret=%d\n", ret);
 	}
 
 	ts->vcc_i2c = regulator_get(&ts->client->dev, "vcc_i2c");
 	if (IS_ERR(ts->vcc_i2c)) {
-		ts->vcc_i2c = NULL;
 		ret = PTR_ERR(ts->vcc_i2c);
+		ts->vcc_i2c = NULL;
 		dev_info(&ts->client->dev,
 			 "Regulator get failed vcc_i2c ret=%d\n", ret);
 	}
@@ -1914,8 +1915,6 @@ static void gtp_shutdown(struct i2c_client *client)
 
 	gtp_work_control_enable(data, false);
 	gtp_power_off(data);
-
-	return;
 }
 
 static int gtp_probe(struct i2c_client *client, const struct i2c_device_id *id)
