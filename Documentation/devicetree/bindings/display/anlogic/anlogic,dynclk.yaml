@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/display/anlogic/anlogic,dynclk.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Anlogic dynamic clock
+
+description: |
+  AXI PLL IP can dynamic generate different frequency clock. Dynclk driver should
+  work with AXI PLL IP.
+
+maintainers:
+  - Guanghao.zhang <guanghao.zhang@anlogic.com>
+
+properties:
+  compatible:
+    const: anlogic,dynclk
+
+  reg:
+    maxItems: 1
+  reg-names:
+    items:
+      - const: base address
+
+required:
+  - compatible
+  - reg
+  - refclk
+  - expclk
+
+additionalProperties: false
+
+examples:
+  - |
+    axi_dynclk@80300000 {
+        compatible = "anlogic,dynclk";
+        reg = <0x0 0x80300000 0x0 0x10000>;
+        refclk = <50000000>;
+        expclk = <40000000>;
+    };
+...

@@ -1,0 +1,115 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/display/anlogic/anlogic,vdmafb.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Anlogic framebuffer driver
+
+description: |
+  Anlogic vdma framebuffer driver. Should work with vdma, vtc and dynclk.
+
+maintainers:
+  - Guanghao.zhang <guanghao.zhang@anlogic.com>
+
+properties:
+  compatible:
+    const: anlogic,vdmafb
+
+  reg:
+    maxItems: 1
+  reg-names:
+    items:
+      - const: base address
+
+  dmas:
+    items:
+      - description: Video output
+
+  dma-names:
+    items:
+      - const: vdma
+
+required:
+  - compatible
+  - reg
+  - dmas
+  - dma-names
+  - pixel-format
+  - display-timings
+
+additionalProperties: false
+
+examples:
+  - |
+    vdmafb@80400000 {
+        compatible = "anlogic,vdmafb";
+        reg = <0x0 0x80400000 0x0 0x10000>;
+        dmas = <&axi_vdma 0>;
+        dma-names = "vdma";
+        pixel-format = "RGB888";
+        display-timings {
+            native-mode = <&timing_800x600>;
+            timing_800x480: timing0 {
+                clock-frequency = <25000000>;
+                hactive = <800>;
+                vactive = <480>;
+                hback-porch = <30>;
+                hfront-porch = <80>;
+                hsync-len = <10>;
+                vback-porch = <10>;
+                vfront-porch = <25>;
+                vsync-len = <5>;
+                hsync-active = <0>;
+                vsync-active = <0>;
+                de-active = <1>;
+                pixelclk-active = <0>;
+            };
+            timing_1920x1080: timing1 {
+                clock-frequency = <150000000>;
+                hactive = <1920>;
+                vactive = <1080>;
+                hback-porch = <280>;
+                hfront-porch = <88>;
+                hsync-len = <44>;
+                vback-porch = <35>;
+                vfront-porch = <4>;
+                vsync-len = <5>;
+                hsync-active = <0>;
+                vsync-active = <0>;
+                de-active = <1>;
+                pixelclk-active = <0>;
+            };
+            timing_1280x720: timing2 {
+                clock-frequency = <75000000>;
+                hactive = <1280>;
+                vactive = <720>;
+                hback-porch = <220>;
+                hfront-porch = <110>;
+                hsync-len = <40>;
+                vback-porch = <20>;
+                vfront-porch = <5>;
+                vsync-len = <5>;
+                hsync-active = <0>;
+                vsync-active = <0>;
+                de-active = <1>;
+                pixelclk-active = <0>;
+            };
+            timing_800x600: timing3 {
+                clock-frequency = <40000000>;
+                hactive = <800>;
+                vactive = <600>;
+                hback-porch = <88>;
+                hfront-porch = <40>;
+                hsync-len = <128>;
+                vback-porch = <23>;
+                vfront-porch = <1>;
+                vsync-len = <4>;
+                hsync-active = <0>;
+                vsync-active = <0>;
+                de-active = <1>;
+                pixelclk-active = <0>;
+            };
+        };
+    };
+...
