@@ -1999,6 +1999,36 @@ config FB_XILINX
 	  framebuffer. ML300 carries a 640*480 LCD display on the board,
 	  ML403 uses a standard DB15 VGA connector.
 
+config FB_ANLOGIC
+	tristate "Anlogic frame buffer support"
+	depends on FB
+	default	n
+	select ANLOGIC_DMA
+	select AXI_DMA
+	select AXI_VDMA
+	select VIDEOMODE_HELPERS
+	help
+	  This driver support Anlogic vdma framebuffer. It is used by Anlogic
+	  FPSoC, should work with PL bit.
+
+	  This driver registers linux framebuffer device, can support different
+	  resolutions.
+
+	  To compile this as a module, choose M here.
+
+config ANLOGIC_DYNCLK
+	tristate "Anlogic dynclk support"
+	depends on FB
+	default	n
+	help
+	  This driver support Anlogic axi dynamic clock. It is used by Anlogic
+	  FPSoC, should work with PL bit.
+
+	  This driver implement auto calculate frequency algorithm, can generate
+	  different frequency clocks for different resolutions.
+
+	  To compile this as a module, choose M here.
+
 config FB_GOLDFISH
 	tristate "Goldfish Framebuffer"
 	depends on FB
