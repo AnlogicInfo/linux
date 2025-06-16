@@ -227,7 +227,7 @@
 		reg = <0x0 0x80000000 0 0x10000>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		status = "disable";
+		status = "disabled";
 
 		clocks = <&axi_canfd_clk>, <&axi_canfd_bus_clk>;
 		clock-names = "can_clk", "bus_clk";
