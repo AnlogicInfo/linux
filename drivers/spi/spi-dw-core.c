@@ -409,19 +409,46 @@ static int dw_spi_poll_transfer(struct dw_spi *dws,
 
 	delay.unit = SPI_DELAY_UNIT_SCK;
 	nbits = dws->n_bytes * BITS_PER_BYTE;
+#ifdef CONFIG_ANLOGIC_SOC
+	if (dws->master->slave) {
+		u32 total_rx_len = dws->rx_len;
+		u16 busy_status;
 
-	do {
-		dw_writer(dws);
+		do {
+			dw_writer(dws);
 
-		delay.value = nbits * (dws->rx_len - dws->tx_len);
-		spi_delay_exec(&delay, transfer);
+			ndelay(400);
 
-		dw_reader(dws);
+			dw_reader(dws);
 
-		ret = dw_spi_check_status(dws, true);
-		if (ret)
-			return ret;
-	} while (dws->rx_len);
+			ret = dw_spi_check_status(dws, true);
+			if (ret)
+				return ret;
+			if (total_rx_len != dws->rx_len) {
+				busy_status = (dw_readl(dws, DW_SPI_SR) & DW_SPI_SR_BUSY);
+				if (!busy_status) {
+					dws->tx_len = dws->rx_len;
+					break;
+				}
+			}
+		} while (dws->rx_len);
+	} else {
+#endif
+		do {
+			dw_writer(dws);
+
+			delay.value = nbits * (dws->rx_len - dws->tx_len);
+			spi_delay_exec(&delay, transfer);
+
+			dw_reader(dws);
+
+			ret = dw_spi_check_status(dws, true);
+			if (ret)
+				return ret;
+		} while (dws->rx_len);
+#ifdef CONFIG_ANLOGIC_SOC
+	}
+#endif
 
 	return 0;
 }
@@ -471,6 +498,11 @@ static int dw_spi_transfer_one(struct spi_controller *master,
 	}
 
 	dw_spi_enable_chip(dws, 1);
+
+#ifdef CONFIG_ANLOGIC_SOC
+	if (dws->master->slave)
+		return dw_spi_poll_transfer(dws, transfer);
+#endif
 
 	if (dws->dma_mapped)
 		return dws->dma_ops->dma_transfer(dws, transfer);
@@ -532,11 +564,11 @@ static void dw_spi_unmap_buf(struct sg_table *sgt)
 	sg_free_table(sgt);
 }
 
-static void* dw_spi_memcpy(void* dest, const void* src, size_t len)
+static void *dw_spi_memcpy(void *dest, const void *src, size_t len)
 {
 	int i;
-	unsigned char* dst_ptr = (unsigned char*) dest;
-	const unsigned char* src_ptr = (const unsigned char*) src;
+	unsigned char *dst_ptr = (unsigned char *) dest;
+	const unsigned char *src_ptr = (const unsigned char *) src;
 
 	for (i = 0; i < len; i++)
 		dst_ptr[i] = src_ptr[i];
@@ -806,7 +838,7 @@ static int dw_spi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
 
 			if (ret) {
 				if (dws->tx_len != 0) {
-					if(dws->use_ocm == 1)
+					if (dws->use_ocm == 1)
 						dw_spi_unmap_buf(&transfer.tx_sg);
 					else
 						spi_unmap_buf(dws->master, dws->master->dma_tx->device->dev, &transfer.tx_sg,
@@ -817,6 +849,10 @@ static int dw_spi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
 		}
 
 		dws->dma_mapped = 1;
+		/*
+		 * Flush descriptor writes before starting DMA.
+		 * Ensures hardware sees consistent state.
+		 */
 		smp_mb();
 	}
 #endif
@@ -888,12 +924,12 @@ static int dw_spi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
 		preempt_enable();
 
 		/*
-		* Wait for the operation being finished and check the controller
-		* status only if there hasn't been any run-time error detected. In the
-		* former case it's just pointless. In the later one to prevent an
-		* additional error message printing since any hw error flag being set
-		* would be due to an error detected on the data transfer.
-		*/
+		 * Wait for the operation being finished and check the controller
+		 * status only if there hasn't been any run-time error detected. In the
+		 * former case it's just pointless. In the later one to prevent an
+		 * additional error message printing since any hw error flag being set
+		 * would be due to an error detected on the data transfer.
+		 */
 		if (!ret) {
 			ret = dw_spi_wait_mem_op_done(dws);
 			if (!ret)
