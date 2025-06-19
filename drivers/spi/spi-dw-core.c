@@ -383,19 +383,46 @@ static int dw_spi_poll_transfer(struct dw_spi *dws,
 
 	delay.unit = SPI_DELAY_UNIT_SCK;
 	nbits = dws->n_bytes * BITS_PER_BYTE;
+#ifdef CONFIG_ANLOGIC_SOC
+	if (dws->master->slave) {
+		u32 total_rx_len = dws->rx_len;
+		u16 busy_status;
 
-	do {
-		dw_writer(dws);
+		do {
+			dw_writer(dws);
 
-		delay.value = nbits * (dws->rx_len - dws->tx_len);
-		spi_delay_exec(&delay, transfer);
+			ndelay(400);
 
-		dw_reader(dws);
+			dw_reader(dws);
 
-		ret = dw_spi_check_status(dws, true);
-		if (ret)
-			return ret;
-	} while (dws->rx_len);
+			ret = dw_spi_check_status(dws, true);
+			if (ret)
+				return ret;
+			if (total_rx_len != dws->rx_len) {
+				busy_status = (dw_readl(dws, DW_SPI_SR) & SR_BUSY);
+				if (!busy_status) {
+					dws->tx_len = dws->rx_len;
+					break;
+				}
+			}
+		} while (dws->rx_len);
+	} else {
+#endif
+		do {
+			dw_writer(dws);
+
+			delay.value = nbits * (dws->rx_len - dws->tx_len);
+			spi_delay_exec(&delay, transfer);
+
+			dw_reader(dws);
+
+			ret = dw_spi_check_status(dws, true);
+			if (ret)
+				return ret;
+		} while (dws->rx_len);
+#ifdef CONFIG_ANLOGIC_SOC
+	}
+#endif
 
 	return 0;
 }
@@ -441,6 +468,11 @@ static int dw_spi_transfer_one(struct spi_controller *master,
 	}
 
 	spi_enable_chip(dws, 1);
+
+#ifdef CONFIG_ANLOGIC_SOC
+	if (dws->master->slave)
+		return dw_spi_poll_transfer(dws, transfer);
+#endif
 
 	if (dws->dma_mapped)
 		return dws->dma_ops->dma_transfer(dws, transfer);
