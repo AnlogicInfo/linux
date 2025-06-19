@@ -239,4 +239,68 @@
 		rx-fifo-1-depth = <0x40>;
 		rx-buffer-num = <0x30>;
 	};
+
+	axi_enet_axi_clk: axi_enet_axi_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <100000000>;
+		clock-output-names = "axi_enet_axi_clk";
+	};
+
+	axi_dma_1: axidma@80000000 {
+		#dma-cells = <1>;
+		compatible = "anlogic,axi-dma";
+		interrupt-parent = <&gic>;
+		reg = <0x0 0x80000000 0x0 0x1000>;
+		anlogic,addrwidth = <0x20>;
+		anlogic,include-sg;
+		anlogic,sg-length-width = <0x10>;
+		phandle = <0xac>;
+		anlogic,include-dre;
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>,
+						<GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>;
+		status = "disabled";
+		dma-channel@80000000 {
+			compatible = "anlogic,axi-dma-mm2s-channel";
+			dma-channels = <0x1>;
+			anlogic,datawidth = <0x20>;
+			anlogic,include-dre;
+		};
+		dma-channel@80000030 {
+			compatible = "anlogic,axi-dma-s2mm-channel";
+			dma-channels = <0x1>;
+			anlogic,datawidth = <0x20>;
+			anlogic,include-dre;
+		};
+	};
+
+	axi_ethernet_eth: ethernet@80100000 {
+		axistream-connected = <&axi_dma_1>;
+		axistream-control-connected = <&axi_dma_1>;
+		mac-address = [E0 78 A3 00 00 11];
+		clock-frequency = <100000000>;
+		compatible = "anlogic,axi-ethernet-1.00.a";
+		device_type = "network";
+		interrupts = <GIC_SPI 84 IRQ_TYPE_LEVEL_HIGH>;
+		clock-names = "axis_clk";
+		clocks = <&axi_enet_axi_clk>;
+		reg = <0x0 0x80100000 0x0 0x40000>;
+		anlogic,phyaddr = <0x1>;
+		anlogic,rxcsum = <0x0>;
+		anlogic,rxmem = <0x8000>;
+		anlogic,txcsum = <0x0>;
+		phy-mode = "gmii";
+		phy-handle = <&axi_ethernet_eth_phy0>;
+		status = "disabled";
+
+		axi_ethernet_eth_mdio: mdio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			axi_ethernet_eth_phy0: phy@1 {
+				status = "disabled";
+				device_type = "ethernet-phy";
+				reg = <1>;
+			};
+		};
+	};
 };

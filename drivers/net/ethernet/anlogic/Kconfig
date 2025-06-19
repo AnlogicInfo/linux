@@ -19,3 +19,11 @@ config ANLOGIC_ETHLITE
 	  for Anlogic FPSoC that feature the Ethernet Lite controller. It
 	  supports both half-duplex and full-duplex modes, as well as a
 	  variety of network protocols.
+
+config ANLOGIC_AXI_EMAC
+	tristate "Anlogic 10/100/1000 AXI Ethernet support"
+	depends on HAS_IOMEM
+	select PHYLINK
+	help
+	  This driver supports the 10/100/1000 Ethernet from Anlogic for the
+	  AXI bus interface used in Anlogic FPGAs and FPSoc's.
