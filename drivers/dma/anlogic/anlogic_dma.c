@@ -512,10 +512,12 @@ static int anlogic_dma_child_probe(struct anlogic_dma_device *al_dev,
 	int ret, i;
 	u32 nr_channels = 1;
 
-	ret = of_property_read_u32(node, "dma-channels", &nr_channels);
-	if (ret < 0) {
-		dev_err(al_dev->dev, "missing dma-channels property\n");
-		return ret;
+	if (al_dev->dma_config->dmatype == AL_DMA_TYPE_AXIDMA) {
+		ret = of_property_read_u32(node, "dma-channels", &nr_channels);
+		if (ret < 0) {
+			dev_err(al_dev->dev, "missing dma-channels property\n");
+			return ret;
+		}
 	}
 
 	for (i = 0; i < nr_channels; i++) {
@@ -591,7 +593,7 @@ static int anlogic_dma_probe(struct platform_device *pdev)
 		return err;
 	}
 	/* Retrieve the DMA engine properties from the device tree */
-	al_dev->max_buffer_len = GENMASK(ANLOGIC_DMA_V2_MAX_TRANS_LEN_MAX - 1, 0);
+	al_dev->max_buffer_len = GENMASK(ANLOGIC_DMA_MAX_TRANS_LEN_MAX - 1, 0);
 	al_dev->s2mm_chan_id = al_dev->dma_config->max_channels / 2;
 
 	if (al_dev->dma_config->dmatype == AL_DMA_TYPE_AXIDMA) {
