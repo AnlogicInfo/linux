@@ -103,7 +103,7 @@
 		status = "disabled";
 	};
 
-	axi_dma0: axidma@80000000 {
+	axi_dma0: axi_dma0@80000000 {
 		#dma-cells = <1>;
 		compatible = "anlogic,axi-dma";
 		interrupt-parent = <&gic>;
@@ -254,7 +254,7 @@
 		clock-output-names = "axi_enet_ref_clk";
 	};
 
-	axi_dma_1: axidma@80000000 {
+	axi_dma_eth: axi_dma_eth@80000000 {
 		#dma-cells = <1>;
 		compatible = "anlogic,axi-dma";
 		interrupt-parent = <&gic>;
@@ -282,8 +282,8 @@
 	};
 
 	axi_ethernet_eth: ethernet@80100000 {
-		axistream-connected = <&axi_dma_1>;
-		axistream-control-connected = <&axi_dma_1>;
+		axistream-connected = <&axi_dma_eth>;
+		axistream-control-connected = <&axi_dma_eth>;
 		mac-address = [E0 78 A3 00 00 11];
 		clock-frequency = <100000000>;
 		compatible = "anlogic,axi-ethernet-1.00.a";
