@@ -27,9 +27,10 @@ static int vdmafb_vdma_init(struct vdmafb_dev *fbdev)
 {
 	struct device *dev = &fbdev->pdev->dev;
 	struct fb_info *info = fbdev->info;
-	struct dma_interleaved_template xt = {0};
+	struct dma_interleaved_template *xt;
 	struct dma_async_tx_descriptor *tx_desc;
 	struct anlogic_vdma_config config;
+	size_t xt_size = sizeof(*xt) + sizeof(struct data_chunk);
 
 	fbdev->vdma = of_dma_request_slave_channel(dev->of_node, "vdma");
 	if (IS_ERR(fbdev->vdma)) {
@@ -39,20 +40,25 @@ static int vdmafb_vdma_init(struct vdmafb_dev *fbdev)
 
 	dmaengine_terminate_all(fbdev->vdma);
 
-	xt.dir = DMA_MEM_TO_DEV;
-	xt.numf =  info->var.yres;
-	xt.sgl[0].size = info->fix.line_length;
-	xt.frame_size = 1;
-	xt.sgl[0].icg = 0;
-	xt.src_start = info->fix.smem_start;
-	xt.src_sgl = 1;
-	xt.src_inc = 1;
-	xt.dst_inc = 0;
-	xt.dst_sgl = 0;
+	xt = kmalloc(xt_size, GFP_KERNEL);
+	if (!xt)
+		return -ENOMEM;
 
-	tx_desc = dmaengine_prep_interleaved_dma(fbdev->vdma, &xt, DMA_PREP_INTERRUPT);
+	xt->dir = DMA_MEM_TO_DEV;
+	xt->numf =  info->var.yres;
+	xt->sgl[0].size = info->fix.line_length;
+	xt->frame_size = 1;
+	xt->sgl[0].icg = 0;
+	xt->src_start = info->fix.smem_start;
+	xt->src_sgl = 1;
+	xt->src_inc = 1;
+	xt->dst_inc = 0;
+	xt->dst_sgl = 0;
+
+	tx_desc = dmaengine_prep_interleaved_dma(fbdev->vdma, xt, DMA_PREP_INTERRUPT);
 	if (!tx_desc) {
 		dev_err(dev, "Failed to prepare DMA descriptor");
+		kfree(xt);
 		dma_release_channel(fbdev->vdma);
 		return -1;
 	}
@@ -63,6 +69,7 @@ static int vdmafb_vdma_init(struct vdmafb_dev *fbdev)
 
 	dmaengine_submit(tx_desc);
 	dma_async_issue_pending(fbdev->vdma);
+	kfree(xt);
 
 	return 0;
 }
@@ -184,11 +191,11 @@ static int vdmafb_fbinfo_init(struct vdmafb_dev *fbdev, struct videomode *vmode)
 	fb_info->var.yres = fb_info->var.yres_virtual = vmode->vactive;
 	fb_info->var.xoffset = fb_info->var.yoffset = 0;
 
-	fb_info->var.red.offset = 0;
+	fb_info->var.red.offset = 16;
 	fb_info->var.red.length = 8;
 	fb_info->var.green.offset = 8;
 	fb_info->var.green.length = 8;
-	fb_info->var.blue.offset = 16;
+	fb_info->var.blue.offset = 0;
 	fb_info->var.blue.length = 8;
 	fb_info->var.transp.offset = 0;
 	fb_info->var.transp.length = 0;
