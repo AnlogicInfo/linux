@@ -1033,17 +1033,33 @@ static void stmmac_mac_link_up(struct phylink_config *config,
 	}
 
 #ifdef CONFIG_ANLOGIC_SOC
+/* Phase adjustment bitmask (bit6-bit12) and offset in control register */
+#define PHASE_ADJ_MASK    0x7F       /* bit6-bit12 field for phase value */
+#define PHASE_ADJ_OFFSET     6       /* Start from bit 6 */
+
 	if (phy->cfg_ctrl_gbe_phy) {
+		void __iomem *reg_addr = phy->cfg_ctrl_gbe_phy;
+		u32 reg_val = readl(reg_addr);
+		u32 new_phase = 0;
+
+		/* Select phase value based on link speed */
 		switch (speed) {
 		case SPEED_100:
-			writel(phy->phase_100M, phy->cfg_ctrl_gbe_phy);
+			new_phase = phy->phase_100M;
 			break;
 		case SPEED_1000:
-			writel(phy->phase_1000M, phy->cfg_ctrl_gbe_phy);
+			new_phase = phy->phase_1000M;
 			break;
 		}
+
+		/* Clear existing phase bits and set new value.
+		 * Mask ensures phase value does not exceed 7 bits.
+		 */
+		reg_val &= ~(PHASE_ADJ_MASK << PHASE_ADJ_OFFSET);
+		reg_val |= (new_phase & PHASE_ADJ_MASK) << PHASE_ADJ_OFFSET;
+		writel(reg_val, reg_addr);
 	} else {
-		dev_warn(&phy->mdio.dev, "no phase setting\n");
+		dev_warn(&phy->mdio.dev, "No phase adjustment register defined\n");
 	}
 #endif
 
