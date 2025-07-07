@@ -387,8 +387,8 @@
 					reset-assert-us = <10000>;
 					reset-deassert-us = <30000>;
 					cfg_ctrl_gbe = <0xf8800140>;
-					phase-100M = <0x14a1>;
-					phase-1000M = <0x1461>;
+					phase-100M = <0x52>;
+					phase-1000M = <0x51>;
 				};
 
 				eth_phy1: ethernet-phy@1 {
@@ -397,8 +397,8 @@
 					yt,phy-delay = <0x001f>;
 					phy-connection-type = "rgmii-id";
 					cfg_ctrl_gbe = <0xf8800140>;
-					phase-100M = <0x361>;
-					phase-1000M = <0x621>;
+					phase-100M = <0x0D>;
+					phase-1000M = <0x18>;
 				};
 			};
 		};
@@ -435,8 +435,8 @@
 					reset-assert-us = <10000>;
 					reset-deassert-us = <30000>;
 					cfg_ctrl_gbe = <0xf8800144>;
-					phase-100M = <0x14a1>;
-					phase-1000M = <0x1461>;
+					phase-100M = <0x52>;
+					phase-1000M = <0x51>;
 				};
 
 				eth_phy3: ethernet-phy@3 {
@@ -445,8 +445,8 @@
 					yt,phy-delay = <0x001f>;
 					phy-connection-type = "rgmii-id";
 					cfg_ctrl_gbe = <0xf8800144>;
-					phase-100M = <0x361>;
-					phase-1000M = <0x621>;
+					phase-100M = <0x0D>;
+					phase-1000M = <0x18>;
 				};
 			};
 		};
