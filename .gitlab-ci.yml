@@ -53,6 +53,7 @@ build_ci:
       builddir=build_aarch64
       mkdir -p ${builddir}
       mkcmd="make ARCH=arm64 LLVM=1 LLVM_IAS=1 CROSS_COMPILE=aarch64-linux-gnu- O=`pwd`/${builddir}"
+      sed -i -e 's/^#REM dtb/dtb/g' arch/arm64/boot/dts/anlogic/Makefile
       ${mkcmd} anlogic_dr1m90_defconfig
       ${mkcmd} dtbs
       ${mkcmd} -j8 Image
@@ -61,6 +62,7 @@ build_ci:
       builddir=build_riscv64
       mkdir -p ${builddir}
       mkcmd="make ARCH=riscv LLVM=1 LLVM_IAS=1 O=`pwd`/${builddir}"
+      sed -i -e 's/^#REM dtb/dtb/g' arch/riscv/boot/dts/anlogic/Makefile
       ${mkcmd} anlogic_dr1v90_defconfig
       ${mkcmd} dtbs
       ${mkcmd} -j8 Image
