@@ -294,6 +294,7 @@
 		clock-frequency = <100000000>;
 		compatible = "anlogic,axi-ethernet-1.00.a";
 		device_type = "network";
+		interrupt-parent = <&plic0>;
 		interrupts = <84>;
 		clock-names = "s_axi_lite_clk", "axis_clk", "ref_clk";
 		clocks = <&axi_enet_axi_clk>, <&axi_enet_axi_clk>, <&axi_enet_ref_clk>;
