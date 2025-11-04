@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 
+#define SYSCTRL_NS_CFG_CHIPID        (0x00000000U)
 #define SYSCTRL_NS_CFG_CTRL_USB0     (0x00000130U)
 #define SYSCTRL_NS_CFG_CTRL_USB1     (0x00000134U)
 #define SYSCTRL_NS_CFG_CTRL_GBE0     (0x00000140U)
