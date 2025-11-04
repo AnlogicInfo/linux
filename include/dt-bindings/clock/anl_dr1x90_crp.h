@@ -27,6 +27,7 @@
 #define CLK_ADCPL	13
 #define CLK_GBE		14
 #define CLK_JPU		15
-#define CLK_NUMBER	16
+#define CLK_TVS		16
+#define CLK_NUMBER	17
 
 #endif

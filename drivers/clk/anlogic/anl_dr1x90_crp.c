@@ -502,6 +502,7 @@ static struct clk_hw_onecell_data anl_hw_clks = {
 		[CLK_ADCPL] = &adcpl.clk.hw,
 		[CLK_GBE] = &gbe.clk.hw,
 		[CLK_JPU] = &jpu.clk.hw,
+		[CLK_TVS] = &tvs.clk.hw,
 	},
 	.num	= CLK_NUMBER,
 };

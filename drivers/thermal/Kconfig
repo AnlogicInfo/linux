@@ -412,6 +412,15 @@ config MTK_THERMAL
 	  Enable this option if you want to have support for thermal management
 	  controller present in Mediatek SoCs
 
+config DR1X90_THERMAL
+	tristate "Temperature sensor driver for Anlogic Dr1x90"
+	depends on ANLOGIC_SOC || COMPILE_TEST
+	depends on OF
+	default y
+	help
+	  Enable this option if you want to have support for thermal management
+	  controller present in Anlogic Dr1x90 SoCs
+
 config AMLOGIC_THERMAL
 	tristate "Amlogic Thermal Support"
 	default ARCH_MESON
