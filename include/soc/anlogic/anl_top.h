@@ -27,4 +27,5 @@ loff_t secreg_llseek(struct file *file, loff_t off, int whence);
 void al_misc_reboot(unsigned long entry);
 void al_misc_cpu_die(int id);
 int anl_wdt_softboot_enable(ulong wdtidx, ulong entry_point);
+uint64_t anl_get_chipid(void);
 #endif

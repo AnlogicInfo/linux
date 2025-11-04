@@ -57,6 +57,7 @@ static void __iomem *top_base;
 static ulong top_reg_base, top_len;
 static void __iomem *top_sec_base;
 static ulong top_sec_reg_base, top_sec_len;
+static uint64_t anl_chipid;
 
 static struct anl_top_data dr1x90_top_data = {
 	.chip = ANL_SOC_DR1X90,
@@ -527,6 +528,12 @@ int anl_wdt_softboot_enable(ulong wdtidx, ulong entry_point)
 EXPORT_SYMBOL(anl_wdt_softboot_enable);
 #endif
 
+uint64_t anl_get_chipid(void)
+{
+	return anl_chipid;
+}
+EXPORT_SYMBOL(anl_get_chipid);
+
 static int anl_top_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -551,6 +558,7 @@ static int anl_top_probe(struct platform_device *pdev)
 		goto out;
 	}
 	top_base = reg;
+	anl_chipid = top_readl(SYSCTRL_NS_CFG_CHIPID);
 
 	ret = of_address_to_resource(pdev->dev.of_node, 1, &res);
 	if (ret) {
