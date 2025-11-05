@@ -1,0 +1,20 @@
+* Anlogic tvs thermal
+
+This binding describes thermal sensors that is part of Anlogic Dr1x SoCs.
+
+Required properties:
+- compatible : Must be "anlogic,dr1x90_thermal"
+- reg : register range
+- #thermal-sensor-cells : Thermal sensor phandler
+- clocks: clocks of sensor xADC
+- clock-names: clock names.
+
+Example:
+	pvt0: pvt@f8801404 {
+		compatible = "anlogic,dr1x90_thermal";
+		reg = <0 0xf8801404 0 0x4>;
+		clocks = <&crp CLK_TVS>;
+		clock-names = "tvsclk";
+		#thermal-sensor-cells = <1>;
+		status = "okay";
+	};
