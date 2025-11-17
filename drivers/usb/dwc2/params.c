@@ -10,6 +10,28 @@
 
 #include "core.h"
 
+static void dwc2_set_dr1m_params(struct dwc2_hsotg *hsotg)
+{
+	struct dwc2_hw_params *hw = &hsotg->hw_params;
+	struct dwc2_core_params *p = &hsotg->params;
+
+	p->ahbcfg = GAHBCFG_HBSTLEN_INCR8 <<
+		GAHBCFG_HBSTLEN_SHIFT;
+
+	if ((hsotg->dr_mode == USB_DR_MODE_PERIPHERAL) ||
+	    (hsotg->dr_mode == USB_DR_MODE_OTG)) {
+#ifdef CONFIG_ANLOGIC_SOC
+#ifndef CONFIG_ANLOGIC_USB_DEVICE_DISABLE_SGDMA
+		p->g_dma_desc = hw->dma_desc_enable;
+#else
+		p->g_dma_desc = false;
+#endif
+#else
+		p->g_dma_desc = hw->dma_desc_enable;
+#endif
+	}
+}
+
 static void dwc2_set_bcm_params(struct dwc2_hsotg *hsotg)
 {
 	struct dwc2_core_params *p = &hsotg->params;
@@ -231,6 +253,7 @@ static void dwc2_set_stm32mp15_hsotg_params(struct dwc2_hsotg *hsotg)
 }
 
 const struct of_device_id dwc2_of_match_table[] = {
+	{ .compatible = "anlogic,dr1m-usb", .data = dwc2_set_dr1m_params },
 	{ .compatible = "brcm,bcm2835-usb", .data = dwc2_set_bcm_params },
 	{ .compatible = "hisilicon,hi6220-usb", .data = dwc2_set_his_params },
 	{ .compatible = "ingenic,jz4775-otg", .data = dwc2_set_jz4775_params },
@@ -453,16 +476,7 @@ static void dwc2_set_default_params(struct dwc2_hsotg *hsotg)
 	if ((hsotg->dr_mode == USB_DR_MODE_PERIPHERAL) ||
 	    (hsotg->dr_mode == USB_DR_MODE_OTG)) {
 		p->g_dma = dma_capable;
-
-#ifdef CONFIG_ANLOGIC_SOC
-#ifndef CONFIG_ANLOGIC_USB_DEVICE_DISABLE_SGDMA
 		p->g_dma_desc = hw->dma_desc_enable;
-#else
-		p->g_dma_desc = false;
-#endif
-#else
-		p->g_dma_desc = hw->dma_desc_enable;
-#endif
 
 		/*
 		 * The values for g_rx_fifo_size (2048) and
