@@ -421,7 +421,8 @@ static inline void al_axi_qspi_sw_rst(struct al_axi_qspi *axi_qspi)
 }
 
 static inline void al_axi_qspi_config_controller(struct al_axi_qspi *axi_qspi,
-						struct spi_device *dev)
+						struct spi_device *dev,
+						u32 ignore_cs)
 {
 	u32 reg_val = 0;
 
@@ -443,8 +444,10 @@ static inline void al_axi_qspi_config_controller(struct al_axi_qspi *axi_qspi,
 
 	writel_relaxed(1 << AL_AXI_QSPI_DEV_GLB_INTR_EN_SHIFT,
 		axi_qspi->regs + AL_AXI_QSPI_DEV_GLB_INTR_EN_OFFSET);
-	writel_relaxed(~(1 << dev->chip_select),
-		axi_qspi->regs + AL_AXI_QSPI_SLV_SEL_OFFSET);
+
+	if (!ignore_cs)
+		writel_relaxed(~(1 << dev->chip_select),
+			axi_qspi->regs + AL_AXI_QSPI_SLV_SEL_OFFSET);
 
 	/* reset tx/rx fifo */
 	reg_val = readl_relaxed(axi_qspi->regs + AL_AXI_QSPI_CTL_OFFSET);
@@ -488,7 +491,7 @@ static int al_axi_qspi_transfer_intr(struct al_axi_qspi *axi_qspi, struct spi_de
 	int ret = 0;
 
 	axi_qspi->is_transfer_done = 0;
-	al_axi_qspi_config_controller(axi_qspi, dev);
+	al_axi_qspi_config_controller(axi_qspi, dev, 0);
 
 	bytes_step = axi_qspi->hw_config.trans_bits >> 3;
 	if (axi_qspi->hw_config.fifo_depth == 0)
@@ -584,7 +587,7 @@ static int al_axi_qspi_transfer_polled(struct al_axi_qspi *axi_qspi, struct spi_
 	const u8 *send_buf = axi_qspi->trans_info.phase2_buf.out;
 	struct al_axi_qspi_trans_info *trans_info = &axi_qspi->trans_info;
 
-	al_axi_qspi_config_controller(axi_qspi, dev);
+	al_axi_qspi_config_controller(axi_qspi, dev, 0);
 	writel_relaxed(0, axi_qspi->regs + AL_AXI_QSPI_DEV_GLB_INTR_EN_OFFSET);
 
 	while (1) {
@@ -661,6 +664,78 @@ static int al_axi_qspi_transfer_polled(struct al_axi_qspi *axi_qspi, struct spi_
 
 	reg_val = readl_relaxed(axi_qspi->regs + AL_AXI_QSPI_CTL_OFFSET);
 	reg_val &= ~(1 << AL_AXI_QSPI_CTL_EN_SHIFT);
+	reg_val |= (1 << AL_AXI_QSPI_CTL_MASTER_INHIBIT_SHIFT);
+	writel_relaxed(reg_val, axi_qspi->regs + AL_AXI_QSPI_CTL_OFFSET);
+
+	return 0;
+}
+
+void al_axi_qspi_set_cs(struct spi_device *spi, bool enable)
+{
+	struct al_axi_qspi *axi_qspi = spi_master_get_devdata(spi->controller);
+	bool cs_high = !!(spi->mode & SPI_CS_HIGH);
+
+	if (cs_high == enable)
+		writel_relaxed(~(1 << spi->chip_select),
+			axi_qspi->regs + AL_AXI_QSPI_SLV_SEL_OFFSET);
+	else
+		writel_relaxed(0xFFFFFFFFU,
+			axi_qspi->regs + AL_AXI_QSPI_SLV_SEL_OFFSET);
+}
+
+static int al_axi_qspi_transfer_one(struct spi_controller *master,
+				    struct spi_device *spi,
+				    struct spi_transfer *transfer)
+{
+	u32 wr_data;
+	u32 fill_cnt;
+	u32 fill_cnt_cpy;
+	u32 fetch_cnt;
+	u32 w_cnt = 0;
+	u32 r_cnt = 0;
+	u32 bytes_step;
+	u32 reg_val;
+	const u8 *tx_buf = (const u8 *)transfer->tx_buf;
+	u8 *rx_buf = (u8 *)transfer->rx_buf;
+	u32 len = transfer->len;
+
+	struct al_axi_qspi *axi_qspi = spi_master_get_devdata(master);
+
+	bytes_step = axi_qspi->hw_config.trans_bits >> 3;
+
+	al_axi_qspi_config_controller(axi_qspi, spi, 1);
+	writel_relaxed(0, axi_qspi->regs + AL_AXI_QSPI_DEV_GLB_INTR_EN_OFFSET);
+
+	reg_val = readl_relaxed(axi_qspi->regs + AL_AXI_QSPI_CTL_OFFSET);
+	reg_val &= ~(1 << AL_AXI_QSPI_CTL_MASTER_INHIBIT_SHIFT);
+	writel_relaxed(reg_val, axi_qspi->regs + AL_AXI_QSPI_CTL_OFFSET);
+
+	while (len) {
+		if (axi_qspi->hw_config.fifo_depth == 0)
+			fill_cnt = 1;
+		else
+			fill_cnt = axi_qspi->hw_config.fifo_depth - 1 -
+				readl_relaxed(axi_qspi->regs + AL_AXI_QSPI_TX_FIFO_OCY_OFFSET);
+		fill_cnt = fill_cnt > (len / bytes_step) ? (len / bytes_step) : fill_cnt;
+		fill_cnt_cpy = fill_cnt;
+
+		len -= (fill_cnt_cpy * bytes_step);
+		while (fill_cnt--) {
+			wr_data = al_axi_pre_send_data(tx_buf, w_cnt, bytes_step);
+			writel_relaxed(wr_data, axi_qspi->regs + AL_AXI_QSPI_DTR_OFFSET);
+			w_cnt += bytes_step;
+		}
+
+		while (fill_cnt_cpy--) {
+			while (al_axi_qspi_check_rx_empty(axi_qspi))
+				;
+			al_axi_save_recv_data(rx_buf, r_cnt, bytes_step,
+				readl_relaxed(axi_qspi->regs + AL_AXI_QSPI_DRR_OFFSET));
+			r_cnt += bytes_step;
+		}
+	}
+
+	reg_val = readl_relaxed(axi_qspi->regs + AL_AXI_QSPI_CTL_OFFSET);
 	reg_val |= (1 << AL_AXI_QSPI_CTL_MASTER_INHIBIT_SHIFT);
 	writel_relaxed(reg_val, axi_qspi->regs + AL_AXI_QSPI_CTL_OFFSET);
 
@@ -804,6 +879,8 @@ static int al_axi_qspi_probe(struct platform_device *pdev)
 	master->dev.fwnode = pdev->dev.fwnode;
 	master->num_chipselect = axi_qspi->hw_config.num_cs;
 	master->mem_ops = &al_axi_qspi_mem_ops;
+	master->set_cs = al_axi_qspi_set_cs;
+	master->transfer_one = al_axi_qspi_transfer_one;
 	ret = spi_register_controller(master);
 	if (ret) {
 		dev_err(&pdev->dev, "register SPI controller failed: %d\n", ret);
