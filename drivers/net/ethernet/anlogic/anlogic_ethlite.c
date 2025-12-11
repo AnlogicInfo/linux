@@ -52,19 +52,21 @@
 #define ETXSTAT0_SENDREQ_SHIFT		30
 #define ETXSTAT0_FRAMELEN_SHIFT		0
 
-/* Axi Ethernet Lite RX Status0 Register */
-#define ERXSTAT0_BUFSTAT_SHIFT		31
-#define ERXSTAT0_CLRREQ_SHIFT	   30
-#define ERXSTAT0_FRAMELEN_SHIFT		0
-
 /* Axi Ethernet Lite TX Status1 Register */
 #define ETXSTAT1_BUFSTAT_SHIFT		31
 #define ETXSTAT1_SENDREQ_SHIFT		30
 #define ETXSTAT1_FRAMELEN_SHIFT		0
 
+/* Axi Ethernet Lite RX Status0 Register */
+#define ERXSTAT0_BUFSTAT_SHIFT		31
+#define ERXSTAT0_CLRREQ_SHIFT		30
+#define ERXSTAT0_BAD_PACKET_SHIFT	29
+#define ERXSTAT0_FRAMELEN_SHIFT		0
+
 /* Axi Ethernet Lite RX Status1 Register */
 #define ERXSTAT1_BUFSTAT_SHIFT		31
 #define ERXSTAT1_CLRREQ_SHIFT		30
+#define ERXSTAT1_BAD_PACKET_SHIFT	29
 #define ERXSTAT1_FRAMELEN_SHIFT		0
 
 /* Axi Ethernet Lite Packet loss counter Register */
@@ -197,8 +199,8 @@ static void anlogic_axi_ethlite_enable_interrupts(struct net_local *drvdata)
 
 	/* Enable the interrupts */
 	anlogic_axi_ethlite_writel((1 << EIP_RXBADPKT_SHIFT)
-					 | (1 << EIP_RXVALID_SHIFT) | (1 << EIP_TXDONE_SHIFT),
-					drvdata->base_addr + ELITE_EIC_OFFSET);
+				   | (1 << EIP_RXVALID_SHIFT) | (1 << EIP_TXDONE_SHIFT),
+				   drvdata->base_addr + ELITE_EIC_OFFSET);
 }
 
 /**
@@ -348,10 +350,10 @@ static int anlogic_axi_ethlite_send_data(struct net_local *drvdata, u8 *data,
 		byte_count = ETH_FRAME_LEN;
 
 	if ((anlogic_axi_ethlite_readl(drvdata->base_addr + ELITE_ETXSTAT0_OFFSET)
-				       & BIT(ETXSTAT0_BUFSTAT_SHIFT)) == 0) {
+	    & BIT(ETXSTAT0_BUFSTAT_SHIFT)) == 0) {
 		drvdata->next_tx_buf_to_use = ELITE_TXPINGBUF_OFFSET;
 	} else if ((anlogic_axi_ethlite_readl(drvdata->base_addr + ELITE_ETXSTAT1_OFFSET)
-					      & BIT(ETXSTAT1_BUFSTAT_SHIFT)) == 0) {
+		   & BIT(ETXSTAT1_BUFSTAT_SHIFT)) == 0) {
 		drvdata->next_tx_buf_to_use = ELITE_TXPONGBUF_OFFSET;
 	} else {
 		return -1; /* Buffer was full, return failure */
@@ -598,17 +600,31 @@ static irqreturn_t anlogic_axi_ethlite_interrupt(int irq, void *dev_id)
 
 	val = anlogic_axi_ethlite_readl(lp->base_addr + ELITE_EIP_OFFSET);
 
-	if (val & (1 << EIP_RXBADPKT_SHIFT)) {
-		netdev_dbg(lp->ndev, "An error packet was received\n");
-		anlogic_axi_ethlite_writel((1 << ERXSTAT0_CLRREQ_SHIFT),
-					   base_addr + ELITE_ERXSTAT0_OFFSET);
-		anlogic_axi_ethlite_writel((1 << ERXSTAT1_CLRREQ_SHIFT),
-					   base_addr + ELITE_ERXSTAT1_OFFSET);
-		anlogic_axi_ethlite_writel((1 << EIP_RXBADPKT_SHIFT),
-					   base_addr + ELITE_EEP_OFFSET);
+	if (val & (BIT(EIP_RXVALID_SHIFT) | BIT(EIP_RXBADPKT_SHIFT))) {
+		if (anlogic_axi_ethlite_readl(base_addr + ELITE_ERXSTAT0_OFFSET) &
+		    BIT(ERXSTAT0_BAD_PACKET_SHIFT)) {
+			anlogic_axi_ethlite_writel((1 << ERXSTAT0_CLRREQ_SHIFT),
+						   base_addr + ELITE_ERXSTAT0_OFFSET);
+			anlogic_axi_ethlite_writel((1 << EIC_RXBADPKT_SHIFT),
+						   base_addr + ELITE_EEP_OFFSET);
+			anlogic_axi_ethlite_writel((1 << EIC_RXVALID_SHIFT),
+						   base_addr + ELITE_EEP_OFFSET);
+			netdev_dbg(lp->ndev, "An error packet was received in ping buffer\n");
+		}
+
+		if (anlogic_axi_ethlite_readl(base_addr + ELITE_ERXSTAT1_OFFSET) &
+		    BIT(ERXSTAT1_BAD_PACKET_SHIFT)) {
+			anlogic_axi_ethlite_writel((1 << ERXSTAT1_CLRREQ_SHIFT),
+						   base_addr + ELITE_ERXSTAT1_OFFSET);
+			anlogic_axi_ethlite_writel((1 << EIC_RXBADPKT_SHIFT),
+						   base_addr + ELITE_EEP_OFFSET);
+			anlogic_axi_ethlite_writel((1 << EIC_RXVALID_SHIFT),
+						   base_addr + ELITE_EEP_OFFSET);
+			netdev_dbg(lp->ndev, "An error packet was received in pong buffer\n");
+		}
 	}
 
-	if (val & (1 << EIP_RXVALID_SHIFT)) {
+	if ((val & BIT(EIP_RXVALID_SHIFT)) && !(val & BIT(EIP_RXBADPKT_SHIFT))) {
 		anlogic_axi_ethlite_rx_handler(dev);
 		anlogic_axi_ethlite_writel((1 << EIP_RXVALID_SHIFT), base_addr + ELITE_EEP_OFFSET);
 	}
@@ -676,8 +692,8 @@ static int anlogic_axi_ethlite_mdio_read(struct mii_bus *bus, int phy_id, int re
 	 * register to start a MDIO read transaction.
 	 */
 	rc = (phy_id << MDIOCTL_PHYAD_SHIFT) | (reg << MDIOCTL_REGAD_SHIFT) |
-		 (MDIO_RD_SEL << MDIOCTL_RWSEL_SHIFT) |
-		 (MDIO_START_TRANS << MDIOCTL_ACTTRIG_SHIFT);
+	     (MDIO_RD_SEL << MDIOCTL_RWSEL_SHIFT) |
+	     (MDIO_START_TRANS << MDIOCTL_ACTTRIG_SHIFT);
 
 	anlogic_axi_ethlite_writel(rc, lp->base_addr + ELITE_MDIOCTL_OFFSET);
 
@@ -726,7 +742,7 @@ static int anlogic_axi_ethlite_mdio_write(struct mii_bus *bus, int phy_id, int r
 	anlogic_axi_ethlite_writel(val, lp->base_addr + ELITE_MDIOWR_OFFSET);
 
 	rc = (phy_id << MDIOCTL_PHYAD_SHIFT) | (reg << MDIOCTL_REGAD_SHIFT) |
-		(MDIO_WR_SEL << MDIOCTL_RWSEL_SHIFT) | (MDIO_START_TRANS << MDIOCTL_ACTTRIG_SHIFT);
+	     (MDIO_WR_SEL << MDIOCTL_RWSEL_SHIFT) | (MDIO_START_TRANS << MDIOCTL_ACTTRIG_SHIFT);
 
 	anlogic_axi_ethlite_writel(rc, lp->base_addr + ELITE_MDIOCTL_OFFSET);
 
