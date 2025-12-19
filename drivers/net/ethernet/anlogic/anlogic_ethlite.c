@@ -54,7 +54,8 @@
 
 /* Axi Ethernet Lite RX Status0 Register */
 #define ERXSTAT0_BUFSTAT_SHIFT		31
-#define ERXSTAT0_CLRREQ_SHIFT	   30
+#define ERXSTAT0_CLRREQ_SHIFT		30
+#define ERXSTAT0_BAD_PACKET_SHIFT	29
 #define ERXSTAT0_FRAMELEN_SHIFT		0
 
 /* Axi Ethernet Lite TX Status1 Register */
@@ -65,6 +66,7 @@
 /* Axi Ethernet Lite RX Status1 Register */
 #define ERXSTAT1_BUFSTAT_SHIFT		31
 #define ERXSTAT1_CLRREQ_SHIFT		30
+#define ERXSTAT1_BAD_PACKET_SHIFT	29
 #define ERXSTAT1_FRAMELEN_SHIFT		0
 
 /* Axi Ethernet Lite Packet loss counter Register */
@@ -87,15 +89,15 @@
 #define MDIOCCF_MDIODIV_SHIFT		0
 
 /* Axi Ethernet Lite MDIO Control Register */
-#define MDIOCTL_REGAD_SHIFT			8
-#define MDIOCTL_PHYAD_SHIFT			3
-#define MDIOCTL_RWSEL_SHIFT			1
+#define MDIOCTL_REGAD_SHIFT		8
+#define MDIOCTL_PHYAD_SHIFT		3
+#define MDIOCTL_RWSEL_SHIFT		1
 #define MDIOCTL_ACTTRIG_SHIFT		0
 
 /* Axi Ethernet Lite Mac Configure Register */
 #define ESET0_SPEEDCFG_SHIFT		30	/* Set Mac Speed Configure */
-#define ESET0_TXIFG_SHIFT			16	/* Set Tx IFG */
-#define ESET0_RXEN_SHIFT			15	/* Set Rx Enable */
+#define ESET0_TXIFG_SHIFT		16	/* Set Tx IFG */
+#define ESET0_RXEN_SHIFT		15	/* Set Rx Enable */
 #define ESET0_RXFLOWCTRLEN_SHIFT	14	/* Set Rx Flow Control Enable */
 #define ESET0_RXLTCHKEN_SHIFT		13	/* Set Rx Length Type Check Enable */
 #define ESET0_RXCFCHKEN_SHIFT		12	/* Set Rx Control Frame Check Enable */
@@ -103,7 +105,7 @@
 #define ESET0_RXFCSCHKEN_SHIFT		10	/* Set Rx FCS Check Enable */
 #define ESET0_RXVLANEN_SHIFT		9	/* Set Rx Vlan Enable */
 #define ESET0_RXSEMIEN_SHIFT		8	/* Set Rx Half-duplex Receive Enable */
-#define ESET0_TXEN_SHIFT			7	/* Set Tx Enable */
+#define ESET0_TXEN_SHIFT		7	/* Set Tx Enable */
 #define ESET0_TXFLOWCTRLEN_SHIFT	6	/* Set Tx Flow Control Enable */
 #define ESET0_TXGAPADJEN_SHIFT		5	/* Set Tx InterFrameGap Adjustment Enable */
 #define ESET0_TXJUMBOEN_SHIFT		3	/* Set Tx Jumpbo Package Enable */
@@ -598,17 +600,26 @@ static irqreturn_t anlogic_axi_ethlite_interrupt(int irq, void *dev_id)
 
 	val = anlogic_axi_ethlite_readl(lp->base_addr + ELITE_EIP_OFFSET);
 
-	if (val & (1 << EIP_RXBADPKT_SHIFT)) {
-		netdev_dbg(lp->ndev, "An error packet was received\n");
-		anlogic_axi_ethlite_writel((1 << ERXSTAT0_CLRREQ_SHIFT),
-					   base_addr + ELITE_ERXSTAT0_OFFSET);
-		anlogic_axi_ethlite_writel((1 << ERXSTAT1_CLRREQ_SHIFT),
-					   base_addr + ELITE_ERXSTAT1_OFFSET);
-		anlogic_axi_ethlite_writel((1 << EIP_RXBADPKT_SHIFT),
+	if (val & (BIT(EIP_RXVALID_SHIFT) | BIT(EIP_RXBADPKT_SHIFT))) {
+		if (anlogic_axi_ethlite_readl(base_addr + ELITE_ERXSTAT0_OFFSET) &
+		    BIT(ERXSTAT0_BAD_PACKET_SHIFT)) {
+			anlogic_axi_ethlite_writel((1 << ERXSTAT0_CLRREQ_SHIFT),
+						   base_addr + ELITE_ERXSTAT0_OFFSET);
+			netdev_dbg(lp->ndev, "An error packet was received in ping buffer\n");
+		}
+		if (anlogic_axi_ethlite_readl(base_addr + ELITE_ERXSTAT1_OFFSET) &
+		    BIT(ERXSTAT1_BAD_PACKET_SHIFT)) {
+			anlogic_axi_ethlite_writel((1 << ERXSTAT1_CLRREQ_SHIFT),
+						   base_addr + ELITE_ERXSTAT1_OFFSET);
+			netdev_dbg(lp->ndev, "An error packet was received in pong buffer\n");
+		}
+		anlogic_axi_ethlite_writel((1 << EIC_RXBADPKT_SHIFT),
+					   base_addr + ELITE_EEP_OFFSET);
+		anlogic_axi_ethlite_writel((1 << EIC_RXVALID_SHIFT),
 					   base_addr + ELITE_EEP_OFFSET);
 	}
 
-	if (val & (1 << EIP_RXVALID_SHIFT)) {
+	if ((val & BIT(EIP_RXVALID_SHIFT)) && !(val & BIT(EIP_RXBADPKT_SHIFT))) {
 		anlogic_axi_ethlite_rx_handler(dev);
 		anlogic_axi_ethlite_writel((1 << EIP_RXVALID_SHIFT), base_addr + ELITE_EEP_OFFSET);
 	}
@@ -641,9 +652,8 @@ static int anlogic_axi_ethlite_mdio_wait(struct net_local *lp)
 	u32 val;
 
 	return readx_poll_timeout(anlogic_axi_ethlite_readl,
-				(lp->base_addr + ELITE_MDIOCTL_OFFSET),
-				val, !(val & 0x1),
-				1000, 20000);
+				  (lp->base_addr + ELITE_MDIOCTL_OFFSET), val, !(val & 0x1),
+				  1000, 20000);
 }
 
 /**
@@ -676,8 +686,8 @@ static int anlogic_axi_ethlite_mdio_read(struct mii_bus *bus, int phy_id, int re
 	 * register to start a MDIO read transaction.
 	 */
 	rc = (phy_id << MDIOCTL_PHYAD_SHIFT) | (reg << MDIOCTL_REGAD_SHIFT) |
-		 (MDIO_RD_SEL << MDIOCTL_RWSEL_SHIFT) |
-		 (MDIO_START_TRANS << MDIOCTL_ACTTRIG_SHIFT);
+	     (MDIO_RD_SEL << MDIOCTL_RWSEL_SHIFT) |
+	     (MDIO_START_TRANS << MDIOCTL_ACTTRIG_SHIFT);
 
 	anlogic_axi_ethlite_writel(rc, lp->base_addr + ELITE_MDIOCTL_OFFSET);
 
