@@ -398,7 +398,7 @@ static int __init cma_mem_init(void)
 	}
 
 	cma_dev = cma_mem_misc.this_device;
-	cma_dev->coherent_dma_mask = ~0;
+	dma_set_coherent_mask(cma_dev, DMA_BIT_MASK(32));
 
 	_dev_info(cma_dev, "registered.\n");
 	return ret;
