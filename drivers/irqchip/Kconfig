@@ -5,6 +5,13 @@ config IRQCHIP
 	def_bool y
 	depends on (OF_IRQ || ACPI_GENERIC_GSI)
 
+config AL_AXI_INTC
+	tristate "Anlogic AXI Interrupt Controller"
+	default n
+	help
+	  The Anlogic AXI Interrupt Controller, AXI IP can request interrupts
+	  from the processor by connecting to this controller.
+
 config ARM_GIC
 	bool
 	select IRQ_DOMAIN_HIERARCHY
