@@ -275,6 +275,160 @@ static int anl_div_is_enabled(struct clk_hw *hw)
 	return val != 0;
 }
 
+/****************************************************/
+#define ANL_CALC_RATE_FRAC(p, t) DIV_ROUND_UP_ULL((u64)(p) * (t)->mul, (t)->div)
+
+static inline struct clk_div_table_frac *
+anl_get_div(struct anl_div *div, unsigned int val)
+{
+	struct clk_div_table_frac *tbl = ANL_FRAC_TABLE(div);
+
+	while (tbl->div) {
+		if (tbl->val == val)
+			return tbl;
+		tbl++;
+	}
+
+	return NULL;
+}
+
+static inline struct clk_div_table_frac *
+anl_get_best_div(struct anl_div *div, unsigned long prate,
+		 unsigned long rate)
+{
+	struct clk_div_table_frac *tbl = ANL_FRAC_TABLE(div);
+	struct clk_div_table_frac *best_tbl = tbl;
+	unsigned long best = ULONG_MAX, tmp;
+
+	while (tbl->div) {
+		tmp = ANL_CALC_RATE_FRAC(prate, tbl);
+		if (tmp == rate)
+			return tbl;
+		else if (tmp > rate)
+			tmp = tmp - rate;
+		else
+			tmp = rate - tmp;
+
+		if (tmp < best) {
+			best_tbl = tbl;
+			best = tmp;
+		}
+
+		tbl++;
+	}
+
+	return best_tbl;
+}
+
+static unsigned long
+anl_div_recalc_rate_frac(struct clk_hw *hw,
+			 unsigned long parent_rate)
+{
+	struct anl_clk *clk = hw_to_anl_clk(hw);
+	struct anl_div *div = (struct anl_div *)clk;
+	struct clk_div_table_frac *tbl;
+	unsigned int val;
+
+	if (!(div->flags & CLK_DIVIDER_FRAC_TABLE)) {
+		pr_err("%s: is not fraction table divider\n",
+		       clk_hw_get_name(hw));
+		return 0;
+	}
+
+	val = (readl(clk->base + clk->reg) >> div->shift);
+	val &= clk_div_mask(div->width);
+	tbl = anl_get_div(div, val);
+	if (!tbl) {
+		pr_err("%s: invalid divider value %u\n",
+		       clk_hw_get_name(hw), val);
+		return 0;
+	}
+
+	return ANL_CALC_RATE_FRAC(parent_rate, tbl);
+}
+
+static long anl_div_round_rate_frac(struct clk_hw *hw, unsigned long rate,
+				    unsigned long *prate)
+{
+	struct anl_clk *clk = hw_to_anl_clk(hw);
+	struct anl_div *div = (struct anl_div *)clk;
+	struct clk_div_table_frac *tbl;
+	u32 val;
+
+	if (!(div->flags & CLK_DIVIDER_FRAC_TABLE)) {
+		pr_err("%s: is not fraction table divider\n",
+		       clk_hw_get_name(hw));
+		return 0;
+	}
+
+	if (div->flags & CLK_DIVIDER_READ_ONLY) {
+		val = (readl(clk->base + clk->reg) >> div->shift);
+		val &= clk_div_mask(div->width);
+
+		tbl = anl_get_div(div, val);
+		if (!tbl) {
+			pr_err("%s: invalid divider value %u\n",
+			       clk_hw_get_name(hw), val);
+			return 0;
+		}
+	} else
+		tbl = anl_get_best_div(div, *prate, rate);
+
+	return ANL_CALC_RATE_FRAC(*prate, tbl);
+}
+
+static int anl_div_determine_rate_frac(struct clk_hw *hw,
+				       struct clk_rate_request *req)
+{
+	long rate = anl_div_round_rate_frac(hw, req->rate, &req->best_parent_rate);
+
+	req->rate = rate;
+
+	return 0;
+}
+
+static int anl_div_set_rate_frac(struct clk_hw *hw, unsigned long rate,
+				 unsigned long parent_rate)
+{
+	struct anl_clk *clk = hw_to_anl_clk(hw);
+	struct anl_div *div = (struct anl_div *)clk;
+	struct clk_div_table_frac *tbl;
+	int value;
+	unsigned long flags = 0;
+	u32 val;
+
+	if (!(div->flags & CLK_DIVIDER_FRAC_TABLE)) {
+		pr_err("%s: is not fraction table divider\n",
+		       clk_hw_get_name(hw));
+		return -EINVAL;
+	}
+
+	tbl = anl_get_best_div(div, parent_rate, rate);
+	if (!tbl)
+		return -EINVAL;
+
+	value = tbl->val;
+
+	spin_lock_irqsave(clk->lock, flags);
+
+	if (div->flags & CLK_DIVIDER_HIWORD_MASK) {
+		val = clk_div_mask(div->width) << (div->shift + 16);
+	} else {
+		val = readl(clk->base + clk->reg);
+		val &= ~(clk_div_mask(div->width) << div->shift);
+	}
+	div->divval = value;
+	if (!(div->flags & CLK_DIVIDER_ZERO_GATING) ||
+	    __clk_get_enable_count(hw->clk)) {
+		val |= (u32)value << div->shift;
+		writel(val, clk->base + clk->reg);
+	}
+
+	spin_unlock_irqrestore(clk->lock, flags);
+
+	return 0;
+}
+
 const struct clk_ops anl_div_ops = {
 	.init		= anl_div_init,
 	.recalc_rate	= anl_div_recalc_rate,
@@ -322,3 +476,43 @@ const struct clk_ops anl_div_ro_en_ops = {
 	.is_enabled = anl_div_is_enabled,
 };
 EXPORT_SYMBOL(anl_div_ro_en_ops);
+
+const struct clk_ops anl_div_ops_frac = {
+	.init		= anl_div_init,
+	.recalc_rate	= anl_div_recalc_rate_frac,
+	.round_rate = anl_div_round_rate_frac,
+	.determine_rate = anl_div_determine_rate_frac,
+	.set_rate = anl_div_set_rate_frac,
+};
+EXPORT_SYMBOL(anl_div_ops_frac);
+
+const struct clk_ops anl_div_ro_ops_frac = {
+	.init		= anl_div_init,
+	.recalc_rate	= anl_div_recalc_rate_frac,
+	.round_rate = anl_div_round_rate_frac,
+	.determine_rate = anl_div_determine_rate_frac,
+};
+EXPORT_SYMBOL(anl_div_ro_ops_frac);
+
+const struct clk_ops anl_div_en_ops_frac = {
+	.init		= anl_div_init,
+	.recalc_rate	= anl_div_recalc_rate_frac,
+	.round_rate = anl_div_round_rate_frac,
+	.determine_rate = anl_div_determine_rate_frac,
+	.set_rate = anl_div_set_rate_frac,
+	.enable = anl_div_enable,
+	.disable = anl_div_disable,
+	.is_enabled = anl_div_is_enabled,
+};
+EXPORT_SYMBOL(anl_div_en_ops_frac);
+
+const struct clk_ops anl_div_ro_en_ops_frac = {
+	.init		= anl_div_init,
+	.recalc_rate	= anl_div_recalc_rate_frac,
+	.round_rate = anl_div_round_rate_frac,
+	.determine_rate = anl_div_determine_rate_frac,
+	.enable = anl_div_enable,
+	.disable = anl_div_disable,
+	.is_enabled = anl_div_is_enabled,
+};
+EXPORT_SYMBOL(anl_div_ro_en_ops_frac);

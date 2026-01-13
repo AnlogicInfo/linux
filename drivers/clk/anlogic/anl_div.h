@@ -9,9 +9,16 @@
 #define CLK_DIVIDER_FIXED_FACTOR	BIT(24)
 #define CLK_DIVIDER_ZERO_GATING		BIT(25)
 #define CLK_DIVIDER_GATE_SETTODIS	BIT(26)
+#define CLK_DIVIDER_FRAC_TABLE		BIT(27)
 
 #define ANL_DIV_INIT(_width, _shift, _flags)	\
 	.table = anl_divtbl_##_width,		\
+	.width = _width,			\
+	.shift = _shift,			\
+	.flags = _flags
+
+#define ANL_DIV_INIT_CUSTBL(_tbl, _width, _shift, _flags)	\
+	.table = (struct clk_div_table *)_tbl,		\
 	.width = _width,			\
 	.shift = _shift,			\
 	.flags = _flags
@@ -38,6 +45,14 @@
 	ANL_DIV_INIT_VAL_TBL(&anl_divtbl_##_width##bits[1], _width, _shift, \
 			(_flags | CLK_DIVIDER_ZERO_GATING))
 
+#define ANL_FRAC_TABLE(_div) ((struct clk_div_table_frac *)(_div)->table)
+
+struct clk_div_table_frac {
+	unsigned int	val;
+	unsigned int	mul;
+	unsigned int	div;
+};
+
 struct anl_div {
 	struct anl_clk clk;
 	struct clk_div_table *table;
@@ -53,6 +68,10 @@ extern const struct clk_ops anl_div_ops;
 extern const struct clk_ops anl_div_ro_ops;
 extern const struct clk_ops anl_div_en_ops;
 extern const struct clk_ops anl_div_ro_en_ops;
+extern const struct clk_ops anl_div_ops_frac;
+extern const struct clk_ops anl_div_ro_ops_frac;
+extern const struct clk_ops anl_div_en_ops_frac;
+extern const struct clk_ops anl_div_ro_en_ops_frac;
 extern struct clk_div_table anl_divtbl_24[];
 extern struct clk_div_table anl_divtbl_32[];
 
