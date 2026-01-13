@@ -228,11 +228,47 @@ static struct anl_div io400div4 = {
 	ANL_DIV_INIT(32, 0, 0),
 };
 
+struct clk_div_table_frac anl_io400div8_tbl_32[] = {
+	{0x00000001,  1, 32},
+	{0x00010001,  2, 32},
+	{0x00200401,  3, 32},
+	{0x01010101,  4, 32},
+	{0x02081041,  5, 32},
+	{0x04210421,  6, 32},
+	{0x08442211,  7, 32},
+	{0x11111111,  8, 32},
+	{0x11224489,  9, 32},
+	{0x12491249, 10, 32},
+	{0x24924925, 11, 32},
+	{0x25252525, 12, 32},
+	{0x294a5295, 13, 32},
+	{0x2a552a55, 14, 32},
+	{0x2aaa5555, 15, 32},
+	{0x55555555, 16, 32},
+	{0x5555aaab, 17, 32},
+	{0x55ab55ab, 18, 32},
+	{0x56b5ad6b, 19, 32},
+	{0x5b5b5b5b, 20, 32},
+	{0x5b6db6db, 21, 32},
+	{0x6db76db7, 22, 32},
+	{0x6eddbb77, 23, 32},
+	{0x77777777, 24, 32},
+	{0x77bbddef, 25, 32},
+	{0x7bdf7bdf, 26, 32},
+	{0x5f7f7f7f, 27, 32},
+	{0x7f7f7f7f, 28, 32},
+	{0x7fdffbff, 29, 32},
+	{0x7fff7fff, 30, 32},
+	{0x7fffffff, 31, 32},
+	{0xffffffff, 32, 32},
+	{0, 0, 0}
+};
+
 static struct anl_div io400div8 = {
 	.clk = {
-		ANL_CLK_INIT("io400div8", "io400", anl_div_ops, 0, 0x028)
+		ANL_CLK_INIT("io400div8", "io400", anl_div_ops_frac, 0, 0x028)
 	},
-	ANL_DIV_INIT(32, 0, 0),
+	ANL_DIV_INIT_CUSTBL(anl_io400div8_tbl_32, 32, 0, CLK_DIVIDER_FRAC_TABLE),
 };
 
 static struct anl_div io400div16 = {
