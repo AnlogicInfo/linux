@@ -303,4 +303,17 @@
 			};
 		};
 	};
+
+	axi_intc0: interrupt-controller@80000000 {
+		compatible = "anlogic,axi-intc-1.00.a";
+		reg = <0x0 0x80000000 0x0 0x10000>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+		interrupt-parent = <&gic>;
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		anlogic,num-intr-inputs = <6>;
+		anlogic,kind-of-intr = <0x0>;
+		status = "disabled";
+	};
+
 };
