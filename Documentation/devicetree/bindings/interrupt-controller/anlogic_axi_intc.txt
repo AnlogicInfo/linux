@@ -1,0 +1,24 @@
+Anlogic axi intc bindings
+
+Required properties:
+- compatible: should be "anlogic,axi-intc-1.00.a"
+- reg: physical base address of the controller and length of memory mapped region.
+- interrupt-controller: Interrupt controller
+- interrupt-cells: The interrupt controller requires two parameters, the interrupt number and the trigger mode
+- interrupt-parent: Connected to gic
+- interrupts: Interrupt specifier for the controllers interrupt.
+- anlogic,num-intr-inputs: How many input interrupts are there in intc in total
+- anlogic,kind-of-intr: The triggering mode of all input interrupts on intc
+
+Example:
+	axi_intc0: interrupt-controller@80000000 {
+		compatible = "anlogic,axi-intc-1.00.a";
+		reg = <0x0 0x80000000 0x0 0x10000>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+		interrupt-parent = <&gic>;
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		anlogic,num-intr-inputs = <6>;
+		anlogic,kind-of-intr = <0x0>;
+		status = "disabled";
+	};
