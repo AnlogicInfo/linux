@@ -254,9 +254,12 @@ static int dr1x90_thermal_get_temp(void *data, int *temp)
 	writel(code & ~PVT_XADC_ENABLE, priv->pvt_reg);
 	writel(code | PVT_XADC_ENABLE, priv->pvt_reg);
 	// wait 10000 clocks
-	mdelay(10000000/priv->rate + 1);
+	mdelay(10000000/priv->rate + 3);
 	code = readl(priv->pvt_reg);
 	*temp = dr1x90_thermal_code_to_degree(priv, code & PVT_RDATA_MASK);
+
+	if (*temp >= 120000)
+		pr_info("high temperature: %d, 0x%x, %lu\n", *temp, code, priv->rate);
 
 	return 0;
 }
