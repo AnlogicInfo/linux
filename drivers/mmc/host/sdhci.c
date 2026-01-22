@@ -1996,6 +1996,10 @@ void sdhci_enable_clk(struct sdhci_host *host, u16 clk)
 	clk |= SDHCI_CLOCK_INT_EN;
 	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	mdelay(150);
+#endif
+
 	/* Wait max 150 ms */
 	timeout = ktime_add_ms(ktime_get(), 150);
 	while (1) {
@@ -2018,6 +2022,10 @@ void sdhci_enable_clk(struct sdhci_host *host, u16 clk)
 		clk |= SDHCI_CLOCK_PLL_EN;
 		clk &= ~SDHCI_CLOCK_INT_STABLE;
 		sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
+
+#ifdef CONFIG_ANLOGIC_SOC
+		mdelay(150);
+#endif
 
 		/* Wait max 150 ms */
 		timeout = ktime_add_ms(ktime_get(), 150);
@@ -4269,6 +4277,10 @@ int sdhci_setup_host(struct sdhci_host *host)
 		return -EINVAL;
 
 	mmc = host->mmc;
+
+#ifdef CONFIG_ANLOGIC_SOC
+	sdhci_writel(host, SDHCI_INT_ALL_MASK, SDHCI_INT_STATUS);
+#endif
 
 	/*
 	 * If there are external regulators, get them. Note this must be done
