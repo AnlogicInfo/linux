@@ -149,6 +149,8 @@
 };
 
 &sdhci1 {
+	/* if dev is sd, must comment no-sd */
+	no-sd;
 	status = "disabled";
 };
 
