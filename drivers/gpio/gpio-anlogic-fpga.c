@@ -353,6 +353,7 @@ static int plgpio_probe(struct platform_device *pdev)
 	u32 width[2];
 	u32 state[2];
 	u32 dir[2];
+	u32 gpio_base;
 	struct gpio_irq_chip *girq;
 	u32 temp;
 
@@ -392,7 +393,13 @@ static int plgpio_probe(struct platform_device *pdev)
 
 	spin_lock_init(&plgpio->gpio_lock);
 
-	plgpio->gc.base = -1;
+	if (of_property_read_u32(np, "anlogic,gpio-base", &gpio_base)) {
+		gpio_base = -1;
+		dev_dbg(&pdev->dev, "Missing anlogic,gpio-base\n");
+	}
+
+	plgpio->gc.base = gpio_base;
+
 	plgpio->gc.ngpio = PLGPIO_LINE_NUM;
 	plgpio->gc.parent = &pdev->dev;
 	plgpio->gc.direction_input = plgpio_dir_in;

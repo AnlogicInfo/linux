@@ -111,6 +111,12 @@ properties:
     description: This value configures the input or output mode
                  of each bit of GPIO channel2.
 
+  anlogic,gpio-base:
+    $ref: /schemas/types.yaml#/definitions/uint32
+    description: Specifies the base axi-gpio number (1000)
+                 Step between axi-gpio numbers (100).
+    minimum: 1000
+
 required:
   - reg
   - compatible
@@ -143,6 +149,7 @@ examples:
             anlogic,is-dual = <0x1>;
             anlogic,tri-default = <0xFFFFFFFF>;
             anlogic,tri-default-2 = <0xFFFFFFFF>;
+            anlogic,gpio-base = <1000>;
         };
 
 ...
