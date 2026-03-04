@@ -84,6 +84,7 @@
 		anlogic,is-dual = <0x1>;
 		anlogic,tri-default = <0xFFFFFFFF>;
 		anlogic,tri-default-2 = <0xFFFFFFFF>;
+		anlogic,gpio-base = <1000>;
 	};
 
 	axi_gpio-keys {

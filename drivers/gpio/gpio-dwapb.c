@@ -679,6 +679,16 @@ static struct dwapb_platform_data *dwapb_gpio_get_pdata(struct device *dev)
 		pp->irq_shared	= false;
 		pp->gpio_base	= -1;
 
+#ifdef CONFIG_ANLOGIC_SOC
+		if (fwnode_property_read_u32(fwnode, "gpio-base", &pp->gpio_base)) {
+			pp->gpio_base   = -1;
+			dev_info(dev,
+				 "failed to get gpio-base for port%d\n",
+				 i);
+		}
+#endif
+
+
 		/*
 		 * Only port A can provide interrupts in all configurations of
 		 * the IP.

@@ -252,6 +252,7 @@
 				interrupt-controller;
 				#interrupt-cells = <2>;
 				interrupts = <GIC_SPI 52 IRQ_TYPE_LEVEL_HIGH>;
+				gpio-base = <0>;
 			};
 		};
 
@@ -275,6 +276,7 @@
 				interrupt-controller;
 				#interrupt-cells = <2>;
 				interrupts = <GIC_SPI 53 IRQ_TYPE_LEVEL_HIGH>;
+				gpio-base = <100>;
 			};
 		};
 
@@ -298,6 +300,7 @@
 				interrupt-controller;
 				#interrupt-cells = <2>;
 				interrupts = <GIC_SPI 54 IRQ_TYPE_LEVEL_HIGH>;
+				gpio-base = <200>;
 			};
 		};
 
@@ -321,6 +324,7 @@
 				interrupt-controller;
 				#interrupt-cells = <2>;
 				interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
+				gpio-base = <300>;
 			};
 		};
 

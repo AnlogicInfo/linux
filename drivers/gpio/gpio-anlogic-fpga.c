@@ -331,6 +331,7 @@ static int plgpio_probe(struct platform_device *pdev)
 	struct device_node *np = pdev->dev.of_node;
 	u32 is_dual = 0;
 	u32 cells = 2;
+	u32 gpio_base;
 	struct gpio_irq_chip *girq;
 	u32 temp;
 
@@ -380,7 +381,13 @@ static int plgpio_probe(struct platform_device *pdev)
 			return -EINVAL;
 	}
 
-	chip->gc.base = -1;
+	if (of_property_read_u32(np, "anlogic,gpio-base", &gpio_base)) {
+		gpio_base = -1;
+		dev_dbg(&pdev->dev, "Missing anlogic,gpio-base\n");
+	}
+
+	chip->gc.base = gpio_base;
+
 	chip->gc.ngpio = chip->gpio_width[0] + chip->gpio_width[1];
 	chip->gc.parent = &pdev->dev;
 	chip->gc.of_xlate = plgpio_xlate;
