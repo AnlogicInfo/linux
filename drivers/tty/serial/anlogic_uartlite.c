@@ -185,6 +185,42 @@ static int pluart_transmit(struct uart_port *port, int stat)
 	return 1;
 }
 
+static int pluart_baud_to_code(unsigned int baud)
+{
+	switch (baud) {
+	case 110:
+		return 1;
+	case 300:
+		return 2;
+	case 1200:
+		return 3;
+	case 2400:
+		return 4;
+	case 4800:
+		return 5;
+	case 9600:
+		return 0;
+	case 19200:
+		return 6;
+	case 38400:
+		return 7;
+	case 57600:
+		return 8;
+	case 115200:
+		return 9;
+	case 128000:
+		return 10;
+	case 230400:
+		return 11;
+	case 460800:
+		return 12;
+	case 921600:
+		return 13;
+	default:
+		return -1;
+	}
+}
+
 static irqreturn_t pluart_isr(int irq, void *dev_id)
 {
 	struct uart_port *port = dev_id;
@@ -255,6 +291,7 @@ static int pluart_startup(struct uart_port *port)
 {
 	struct uartlite_data *pdata = port->private_data;
 	int ret;
+	u32 control_val;
 
 	ret = clk_enable(pdata->clk);
 	if (ret) {
@@ -269,7 +306,11 @@ static int pluart_startup(struct uart_port *port)
 
 	uart_out32(PLUART_CONTROL_RST_RX | PLUART_CONTROL_RST_TX,
 		PLUART_CONTROL, port);
-	uart_out32(PLUART_CONTROL_IE, PLUART_CONTROL, port);
+
+	control_val = PLUART_CONTROL_IE |
+			(((u8)pluart_baud_to_code(pdata->baud)) << 5);
+
+	uart_out32(control_val, PLUART_CONTROL, port);
 
 	return 0;
 }
@@ -285,16 +326,24 @@ static void pluart_shutdown(struct uart_port *port)
 }
 
 static void pluart_set_termios(struct uart_port *port,
-			      struct ktermios *termios,
-			      const struct ktermios *old)
+				      struct ktermios *termios,
+				      const struct ktermios *old)
 {
 	unsigned long flags;
 	struct uartlite_data *pdata = port->private_data;
+	unsigned int baud;
+	u32 control_val;
 
 	termios->c_iflag &= ~BRKINT;
 	termios->c_cflag &= ~(CSTOPB | PARENB | PARODD | CSIZE);
 	termios->c_cflag |= pdata->cflags & (PARENB | PARODD | CSIZE);
-	tty_termios_encode_baud_rate(termios, pdata->baud, pdata->baud);
+
+	baud = tty_termios_baud_rate(termios);
+	if (baud == 0 || pluart_baud_to_code(baud) < 0)
+		baud = pdata->baud;
+
+	pdata->baud = baud;
+	tty_termios_encode_baud_rate(termios, baud, baud);
 
 	spin_lock_irqsave(&port->lock, flags);
 
@@ -315,7 +364,11 @@ static void pluart_set_termios(struct uart_port *port,
 			PLUART_STATUS_RXVALID | PLUART_STATUS_PARITY
 			| PLUART_STATUS_FRAME | PLUART_STATUS_OVERRUN;
 
-	uart_update_timeout(port, termios->c_cflag, pdata->baud);
+	uart_update_timeout(port, termios->c_cflag, baud);
+
+	control_val = PLUART_CONTROL_IE | (((u8)pluart_baud_to_code(baud)) << 5);
+
+	uart_out32(control_val, PLUART_CONTROL, port);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 }
@@ -565,6 +618,10 @@ of_err:
 		ret = of_property_read_u32(np, prop, &pdata->baud);
 		if (ret)
 			goto of_err;
+
+		if (pluart_baud_to_code(pdata->baud) < 0)
+			return dev_err_probe(&pdev->dev, -EINVAL,
+					     "invalid baud %u\n", pdata->baud);
 
 		prop = "anlogic,use-parity";
 		ret = of_property_read_u32(np, prop, &val);
