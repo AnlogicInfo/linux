@@ -55,6 +55,7 @@
 struct uartlite_data {
 	const struct uartlite_reg_ops *reg_ops;
 	struct clk *clk;
+	unsigned int baud;
 };
 
 struct uartlite_reg_ops {
@@ -107,6 +108,42 @@ static inline void uart_out32(u32 val, u32 offset, struct uart_port *port)
 }
 
 static struct uart_port pluart_ports[PLUART_NR_UARTS];
+
+static int pluart_baud_to_code(unsigned int baud)
+{
+	switch (baud) {
+	case 110:
+		return 1;
+	case 300:
+		return 2;
+	case 1200:
+		return 3;
+	case 2400:
+		return 4;
+	case 4800:
+		return 5;
+	case 9600:
+		return 0;
+	case 19200:
+		return 6;
+	case 38400:
+		return 7;
+	case 57600:
+		return 8;
+	case 115200:
+		return 9;
+	case 128000:
+		return 10;
+	case 230400:
+		return 11;
+	case 460800:
+		return 12;
+	case 921600:
+		return 13;
+	default:
+		return -1;
+	}
+}
 
 static int pluart_receive(struct uart_port *port, int stat)
 {
@@ -252,6 +289,7 @@ static int pluart_startup(struct uart_port *port)
 {
 	struct uartlite_data *pdata = port->private_data;
 	int ret;
+	u32 control_val;
 
 	ret = clk_enable(pdata->clk);
 	if (ret) {
@@ -264,9 +302,12 @@ static int pluart_startup(struct uart_port *port)
 	if (ret)
 		return ret;
 
+	control_val = PLUART_CONTROL_IE |
+			(((u8)pluart_baud_to_code(pdata->baud)) << 5);
+
 	uart_out32(PLUART_CONTROL_RST_RX | PLUART_CONTROL_RST_TX,
 		PLUART_CONTROL, port);
-	uart_out32(PLUART_CONTROL_IE, PLUART_CONTROL, port);
+	uart_out32(control_val, PLUART_CONTROL, port);
 
 	return 0;
 }
@@ -285,6 +326,8 @@ static void pluart_set_termios(struct uart_port *port, struct ktermios *termios,
 {
 	unsigned long flags;
 	unsigned int baud;
+	u32 control_val;
+	struct uartlite_data *pdata = port->private_data;
 
 	spin_lock_irqsave(&port->lock, flags);
 
@@ -306,6 +349,14 @@ static void pluart_set_termios(struct uart_port *port, struct ktermios *termios,
 			| PLUART_STATUS_FRAME | PLUART_STATUS_OVERRUN;
 
 	baud = uart_get_baud_rate(port, termios, old, 0, 460800);
+	if (baud == 0 || pluart_baud_to_code(baud) < 0)
+		baud = pdata->baud;
+
+	pdata->baud = baud;
+
+	control_val = PLUART_CONTROL_IE | (((u8)pluart_baud_to_code(baud)) << 5);
+	uart_out32(control_val, PLUART_CONTROL, port);
+
 	uart_update_timeout(port, termios->c_cflag, baud);
 
 	spin_unlock_irqrestore(&port->lock, flags);
@@ -537,17 +588,26 @@ static int pluart_probe(struct platform_device *pdev)
 	struct uartlite_data *pdata;
 	int irq, ret;
 	int id = pdev->id;
-#ifdef CONFIG_OF
 	const __be32 *prop;
 
-	prop = of_get_property(pdev->dev.of_node, "port-number", NULL);
-	if (prop)
-		id = be32_to_cpup(prop);
-#endif
 	pdata = devm_kzalloc(&pdev->dev, sizeof(struct uartlite_data),
 			     GFP_KERNEL);
 	if (!pdata)
 		return -ENOMEM;
+
+	prop = of_get_property(pdev->dev.of_node, "port-number", NULL);
+	if (prop)
+		id = be32_to_cpup(prop);
+
+	ret = of_property_read_u32(pdev->dev.of_node, "current-speed", &pdata->baud);
+	if (ret) {
+		pr_err("current-speed is not available\n");
+		return ret;
+	}
+
+	if (pluart_baud_to_code(pdata->baud) < 0)
+		return dev_err_probe(&pdev->dev, -EINVAL,
+						"invalid baud %u\n", pdata->baud);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res)
