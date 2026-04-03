@@ -687,7 +687,6 @@ static int al_axi_qspi_transfer_one(struct spi_controller *master,
 	u32 wr_data;
 	u32 fill_cnt;
 	u32 fill_cnt_cpy;
-	u32 fetch_cnt;
 	u32 w_cnt = 0;
 	u32 r_cnt = 0;
 	u32 bytes_step;
