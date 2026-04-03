@@ -69,8 +69,7 @@ static int dr1m90_fpga_le32(struct fpga_manager *mgr,
 	return 0;
 }
 
-static int dr1m90_fpga_prog_init(struct fpga_manager *mgr, phys_addr_t addr,
-			uint32_t len)
+static int dr1m90_fpga_prog_init(phys_addr_t addr, uint32_t len)
 {
 	unsigned long ret;
 
@@ -299,6 +298,13 @@ static int dr1m90_fpga_probe(struct platform_device *pdev)
 		goto free_initbuf;
 	}
 
+	ret = dr1m90_fpga_prog_init(priv->init_addr, priv->init_size);
+	if (ret < 0) {
+		dev_err(dev, "fpga init fail: %d\n", ret);
+		ret = -EIO;
+		goto free_workbuf;
+	}
+
 	mgr = devm_fpga_mgr_create(dev, "Anlogic dr1m90 FPGA Manager",
 				   &dr1m90_fpga_ops, priv);
 	if (!mgr) {
@@ -313,13 +319,6 @@ static int dr1m90_fpga_probe(struct platform_device *pdev)
 	}
 
 	platform_set_drvdata(pdev, mgr);
-
-	ret = dr1m90_fpga_prog_init(mgr, priv->init_addr, priv->init_size);
-	if (ret < 0) {
-		dev_err(dev, "fpga init fail: %d\n", ret);
-		ret = -EIO;
-		goto free_workbuf;
-	}
 
 	return 0;
 
