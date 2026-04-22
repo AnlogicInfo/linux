@@ -40,6 +40,14 @@ static void anlogic_axivdma_free_tx_descriptor(struct anlogic_dma_chan *chan,
 	kfree(desc);
 }
 
+static int anlogic_axivdma_desc_free(struct dma_async_tx_descriptor *tx)
+{
+	struct anlogic_dma_chan *chan = to_anlogic_chan(tx->chan);
+
+	anlogic_axivdma_free_tx_descriptor(chan, to_dma_tx_descriptor(tx));
+	return 0;
+}
+
 static void anlogic_dma_free_desc_list(struct anlogic_dma_chan *chan,
 					struct list_head *list)
 {
@@ -229,6 +237,7 @@ anlogic_axivdma_prep_interleaved(struct dma_chan *dchan,
 
 	dma_async_tx_descriptor_init(&desc->async_tx, &chan->common);
 	desc->async_tx.tx_submit = anlogic_dma_tx_submit;
+	desc->async_tx.desc_free = anlogic_axivdma_desc_free;
 	async_tx_ack(&desc->async_tx);
 
 	/* Allocate the link descriptor from DMA pool */
