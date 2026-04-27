@@ -9,6 +9,10 @@
 #include <linux/platform_device.h>
 #include <linux/of_address.h>
 #include <linux/miscdevice.h>
+#include <linux/sys_soc.h>
+#include <linux/bitfield.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
 #if IS_ENABLED(CONFIG_ARCH_RV64I)
 #include <asm/sbi.h>
 #else
@@ -42,69 +46,90 @@
 #define ALSM_SECRNG_ACC				2
 #define ALSM_WDT_SOFT_REBOOT_EN			3
 
+#define ANL_SOCID_DR1X90			0x100a9000
+
 enum anl_soc_id {
 	ANL_SOC_DR1X90,
 	ANL_SOC_MAX
 };
 
 struct anl_top_data {
+	const char *family;
 	int chip;
 };
 
 static DEFINE_SPINLOCK(top_lock);
 static DEFINE_MUTEX(top_mtx);
-static void __iomem *top_base;
+static struct soc_device *soc_dev;
+static struct regmap *top_reg;
 static ulong top_reg_base, top_len;
 static void __iomem *top_sec_base;
 static ulong top_sec_reg_base, top_sec_len;
 static uint64_t anl_chipid;
 
 static struct anl_top_data dr1x90_top_data = {
+	.family = "Anlogic-DR1",
 	.chip = ANL_SOC_DR1X90,
 };
 
+static const char *anl_soc_id(uint64_t chipid)
+{
+	const char *socid = "UNKNSOC";
+
+	switch (chipid) {
+	case ANL_SOCID_DR1X90:
+		socid = "DR1X90";
+		break;
+	}
+	return kasprintf(GFP_KERNEL, "%s", socid);
+}
+
 static inline __maybe_unused void top_writel(u32 value, u32 off)
 {
-	if (!top_base || (off + 4) > top_len) {
+	if (!top_reg || (off + 4) > top_len) {
 		pr_warn("anl write top reg 0x%x fail\n", off);
 		BUG_ON(1);
 		return;
 	}
 
-	writel(value, top_base + off);
+	regmap_write(top_reg, off, value);
 }
 
 static inline __maybe_unused u32 top_readl(u32 off)
 {
-	if (!top_base || (off + 4) > top_len) {
+	u32 value = -1;
+
+	if (!top_reg || (off + 4) > top_len) {
 		pr_warn("anl read top reg 0x%x fail\n", off);
 		BUG_ON(1);
 		return 0;
 	}
 
-	return readl(top_base + off);
+	regmap_read(top_reg, off, &value);
+	return value;
 }
 
 static inline __maybe_unused void top_writeq(u64 value, u32 off)
 {
-	if (!top_base || (off + 8) > top_len) {
+	if (!top_reg || (off + 8) > top_len) {
 		pr_warn("anl write top reg 0x%x fail\n", off);
 		BUG_ON(1);
 		return;
 	}
 
-	writeq(value, top_base + off);
+	pr_warn("anl write top reg 0x%x with 64bit value, but not supported\n", off);
 }
 
 static inline __maybe_unused u64 top_readq(u32 off)
 {
-	if (!top_base || (off + 8) > top_len) {
+	if (!top_reg || (off + 8) > top_len) {
 		pr_warn("anl read top reg 0x%x fail\n", off);
 		BUG_ON(1);
 		return 0;
 	}
 
-	return readq(top_base + off);
+	pr_warn("anl read top reg 0x%x with 64bit value, but not supported\n", off);
+	return -1;
 }
 
 static unsigned long invoke_fpga_prog_fn(unsigned long function_id,
@@ -537,32 +562,47 @@ EXPORT_SYMBOL(anl_get_chipid);
 static int anl_top_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
-	void __iomem *reg;
+	struct regmap *regmap;
+	struct soc_device_attribute *soc_dev_attr;
+	void __iomem __maybe_unused *reg;
 	struct resource res;
+	struct device_node *np;
+	u32 value;
 	int ret = 0;
 
 	mutex_lock(&top_mtx);
 
+	soc_dev_attr = devm_kzalloc(dev, sizeof(*soc_dev_attr), GFP_KERNEL);
+	if (!soc_dev_attr) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
 	ret = of_address_to_resource(pdev->dev.of_node, 0, &res);
 	if (ret) {
-		dev_err(dev, "top init fail");
+		dev_err(dev, "top init fail\n");
 		goto out;
 	}
 	top_reg_base = res.start;
 	top_len = resource_size(&res);
 
-	reg = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(reg)) {
-		dev_err(dev, "top init fail");
-		ret = PTR_ERR(reg);
+	regmap = device_node_to_regmap(pdev->dev.of_node);
+	if (IS_ERR(regmap)) {
+		dev_err(dev, "top init fail2\n");
+		ret = PTR_ERR(regmap);
 		goto out;
 	}
-	top_base = reg;
-	anl_chipid = top_readl(SYSCTRL_NS_CFG_CHIPID);
+	top_reg = regmap;
+	ret = regmap_read(regmap, SYSCTRL_NS_CFG_CHIPID, &value);
+	if (ret) {
+		dev_err(dev, "get chipid fail\n");
+		goto out;
+	}
+	anl_chipid = value;
 
 	ret = of_address_to_resource(pdev->dev.of_node, 1, &res);
 	if (ret) {
-		dev_err(dev, "top sec init fail");
+		dev_err(dev, "top sec init fail\n");
 		goto out;
 	}
 	top_sec_reg_base = res.start;
@@ -578,14 +618,31 @@ static int anl_top_probe(struct platform_device *pdev)
 	top_sec_base = reg;
 #endif
 
+	np = of_find_node_by_path("/");
+	of_property_read_string(np, "model", &soc_dev_attr->machine);
+	of_node_put(np);
+	soc_dev_attr->family = dr1x90_top_data.family;
+	soc_dev_attr->revision = "0";
+	soc_dev_attr->serial_number = "0";
+	soc_dev_attr->soc_id = anl_soc_id(anl_chipid);
+
+	soc_dev = soc_device_register(soc_dev_attr);
+	if (IS_ERR(soc_dev)) {
+		kfree(soc_dev_attr->soc_id);
+		ret = PTR_ERR(soc_dev);
+		dev_err(dev, "soc device register fail: %d\n", ret);
+		goto out;
+	}
+
 	mutex_unlock(&top_mtx);
 	return 0;
 
 out:
+	soc_dev = NULL;
 	top_sec_base = NULL;
 	top_sec_reg_base = 0;
 	top_sec_len = 0;
-	top_base = NULL;
+	top_reg = NULL;
 	top_reg_base = 0;
 	top_len = 0;
 	mutex_unlock(&top_mtx);
@@ -610,7 +667,7 @@ static int __init anl_top_driver_init(void)
 {
 	return platform_driver_register(&anl_top_driver);
 }
-arch_initcall(anl_top_driver_init);
+postcore_initcall(anl_top_driver_init);
 
 MODULE_AUTHOR("fushan.zeng<fushan.zeng@anlogic.com>");
 MODULE_DESCRIPTION("anlogic top config");
