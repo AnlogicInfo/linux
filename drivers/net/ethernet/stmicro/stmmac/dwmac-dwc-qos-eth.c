@@ -20,6 +20,9 @@
 #include <linux/platform_device.h>
 #include <linux/reset.h>
 #include <linux/stmmac.h>
+#ifdef CONFIG_ANLOGIC_SOC
+#include <soc/anlogic/anl_top.h>
+#endif
 
 #include "stmmac_platform.h"
 #include "dwmac4.h"
@@ -36,6 +39,14 @@ struct tegra_eqos {
 
 	struct gpio_desc *reset;
 };
+
+#ifdef CONFIG_ANLOGIC_SOC
+struct anl_eqos {
+	struct platform_device *pdev;
+	struct plat_stmmacenet_data *plat_data;
+	int index;
+};
+#endif
 
 static int dwc_eth_dwmac_config_dt(struct platform_device *pdev,
 				   struct plat_stmmacenet_data *plat_dat)
@@ -403,6 +414,82 @@ static int tegra_eqos_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_ANLOGIC_SOC
+static void anl_eqos_fix_speed(void *priv, unsigned int speed)
+{
+	struct anl_eqos *eqos = priv;
+	struct plat_stmmacenet_data *plat_data = eqos->plat_data;
+	struct device *dev = &eqos->pdev->dev;
+	const char *name;
+	u32 value;
+
+	switch (speed) {
+	case SPEED_1000:
+		name = "phase-1000M";
+		break;
+
+	case SPEED_100:
+		name = "phase-100M";
+		break;
+
+	case SPEED_10:
+		name = "phase-10M";
+		break;
+
+	default:
+		dev_err(dev, "invalid speed %u\n", speed);
+		return;
+	}
+
+	if (!plat_data->phy_node)
+		return;
+
+	if (of_property_read_u32(plat_data->phy_node, name, &value))
+		return;
+
+	anl_gbe_set_phase(eqos->index, speed, value);
+	dev_info(dev, "setting PHY phase 0x%x for speed %u\n", value, speed);
+}
+
+static void *anl_qos_probe(struct platform_device *pdev,
+			   struct plat_stmmacenet_data *plat_data,
+			   struct stmmac_resources *stmmac_res)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = pdev->dev.of_node;
+	struct anl_eqos *eqos;
+	int index;
+	void *ret;
+
+	eqos = devm_kzalloc(&pdev->dev, sizeof(*eqos), GFP_KERNEL);
+	if (!eqos)
+		return ERR_PTR(-ENOMEM);
+
+	ret = dwc_qos_probe(pdev, plat_data, stmmac_res);
+	if (ret)
+		return ret;
+
+	if (of_property_read_u32(np, "index", &index)) {
+		dev_info(dev, "no index specified, defaulting to 0\n");
+		index = 0;
+	}
+
+	eqos->pdev = pdev;
+	eqos->plat_data = plat_data;
+	eqos->index = index;
+	plat_data->fix_mac_speed = anl_eqos_fix_speed;
+	plat_data->bsp_priv = eqos;
+	return NULL;
+}
+
+static int anl_qos_remove(struct platform_device *pdev)
+{
+	dwc_qos_remove(pdev);
+
+	return 0;
+}
+#endif
+
 struct dwc_eth_dwmac_data {
 	void *(*probe)(struct platform_device *pdev,
 		       struct plat_stmmacenet_data *data,
@@ -419,6 +506,13 @@ static const struct dwc_eth_dwmac_data tegra_eqos_data = {
 	.probe = tegra_eqos_probe,
 	.remove = tegra_eqos_remove,
 };
+
+#ifdef CONFIG_ANLOGIC_SOC
+static const struct dwc_eth_dwmac_data anl_qos_data = {
+	.probe = anl_qos_probe,
+	.remove = anl_qos_remove,
+};
+#endif
 
 static int dwc_eth_dwmac_probe(struct platform_device *pdev)
 {
@@ -503,6 +597,9 @@ static int dwc_eth_dwmac_remove(struct platform_device *pdev)
 static const struct of_device_id dwc_eth_dwmac_match[] = {
 	{ .compatible = "snps,dwc-qos-ethernet-4.10", .data = &dwc_qos_data },
 	{ .compatible = "nvidia,tegra186-eqos", .data = &tegra_eqos_data },
+#ifdef CONFIG_ANLOGIC_SOC
+	{ .compatible = "anlogic,dwc-qos-ethernet-4.10", .data = &anl_qos_data },
+#endif
 	{ }
 };
 MODULE_DEVICE_TABLE(of, dwc_eth_dwmac_match);

@@ -76,13 +76,7 @@ static int rtl821x_write_page(struct phy_device *phydev, int page)
 #ifdef CONFIG_ANLOGIC_SOC
 static int rtl821x_probe(struct phy_device *phydev)
 {
-	struct device *dev = &phydev->mdio.dev;
-	u32 cfg_ctrl_gbe_phy;
-
-	if (!of_property_read_u32(dev->of_node, "phase-100M", &phydev->phase_100M) &&
-	    !of_property_read_u32(dev->of_node, "phase-1000M", &phydev->phase_1000M) &&
-	    !of_property_read_u32(dev->of_node, "cfg_ctrl_gbe", &cfg_ctrl_gbe_phy))
-		phydev->cfg_ctrl_gbe_phy = devm_ioremap(dev, cfg_ctrl_gbe_phy, 4);
+	//struct device *dev = &phydev->mdio.dev;
 
 	return 0;
 }

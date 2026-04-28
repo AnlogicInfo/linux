@@ -645,12 +645,6 @@ struct phy_device {
 	/* MACsec management functions */
 	const struct macsec_ops *macsec_ops;
 #endif
-
-#ifdef CONFIG_ANLOGIC_SOC
-	void __iomem *cfg_ctrl_gbe_phy;
-	u32 phase_100M;
-	u32 phase_1000M;
-#endif
 };
 #define to_phy_device(d) container_of(to_mdio_device(d), \
 				      struct phy_device, mdio)

@@ -508,10 +508,12 @@
 		};
 
 		eqos0: ethernet0@F8100000 {
-			compatible = "snps,dwc-qos-ethernet-4.10";
+			compatible = "anlogic,dwc-qos-ethernet-4.10",
+				   "snps,dwc-qos-ethernet-4.10";
 			#address-cells = <2>;
 			#size-cells = <2>;
 			reg = <0x0 0xF8100000 0x0 0x10000>;
+			index = <0>;
 			interrupts = <GIC_SPI 58 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&crp CLK_GBE>,<&eth0_phy_clk>,<&crp CLK_PTP>;
 			clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
@@ -536,7 +538,6 @@
 					reg = <0>;
 					reset-assert-us = <10000>;
 					reset-deassert-us = <30000>;
-					cfg_ctrl_gbe = <0xf8800140>;
 					phase-100M = <0x52>;
 					phase-1000M = <0x51>;
 				};
@@ -546,7 +547,6 @@
 					reg = <0>;
 					yt,phy-delay = <0x001f>;
 					phy-connection-type = "rgmii-id";
-					cfg_ctrl_gbe = <0xf8800140>;
 					phase-100M = <0x0D>;
 					phase-1000M = <0x18>;
 				};
@@ -554,10 +554,12 @@
 		};
 
 		eqos1: ethernet1@F8110000 {
-			compatible = "snps,dwc-qos-ethernet-4.10";
+			compatible = "anlogic,dwc-qos-ethernet-4.10",
+				   "snps,dwc-qos-ethernet-4.10";
 			#address-cells = <2>;
 			#size-cells = <2>;
 			reg = <0x0 0xF8110000 0x0 0x10000>;
+			index = <1>;
 			interrupts = <GIC_SPI 59 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&crp CLK_GBE>,<&eth1_phy_clk>,<&crp CLK_PTP>;
 			clock-names = "apb_pclk","phy_ref_clk","ptp_ref";
@@ -582,7 +584,6 @@
 					reg = <0>;
 					reset-assert-us = <10000>;
 					reset-deassert-us = <30000>;
-					cfg_ctrl_gbe = <0xf8800144>;
 					phase-100M = <0x52>;
 					phase-1000M = <0x51>;
 				};
@@ -592,7 +593,6 @@
 					reg = <0>;
 					yt,phy-delay = <0x001f>;
 					phy-connection-type = "rgmii-id";
-					cfg_ctrl_gbe = <0xf8800144>;
 					phase-100M = <0x0D>;
 					phase-1000M = <0x18>;
 				};

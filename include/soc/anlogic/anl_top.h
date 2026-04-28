@@ -28,4 +28,5 @@ void al_misc_reboot(unsigned long entry);
 void al_misc_cpu_die(int id);
 int anl_wdt_softboot_enable(ulong wdtidx, ulong entry_point);
 uint64_t anl_get_chipid(void);
+void anl_gbe_set_phase(int index, unsigned int speed, u32 value);
 #endif
