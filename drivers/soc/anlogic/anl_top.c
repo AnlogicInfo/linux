@@ -12,6 +12,7 @@
 #include <linux/sys_soc.h>
 #include <linux/bitfield.h>
 #include <linux/regmap.h>
+#include <linux/slab.h>
 #include <linux/mfd/syscon.h>
 #if IS_ENABLED(CONFIG_ARCH_RV64I)
 #include <asm/sbi.h>
@@ -559,6 +560,24 @@ uint64_t anl_get_chipid(void)
 }
 EXPORT_SYMBOL(anl_get_chipid);
 
+/* Phase adjustment bitmask (bit6-bit12) and offset in control register */
+#define DR1X90_GBE0_CTRL_REG			0x140
+#define DR1X90_GBE1_CTRL_REG			0x144
+#define DR1X90_PHASE_ADJ_MASK			0x7F
+#define DR1X90_PHASE_ADJ_OFFSET			6
+void anl_gbe_set_phase(int index, unsigned int speed, u32 value)
+{
+	u32 reg_addr = index ? DR1X90_GBE1_CTRL_REG : DR1X90_GBE0_CTRL_REG;
+	u32 reg_val = top_readl(reg_addr);
+	/* Clear existing phase bits and set new value.
+	 * Mask ensures phase value does not exceed 7 bits.
+	 */
+	reg_val &= ~(DR1X90_PHASE_ADJ_MASK << DR1X90_PHASE_ADJ_OFFSET);
+	reg_val |= (value & DR1X90_PHASE_ADJ_MASK) << DR1X90_PHASE_ADJ_OFFSET;
+	top_writel(reg_val, reg_addr);
+}
+EXPORT_SYMBOL(anl_gbe_set_phase);
+
 static int anl_top_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -567,10 +586,13 @@ static int anl_top_probe(struct platform_device *pdev)
 	void __iomem __maybe_unused *reg;
 	struct resource res;
 	struct device_node *np;
+	struct anl_top_data const *data;
 	u32 value;
 	int ret = 0;
 
 	mutex_lock(&top_mtx);
+
+	data = device_get_match_data(&pdev->dev);
 
 	soc_dev_attr = devm_kzalloc(dev, sizeof(*soc_dev_attr), GFP_KERNEL);
 	if (!soc_dev_attr) {
@@ -621,7 +643,7 @@ static int anl_top_probe(struct platform_device *pdev)
 	np = of_find_node_by_path("/");
 	of_property_read_string(np, "model", &soc_dev_attr->machine);
 	of_node_put(np);
-	soc_dev_attr->family = dr1x90_top_data.family;
+	soc_dev_attr->family = data->family;
 	soc_dev_attr->revision = "0";
 	soc_dev_attr->serial_number = "0";
 	soc_dev_attr->soc_id = anl_soc_id(anl_chipid);

@@ -730,12 +730,6 @@ struct phy_device {
 	/* MACsec management functions */
 	const struct macsec_ops *macsec_ops;
 #endif
-
-#ifdef CONFIG_ANLOGIC_SOC
-	void __iomem *cfg_ctrl_gbe_phy;
-	u32 phase_100M;
-	u32 phase_1000M;
-#endif
 };
 
 static inline struct phy_device *to_phy_device(const struct device *dev)

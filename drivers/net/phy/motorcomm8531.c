@@ -1630,16 +1630,6 @@ static int yt8531S_config_init(struct phy_device *phydev)
 
 static int yt8531_probe(struct phy_device *phydev)
 {
-#ifdef CONFIG_ANLOGIC_SOC
-	struct device *dev = &phydev->mdio.dev;
-	u32 cfg_ctrl_gbe_phy;
-
-	if (!of_property_read_u32(dev->of_node, "phase-100M", &phydev->phase_100M) &&
-	    !of_property_read_u32(dev->of_node, "phase-1000M", &phydev->phase_1000M) &&
-	    !of_property_read_u32(dev->of_node, "cfg_ctrl_gbe", &cfg_ctrl_gbe_phy))
-		phydev->cfg_ctrl_gbe_phy = devm_ioremap(dev, cfg_ctrl_gbe_phy, 4);
-#endif
-
 	return 0;
 }
 
