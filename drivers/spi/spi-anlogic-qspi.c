@@ -19,6 +19,7 @@
 #include <linux/workqueue.h>
 #include <linux/spi/spi-mem.h>
 #include <linux/reset.h>
+#include <linux/pm_runtime.h>
 #include "spi-anlogic-qspi.h"
 
 struct al_qspi_mode {
@@ -803,8 +804,10 @@ static int al_qspi_probe(struct platform_device *pdev)
 	master->bits_per_word_mask = SPI_BPW_MASK(32) | SPI_BPW_MASK(16) | SPI_BPW_MASK(8);
 
 	qspi->regs = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
-	if (IS_ERR(qspi->regs))
-		return PTR_ERR(qspi->regs);
+	if (IS_ERR(qspi->regs)) {
+		err = PTR_ERR(qspi->regs);
+		goto exit;
+	}
 
 	/* Request the IRQ */
 	irq = platform_get_irq(pdev, 0);
@@ -835,11 +838,11 @@ static int al_qspi_probe(struct platform_device *pdev)
 	qspi->pclk = devm_clk_get_optional(&pdev->dev, "pclk");
 	if (IS_ERR(qspi->pclk)) {
 		err = PTR_ERR(qspi->pclk);
-		goto out_clk;
+		goto out_rstc;
 	}
 	err = clk_prepare_enable(qspi->pclk);
 	if (err)
-		goto out;
+		goto out_rstc;
 
 	qspi->def_rx_sample_dly_ns = 5;
 	qspi->max_freq = clk_get_rate(qspi->clk);
@@ -867,9 +870,10 @@ static int al_qspi_probe(struct platform_device *pdev)
 	err = devm_request_irq(&pdev->dev, irq, al_qspi_irq,
 			       0, dev_name(&pdev->dev), qspi);
 	if (err)
-		goto out;
+		goto out_pclk;
 
 	al_qspi_hardware_init(qspi, &pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
 	err = spi_register_controller(master);
 	if (err)
@@ -877,11 +881,13 @@ static int al_qspi_probe(struct platform_device *pdev)
 
 	return 0;
 out:
+	pm_runtime_disable(&pdev->dev);
+out_pclk:
 	clk_disable_unprepare(qspi->pclk);
-out_clk:
+out_rstc:
 	reset_control_assert(qspi->rstc);
+out_clk:
 	clk_disable_unprepare(qspi->clk);
-
 exit:
 	spi_controller_put(master);
 
@@ -892,11 +898,15 @@ static int al_qspi_remove(struct platform_device *pdev)
 {
 	struct spi_master *master = platform_get_drvdata(pdev);
 	struct al_qspi *qspi = spi_master_get_devdata(master);
+	struct clk *clk = qspi->clk;
+	struct clk *pclk = qspi->pclk;
+	struct reset_control *rstc = qspi->rstc;
 
 	spi_unregister_controller(master);
-	clk_disable_unprepare(qspi->pclk);
-	clk_disable_unprepare(qspi->clk);
-	reset_control_assert(qspi->rstc);
+	pm_runtime_disable(&pdev->dev);
+	clk_disable_unprepare(pclk);
+	clk_disable_unprepare(clk);
+	reset_control_assert(rstc);
 
 	return 0;
 }

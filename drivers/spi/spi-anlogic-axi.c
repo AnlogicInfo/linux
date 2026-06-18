@@ -12,6 +12,7 @@
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
 #include <linux/wait.h>
+#include <linux/pm_runtime.h>
 
 #include <linux/spi/spi.h>
 #include <linux/spi/spi-mem.h>
@@ -833,8 +834,10 @@ static int al_axi_qspi_probe(struct platform_device *pdev)
 	axi_qspi->master = master;
 
 	axi_qspi->regs = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
-	if (IS_ERR(axi_qspi->regs))
-		return PTR_ERR(axi_qspi->regs);
+	if (IS_ERR(axi_qspi->regs)) {
+		ret = PTR_ERR(axi_qspi->regs);
+		goto exit;
+	}
 
 	init_waitqueue_head(&axi_qspi->wait);
 
@@ -872,6 +875,7 @@ static int al_axi_qspi_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, master);
 
 	al_axi_qspi_sw_rst(axi_qspi);
+	pm_runtime_enable(&pdev->dev);
 
 	master->auto_runtime_pm = true;
 	master->dev.of_node = pdev->dev.of_node;
@@ -883,11 +887,12 @@ static int al_axi_qspi_probe(struct platform_device *pdev)
 	ret = spi_register_controller(master);
 	if (ret) {
 		dev_err(&pdev->dev, "register SPI controller failed: %d\n", ret);
-		goto exit;
+		goto out;
 	}
 
 	return 0;
-
+out:
+	pm_runtime_disable(&pdev->dev);
 exit:
 	spi_controller_put(master);
 	return ret;
@@ -898,6 +903,7 @@ static int al_axi_qspi_remove(struct platform_device *pdev)
 	struct spi_master *master = platform_get_drvdata(pdev);
 
 	spi_unregister_controller(master);
+	pm_runtime_disable(&pdev->dev);
 	return 0;
 }
 
