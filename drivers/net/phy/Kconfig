@@ -256,6 +256,14 @@ config REALTEK_PHY
 	help
 	  Supports the Realtek 821x PHY.
 
+config XF_PHY
+	tristate "XF PHYs"
+	help
+	  Enable support for the XF5211C Gigabit Ethernet PHY.
+	  XF5211C is commonly used as an RTL8211F-compatible RGMII PHY.
+	  The driver performs vendor-specific initialization for RGMII
+	  delay configuration and link interrupt handling.
+
 config RENESAS_PHY
 	tristate "Renesas PHYs"
 	help
