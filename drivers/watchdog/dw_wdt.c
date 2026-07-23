@@ -73,6 +73,7 @@ module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started "
 		 "(default=" __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
+
 enum dw_wdt_rmod {
 	DW_WDT_RMOD_RESET = 1,
 	DW_WDT_RMOD_IRQ = 2
@@ -301,6 +302,9 @@ static int dw_wdt_stop(struct watchdog_device *wdd)
 {
 	struct dw_wdt *dw_wdt = to_dw_wdt(wdd);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	anl_wdt_pause(dw_wdt->idx, 1);
+#else
 	if (!dw_wdt->rst) {
 		set_bit(WDOG_HW_RUNNING, &wdd->status);
 		return 0;
@@ -308,6 +312,7 @@ static int dw_wdt_stop(struct watchdog_device *wdd)
 
 	reset_control_assert(dw_wdt->rst);
 	reset_control_deassert(dw_wdt->rst);
+#endif
 
 	return 0;
 }
