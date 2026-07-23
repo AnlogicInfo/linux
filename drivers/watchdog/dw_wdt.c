@@ -301,6 +301,9 @@ static int dw_wdt_stop(struct watchdog_device *wdd)
 {
 	struct dw_wdt *dw_wdt = to_dw_wdt(wdd);
 
+#ifdef CONFIG_ANLOGIC_SOC
+	anl_wdt_pause(dw_wdt->idx, 1);
+#else
 	if (!dw_wdt->rst) {
 		set_bit(WDOG_HW_RUNNING, &wdd->status);
 		return 0;
@@ -308,6 +311,7 @@ static int dw_wdt_stop(struct watchdog_device *wdd)
 
 	reset_control_assert(dw_wdt->rst);
 	reset_control_deassert(dw_wdt->rst);
+#endif
 
 	return 0;
 }
