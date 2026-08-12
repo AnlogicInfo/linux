@@ -174,7 +174,7 @@
 		};
 
 		serial0: serial@F8400000 {
-			compatible = "snps,dw-apb-uart";
+			compatible = "snps,dw-apb-uart", "uart";
 			reg = <0 0xF8400000 0 0x1000>;
 			interrupts = <GIC_SPI 70 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
@@ -185,7 +185,7 @@
 		};
 
 		serial1: serial@F8401000 {
-			compatible = "snps,dw-apb-uart";
+			compatible = "snps,dw-apb-uart", "uart";
 			reg = <0x0 0xF8401000 0x0 0x1000>;
 			interrupts = <GIC_SPI 71 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
@@ -373,7 +373,7 @@
 			interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&crp CLK_WDT>;
 			clock-names = "tclk";
-			resets = <&crp RST_WDT>;
+			//resets = <&crp RST_WDT>;
 		};
 
 		ipmscan0: can@0xF8408000 {
