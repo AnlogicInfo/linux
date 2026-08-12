@@ -3733,17 +3733,8 @@ void register_console(struct console *newcon)
 		write_console_seq(newcon, prb_next_seq(prb), false);
 	}
 
-#ifdef CONFIG_ANLOGIC_SOC
-	if (!(newcon->flags & CON_BOOT)) {
-		if (!realcon_enabled && !printk_kthreads_available)
-			printk_kthreads_available = true;
-		if (printk_kthreads_available)
-			printk_start_kthread(newcon);
-	}
-#else
 	if (printk_kthreads_available)
 		printk_start_kthread(newcon);
-#endif
 
 	console_unlock();
 	console_sysfs_notify();
@@ -3919,7 +3910,6 @@ static int __init printk_late_init(void)
 }
 late_initcall(printk_late_init);
 
-#ifndef CONFIG_ANLOGIC_SOC
 static int __init printk_activate_kthreads(void)
 {
 	struct console *con;
@@ -3933,7 +3923,6 @@ static int __init printk_activate_kthreads(void)
 	return 0;
 }
 early_initcall(printk_activate_kthreads);
-#endif
 
 #if defined CONFIG_PRINTK
 /* If @con is specified, only wait for that console. Otherwise wait for all. */

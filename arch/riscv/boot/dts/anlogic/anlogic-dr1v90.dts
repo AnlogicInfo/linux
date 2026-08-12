@@ -2,20 +2,22 @@
 
 /dts-v1/;
 #include "anlogic-dr1v90.dtsi"
-
-#include <dt-bindings/gpio/gpio.h>
-#include <dt-bindings/input/input.h>
-#include <dt-bindings/leds/common.h>
+#include "anlogic-dr1v90-plat.h"
+#include "anlogic-dr1v90-settings.h"
 
 / {
-	chosen {
-		bootargs = "earlycon=sbi console=ttyS0,115200";
-	};
-
 	aliases: aliases {
+		serial0 = &uart0;
+		serial1 = &uart1;
 		ethernet0 = &eqos0;
+		ethernet1 = &eqos1;
 		mmc0 = &sdhci0;
 		mmc1 = &sdhci1;
+	};
+
+	chosen {
+		bootargs = "earlycon=sbi loglevel=8";
+		linux,stdout-path = "serial1:115200n8";
 	};
 
 	reserved_memory: reserved-memory {
@@ -101,6 +103,8 @@
 	bus-width = <AL_MMC0_PS_BUS_WIDTH>;
 	#if AL_MMC0_PS_CD_ENABLE
 	cd-gpios=<&AL_MMC0_PS_CD_GPIO_BANK AL_MMC0_PS_CD_GPIO_PORT GPIO_ACTIVE_LOW>;
+	#elif defined(ANLSDK_MMC0_CD_GPIO_ENABLE)
+	cd-gpios=<&ANLSDK_MMC0_CD_GPIO_PORT ANLSDK_MMC0_CD_GPIO_ID ANLSDK_MMC0_CD_GPIO_ACTIVE_LEVEL>;
 	#else
 	non-removable;
 	broken-cd;
@@ -116,6 +120,8 @@
 	bus-width = <AL_MMC1_PS_BUS_WIDTH>;
 	#if AL_MMC1_PS_CD_ENABLE
 	cd-gpios=<&AL_MMC1_PS_CD_GPIO_BANK AL_MMC1_PS_CD_GPIO_PORT GPIO_ACTIVE_LOW>;
+	#elif defined(ANLSDK_MMC1_CD_GPIO_ENABLE)
+	cd-gpios=<&ANLSDK_MMC1_CD_GPIO_PORT ANLSDK_MMC1_CD_GPIO_ID ANLSDK_MMC1_CD_GPIO_ACTIVE_LEVEL>;
 	#else
 	non-removable;
 	broken-cd;

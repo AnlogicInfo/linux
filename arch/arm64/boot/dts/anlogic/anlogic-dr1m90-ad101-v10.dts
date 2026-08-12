@@ -52,10 +52,20 @@
 			status = "okay";
 		};
 	};
+
+	reset: reset-controller {
+		compatible = "anlogic,reset-controller";
+		#reset-cells = <1>;
+#if defined(ANLSDK_HAVE_GPIO_RESETS) && ANLSDK_HAVE_GPIO_RESETS
+		reset-gpios = ANLSDK_RESET_GPIOS;
+		reset-delays = ANLSDK_RESET_DELAYS;
+		reset-post-delays = ANLSDK_RESET_POST_DELAYS;
+#endif
+	};
 };
 
 &serial0 {
-	status = "disabled";
+	status = "okay";
 };
 
 &serial1 {
@@ -126,6 +136,44 @@
 
 &gpio3 {
 	status = "okay";
+};
+
+&eqos0 {
+	phy-handle = <&eth_phy0>;
+#if defined(ANLSDK_GBE0RST_ENABLE) && ANLSDK_GBE0RST_ENABLE
+	resets = <&reset ANLSDK_GBE0RST_INDEX>;
+	reset-names = "stmmaceth";
+#endif
+	status = "okay";
+};
+
+&eth_phy0 {
+	/* Realtek RTL8211F (0x001cc916) */
+	status = "okay";
+};
+
+&eth_phy1 {
+	/* Motorcomm YT8531 (0x4f51e91b) */
+	status = "disabled";
+};
+
+&eqos1 {
+	phy-handle = <&eth_phy2>;
+#if defined(ANLSDK_GBE1RST_ENABLE) && ANLSDK_GBE1RST_ENABLE
+	resets = <&reset ANLSDK_GBE1RST_INDEX>;
+	reset-names = "stmmaceth";
+#endif
+	status = "disabled";
+};
+
+&eth_phy2 {
+	/* Realtek RTL8211F (0x001cc916) */
+	status = "disabled";
+};
+
+&eth_phy3 {
+	/* Motorcomm YT8531 (0x4f51e91b) */
+	status = "disabled";
 };
 
 &axidmac {
@@ -206,38 +254,12 @@
 	status = "okay";
 };
 
-&eqos0 {
-	phy-handle = <&eth_phy0>;
-	status = "okay";
-};
-
-&eth_phy0 {
-	/* Realtek RTL8211F (0x001cc916) */
-	status = "okay";
-};
-
-&eth_phy1 {
-	/* Motorcomm YT8531 (0x4f51e91b) */
-	status = "disabled";
-};
-
-&eqos1 {
-	phy-handle = <&eth_phy2>;
-	status = "disabled";
-};
-
-&eth_phy2 {
-	/* Realtek RTL8211F (0x001cc916) */
-	status = "disabled";
-};
-
-&eth_phy3 {
-	/* Motorcomm YT8531 (0x4f51e91b) */
-	status = "disabled";
-};
-
 &usb_otg0 {
 	status = "okay";
+#if defined(ANLSDK_USB0RST_ENABLE) && ANLSDK_USB0RST_ENABLE
+	resets = <&reset ANLSDK_USB0RST_INDEX>;
+	reset-names = "dwc2";
+#endif
 };
 
 &adc {
